@@ -1,0 +1,66 @@
+@layer theme, base, antd, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@plugin "./../../plugins/tailwind-color";
+@plugin "./../../plugins/tailwind-slider";
+@plugin "./../../plugins/tailwind-scrollbar";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  @font-face {
+    font-family: "Poppins";
+    src: url("/fonts/poppins/Poppins-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Poppins";
+    src: url("/fonts/poppins/Poppins-SemiBold.ttf") format("truetype");
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Poppins";
+    src: url("/fonts/poppins/Poppins-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  body {
+    @apply relative font-['Poppins']! before:after:content-[''] bg-white dark:bg-black/90;
+    /* Before */
+    @apply before:absolute before:inset-0 before:-z-90 before:[clip-path:circle(30%_at_right_70%)];
+    @apply before:to-app-500/10 before:bg-linear-to-b before:from-transparent dark:before:from-black dark:before:to-black;
+    /* After */
+    @apply after:absolute after:inset-0 after:top-[50px] after:-z-90 after:[clip-path:circle(20%_at_10%_10%)];
+    @apply after:from-app-500/10 after:bg-linear-to-b after:to-transparent dark:after:from-black;
+  }
+  * {
+    @apply scrollbar:size-1 scrollbar-track:bg-app-200 scrollbar-thumb:bg-app-500 dark:scrollbar-thumb:bg-black dark:scrollbar-track:bg-black;
+  }
+}
+@layer components {
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+  .ant-form-item:last-of-type {
+    @apply mb-0;
+  }
+}
+
+@layer utilities {
+  .underline {
+    @apply hover:text-app-500 decoration-app-500 dark:decoration-app-400 dark:hover:decoration-app-500 dark:focus:ring-app-400/40 rounded-sm underline decoration-2 underline-offset-2 transition duration-100;
+  }
+  .ant-app {
+    @apply flex h-[inherit] flex-col;
+  }
+  .glass {
+    @apply min-h-[70px] w-full rounded-lg bg-linear-to-r from-white/10 to-white/50 p-6 shadow-md backdrop-blur-lg;
+  }
+}

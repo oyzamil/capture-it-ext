@@ -1,0 +1,6 @@
+appName: Capture It!
+appDescription: Capture & Edit Screenshots on the go!
+items:
+  0: No items # i18n.t('items', 0, ['Zero']) - "No items"
+  1: 1 item # i18n.t('items', 1, ['One']); - "One item"
+  n: $1 items # i18n.t('items', 1, ['One']); - "Multiple items"
