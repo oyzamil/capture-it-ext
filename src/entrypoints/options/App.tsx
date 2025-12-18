@@ -1,1817 +1,814 @@
-import { useAntd } from "@/providers/ThemeProvider";
-import {
-	DeleteOutlined,
-	DownloadOutlined,
-	InboxOutlined,
-	ReloadOutlined,
-	SettingOutlined,
-	UploadOutlined,
-} from "@ant-design/icons";
-import {
-	Button,
-	Card,
-	Checkbox,
-	Col,
-	Collapse,
-	ColorPicker,
-	Input,
-	Radio,
-	Row,
-	Select,
-	Slider,
-	Space,
-	Typography,
-	Upload,
-} from "antd";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { create } from "zustand";
+import { ResetIcon } from '@/components/Icons';
+import { useAntd } from '@/providers/ThemeProvider';
+import { ArrowRightOutlined, CopyOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Button, Card, Col, ColorPicker, Divider, Row, Select, Space, Switch, Typography } from 'antd';
+import domtoimage from 'dom-to-image-more';
+import * as htmlToImage from 'html-to-image';
 
-const { TextArea } = Input;
+import React, { Activity } from 'react';
+
 const { Title } = Typography;
-const { Dragger } = Upload;
 
-// Types
-interface IndividualEmoji {
-	char: string;
-	x: number;
-	y: number;
-	size: number;
-	rotation: number;
-	opacity: number;
-	color: string;
-	isColorTransparent: boolean;
-}
-
-interface Position {
-	char: string;
-	x: number;
-	y: number;
-	size: number;
-	rotation: number;
-	opacity?: number;
-}
-
-interface BackgroundImage {
-	url: string;
-	objectFit: "fit" | "fill" | "cover";
-	scale: number;
-	x: number;
-	y: number;
-	rotation: number;
-}
-
-interface AppState {
-	// Text and layout
-	text: string;
-	aspectRatio: string;
-	layoutMode: "auto" | "manual";
-	emojiCount: number;
-
-	// Background
-	backgroundColor: string;
-	isTransparent: boolean;
-	backgroundImage: BackgroundImage | null;
-
-	// Text/Emoji styling
-	textOpacity: number;
-	textColor: string;
-	isTextColorTransparent: boolean;
-	emojiStyle: "colorful" | "blackandwhite" | "randomopacity";
-
-	// Font
-	selectedFont: string;
-	customFont: string;
-	customFontName: string;
-	showCustomFont: boolean;
-	uploadedFontUrl: string;
-	systemFonts: Array<{ value: string; label: string }>;
-
-	// Layout
-	minDistance: number;
-
-	// Export
-	exportFormat: "png" | "jpg" | "svg" | "webp";
-
-	// Generated positions
-	positions: Position[];
-	individualEmojis: IndividualEmoji[];
-	isGenerating: boolean;
-
-	// Interactive adjustment modes
-	adjustmentMode: "none" | "background" | "emoji";
-	selectedEmojiIndex: number;
-	isDragging: boolean;
-	dragStartPosition: { x: number; y: number } | null;
-}
-
-interface AppActions {
-	setText: (text: string) => void;
-	setAspectRatio: (ratio: string) => void;
-	setLayoutMode: (mode: "auto" | "manual") => void;
-	setEmojiCount: (count: number) => void;
-	setBackgroundColor: (color: string) => void;
-	setIsTransparent: (transparent: boolean) => void;
-	setBackgroundImage: (image: BackgroundImage | null) => void;
-	setTextOpacity: (opacity: number) => void;
-	setTextColor: (color: string) => void;
-	setIsTextColorTransparent: (transparent: boolean) => void;
-	setEmojiStyle: (
-		style: "colorful" | "blackandwhite" | "randomopacity"
-	) => void;
-	setSelectedFont: (font: string) => void;
-	setCustomFont: (font: string) => void;
-	setCustomFontName: (name: string) => void;
-	setShowCustomFont: (show: boolean) => void;
-	setUploadedFontUrl: (url: string) => void;
-	setSystemFonts: (fonts: Array<{ value: string; label: string }>) => void;
-	setMinDistance: (distance: number) => void;
-	setExportFormat: (format: "png" | "jpg" | "svg" | "webp") => void;
-	setPositions: (positions: Position[]) => void;
-	setIndividualEmojis: (emojis: IndividualEmoji[]) => void;
-	updateIndividualEmoji: (
-		index: number,
-		property: keyof IndividualEmoji,
-		value: any
-	) => void;
-	setIsGenerating: (generating: boolean) => void;
-	clearUploadedFont: () => void;
-	updateBackgroundImage: (property: keyof BackgroundImage, value: any) => void;
-	setAdjustmentMode: (mode: "none" | "background" | "emoji") => void;
-	setSelectedEmojiIndex: (index: number) => void;
-	setIsDragging: (dragging: boolean) => void;
-	setDragStartPosition: (position: { x: number; y: number } | null) => void;
-}
-
-// Zustand store
-const useStore = create<AppState & AppActions>((set, get) => ({
-	// Initial state
-	text: "ム",
-	aspectRatio: "1:1",
-	layoutMode: "auto",
-	emojiCount: 1,
-	backgroundColor: "#ffffff",
-	isTransparent: false,
-	backgroundImage: null,
-	textOpacity: 100,
-	textColor: "#000000",
-	isTextColorTransparent: false,
-	emojiStyle: "colorful",
-	selectedFont: "Arial",
-	customFont: "",
-	customFontName: "",
-	showCustomFont: false,
-	uploadedFontUrl: "",
-	systemFonts: [],
-	minDistance: 8,
-	exportFormat: "png",
-	positions: [],
-	individualEmojis: [],
-	isGenerating: false,
-	adjustmentMode: "none",
-	selectedEmojiIndex: -1,
-	isDragging: false,
-	dragStartPosition: null,
-
-	// Actions
-	setText: (text) => set({ text }),
-	setAspectRatio: (aspectRatio) => set({ aspectRatio }),
-	setLayoutMode: (layoutMode) => set({ layoutMode }),
-	setEmojiCount: (emojiCount) => set({ emojiCount }),
-	setBackgroundColor: (backgroundColor) => set({ backgroundColor }),
-	setIsTransparent: (isTransparent) => set({ isTransparent }),
-	setBackgroundImage: (backgroundImage) => set({ backgroundImage }),
-	setTextOpacity: (textOpacity) => set({ textOpacity }),
-	setTextColor: (textColor) => set({ textColor }),
-	setIsTextColorTransparent: (isTextColorTransparent) =>
-		set({ isTextColorTransparent }),
-	setEmojiStyle: (emojiStyle) => set({ emojiStyle }),
-	setSelectedFont: (selectedFont) => set({ selectedFont }),
-	setCustomFont: (customFont) => set({ customFont }),
-	setCustomFontName: (customFontName) => set({ customFontName }),
-	setShowCustomFont: (showCustomFont) => set({ showCustomFont }),
-	setUploadedFontUrl: (uploadedFontUrl) => set({ uploadedFontUrl }),
-	setSystemFonts: (systemFonts) => set({ systemFonts }),
-	setMinDistance: (minDistance) => set({ minDistance }),
-	setExportFormat: (exportFormat) => set({ exportFormat }),
-	setPositions: (positions) => set({ positions }),
-	setIndividualEmojis: (individualEmojis) => set({ individualEmojis }),
-	updateIndividualEmoji: (index, property, value) => {
-		const state = get();
-		const updatedEmojis = state.individualEmojis.map((emoji, i) =>
-			i === index ? { ...emoji, [property]: value } : emoji
-		);
-		set({ individualEmojis: updatedEmojis });
-	},
-	setIsGenerating: (isGenerating) => set({ isGenerating }),
-	clearUploadedFont: () => {
-		const state = get();
-		if (state.uploadedFontUrl) {
-			URL.revokeObjectURL(state.uploadedFontUrl);
-		}
-		set({
-			uploadedFontUrl: "",
-			customFont: "",
-			customFontName: "",
-			selectedFont:
-				state.selectedFont === "custom" ? "Arial" : state.selectedFont,
-			showCustomFont: false,
-		});
-	},
-	updateBackgroundImage: (property, value) => {
-		const state = get();
-		if (state.backgroundImage) {
-			set({
-				backgroundImage: {
-					...state.backgroundImage,
-					[property]: value,
-				},
-			});
-		}
-	},
-	setAdjustmentMode: (adjustmentMode) => set({ adjustmentMode }),
-	setSelectedEmojiIndex: (selectedEmojiIndex) => set({ selectedEmojiIndex }),
-	setIsDragging: (isDragging) => set({ isDragging }),
-	setDragStartPosition: (dragStartPosition) => set({ dragStartPosition }),
-}));
+type BlobState = {
+  src: string | ArrayBuffer | null;
+  w: number;
+  h: number;
+};
 
 const ThumbnailGenerator: React.FC = () => {
-	const store = useStore();
-	const canvasRef = useRef<HTMLCanvasElement>(null);
-	const canvasContainerRef = useRef<HTMLDivElement>(null);
-	const { message, notification } = useAntd();
-
-	// Canvas mouse interaction handlers
-	const getCanvasCoordinates = useCallback((event: MouseEvent) => {
-		const canvas = canvasRef.current;
-		if (!canvas) return { x: 0, y: 0 };
-
-		const rect = canvas.getBoundingClientRect();
-		const scaleX = canvas.width / rect.width;
-		const scaleY = canvas.height / rect.height;
-
-		return {
-			x: (event.clientX - rect.left) * scaleX,
-			y: (event.clientY - rect.top) * scaleY,
-		};
-	}, []);
-
-	const handleCanvasMouseDown = useCallback(
-		(event: MouseEvent) => {
-			if (store.adjustmentMode === "none") return;
-
-			const coords = getCanvasCoordinates(event);
-			store.setIsDragging(true);
-			store.setDragStartPosition(coords);
-
-			if (store.adjustmentMode === "emoji" && store.layoutMode === "manual") {
-				// Find closest emoji to click position
-				let closestIndex = -1;
-				let closestDistance = Infinity;
-
-				store.individualEmojis.forEach((emoji, index) => {
-					const distance = Math.sqrt(
-						Math.pow(coords.x - emoji.x, 2) + Math.pow(coords.y - emoji.y, 2)
-					);
-					if (distance < closestDistance && distance < 100) {
-						// 100px click radius
-						closestDistance = distance;
-						closestIndex = index;
-					}
-				});
-
-				if (closestIndex !== -1) {
-					store.setSelectedEmojiIndex(closestIndex);
-				}
-			}
-		},
-		[store, getCanvasCoordinates]
-	);
-
-	const handleCanvasMouseMove = useCallback(
-		(event: MouseEvent) => {
-			if (!store.isDragging || !store.dragStartPosition) return;
-
-			const coords = getCanvasCoordinates(event);
-			const deltaX = coords.x - store.dragStartPosition.x;
-			const deltaY = coords.y - store.dragStartPosition.y;
-
-			if (store.adjustmentMode === "background" && store.backgroundImage) {
-				store.updateBackgroundImage("x", store.backgroundImage.x + deltaX);
-				store.updateBackgroundImage("y", store.backgroundImage.y + deltaY);
-				store.setDragStartPosition(coords);
-			} else if (
-				store.adjustmentMode === "emoji" &&
-				store.layoutMode === "manual" &&
-				store.selectedEmojiIndex >= 0
-			) {
-				const emoji = store.individualEmojis[store.selectedEmojiIndex];
-				if (emoji) {
-					store.updateIndividualEmoji(
-						store.selectedEmojiIndex,
-						"x",
-						emoji.x + deltaX
-					);
-					store.updateIndividualEmoji(
-						store.selectedEmojiIndex,
-						"y",
-						emoji.y + deltaY
-					);
-					store.setDragStartPosition(coords);
-				}
-			}
-		},
-		[store, getCanvasCoordinates]
-	);
-
-	const handleCanvasMouseUp = useCallback(() => {
-		store.setIsDragging(false);
-		store.setDragStartPosition(null);
-	}, [store]);
-
-	const handleCanvasWheel = useCallback(
-		(event: WheelEvent) => {
-			if (store.adjustmentMode === "none") return;
-
-			event.preventDefault();
-			const scaleFactor = event.deltaY > 0 ? 0.9 : 1.1;
-
-			if (store.adjustmentMode === "background" && store.backgroundImage) {
-				const newScale = Math.max(
-					0.1,
-					Math.min(3, store.backgroundImage.scale * scaleFactor)
-				);
-				store.updateBackgroundImage("scale", newScale);
-			} else if (
-				store.adjustmentMode === "emoji" &&
-				store.layoutMode === "manual" &&
-				store.selectedEmojiIndex >= 0
-			) {
-				const emoji = store.individualEmojis[store.selectedEmojiIndex];
-				if (emoji) {
-					const newSize = Math.max(
-						10,
-						Math.min(1000, emoji.size * scaleFactor)
-					);
-					store.updateIndividualEmoji(
-						store.selectedEmojiIndex,
-						"size",
-						newSize
-					);
-				}
-			}
-		},
-		[store]
-	);
-
-	const aspectRatios = useMemo(
-		() => [
-			{ value: "1:1", label: "1:1 (Square)" },
-			{ value: "16:9", label: "16:9 (Widescreen)" },
-			{ value: "9:16", label: "9:16 (Vertical)" },
-			{ value: "4:3", label: "4:3 (Standard)" },
-			{ value: "3:4", label: "3:4 (Portrait)" },
-			{ value: "2:1", label: "2:1 (Banner)" },
-			{ value: "1:2", label: "1:2 (Tall)" },
-			{ value: "3:2", label: "3:2 (Photo)" },
-			{ value: "2:3", label: "2:3 (Poster)" },
-		],
-		[]
-	);
-
-	const fontOptions = useMemo(
-		() => [
-			{ value: "Arial", label: "Arial" },
-			{ value: "Helvetica", label: "Helvetica" },
-			{ value: "Times New Roman", label: "Times New Roman" },
-			{ value: "Georgia", label: "Georgia" },
-			{ value: "Verdana", label: "Verdana" },
-			{ value: "Courier New", label: "Courier New" },
-			{ value: "Impact", label: "Impact" },
-			{ value: "Comic Sans MS", label: "Comic Sans MS" },
-			{ value: "Trebuchet MS", label: "Trebuchet MS" },
-			{ value: "Tahoma", label: "Tahoma" },
-			{ value: "Palatino", label: "Palatino" },
-			{ value: "Lucida Console", label: "Lucida Console" },
-			{ value: "custom", label: "🎨 Add Custom Font" },
-		],
-		[]
-	);
-
-	const commonSystemFonts = useMemo(
-		() => [
-			"Arial Black",
-			"Calibri",
-			"Cambria",
-			"Candara",
-			"Century Gothic",
-			"Consolas",
-			"Franklin Gothic Medium",
-			"Futura",
-			"Garamond",
-			"Gill Sans",
-			"Helvetica Neue",
-			"Lucida Grande",
-			"Lucida Sans Unicode",
-			"Microsoft Sans Serif",
-			"Monaco",
-			"Optima",
-			"Segoe UI",
-			"System",
-			"-apple-system",
-			"BlinkMacSystemFont",
-			"San Francisco",
-			"Roboto",
-			"Open Sans",
-			"Montserrat",
-			"Lato",
-			"Source Sans Pro",
-			"Ubuntu",
-			"Nunito",
-			"Raleway",
-			"Poppins",
-			"Inter",
-			"Work Sans",
-			"Playfair Display",
-			"Merriweather",
-			"Oswald",
-			"Source Serif Pro",
-			"Crimson Text",
-			"PT Sans",
-			"PT Serif",
-			"Fira Sans",
-			"IBM Plex Sans",
-			"Avenir",
-			"Proxima Nova",
-			"Myriad Pro",
-		],
-		[]
-	);
-
-	const exportFormats = useMemo(
-		() => [
-			{ value: "png", label: "PNG" },
-			{ value: "jpg", label: "JPG" },
-			{ value: "webp", label: "WebP" },
-			{ value: "svg", label: "SVG" },
-		],
-		[]
-	);
-
-	const objectFitOptions = useMemo(
-		() => [
-			{ value: "fit", label: "Fit (contain)" },
-			{ value: "fill", label: "Fill (stretch)" },
-			{ value: "cover", label: "Cover (crop)" },
-		],
-		[]
-	);
-
-	// Function to detect available system fonts
-	const detectSystemFonts = useCallback(() => {
-		const canvas = document.createElement("canvas");
-		const context = canvas.getContext("2d");
-		if (!context) return [];
-
-		const baseFonts = ["monospace", "sans-serif", "serif"];
-		const testString = "mmmmmmmmmmlli";
-		const testSize = "72px";
-		const defaultWidth: { [key: string]: number } = {};
-		const defaultHeight: { [key: string]: number } = {};
-
-		for (const baseFont of baseFonts) {
-			context.font = `${testSize} ${baseFont}`;
-			const metrics = context.measureText(testString);
-			defaultWidth[baseFont] = metrics.width;
-			defaultHeight[baseFont] =
-				metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-		}
-
-		const availableFonts: Array<{ value: string; label: string }> = [];
-
-		for (const font of commonSystemFonts) {
-			let available = false;
-
-			for (const baseFont of baseFonts) {
-				context.font = `${testSize} ${font}, ${baseFont}`;
-				const metrics = context.measureText(testString);
-				const width = metrics.width;
-				const height =
-					metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-
-				if (
-					Math.abs(width - defaultWidth[baseFont]) > 1 ||
-					Math.abs(height - defaultHeight[baseFont]) > 1
-				) {
-					available = true;
-					break;
-				}
-			}
-
-			if (available) {
-				availableFonts.push({ value: font, label: font });
-			}
-		}
-
-		return availableFonts.sort((a, b) => a.label.localeCompare(b.label));
-	}, [commonSystemFonts]);
-
-	const getCanvasDimensions = useCallback((ratio: string) => {
-		const baseWidth = 800;
-		const [w, h] = ratio.split(":").map(Number);
-		const width = baseWidth;
-		const height = (baseWidth * h) / w;
-		return { width, height };
-	}, []);
-
-	// Initialize individual emojis
-	const initializeIndividualEmojis = useCallback(() => {
-		// const characters = [...store.text.trim()].filter(char => char !== ' ');
-		const characters = store.text
-			.trim()
-			.split("\n")
-			.filter((line) => line.trim() !== "");
-		if (characters.length === 0) return [];
-
-		const { width, height } = getCanvasDimensions(store.aspectRatio);
-		const emojis: IndividualEmoji[] = [];
-
-		for (let i = 0; i < store.emojiCount; i++) {
-			const char = characters[i % characters.length];
-
-			let x, y;
-			if (store.emojiCount === 1) {
-				x = width / 2;
-				y = height / 2;
-			} else {
-				const cols = Math.ceil(Math.sqrt(store.emojiCount));
-				const rows = Math.ceil(store.emojiCount / cols);
-				const cellWidth = width / cols;
-				const cellHeight = height / rows;
-
-				const row = Math.floor(i / cols);
-				const col = i % cols;
-
-				x = col * cellWidth + cellWidth / 2;
-				y = row * cellHeight + cellHeight / 2;
-			}
-
-			emojis.push({
-				char,
-				x,
-				y,
-				size: 400,
-				rotation: 0,
-				opacity: 1,
-				color: store.textColor,
-				isColorTransparent: store.isTextColorTransparent,
-			});
-		}
-
-		return emojis;
-	}, [
-		store.text,
-		store.emojiCount,
-		store.aspectRatio,
-		store.textColor,
-		store.isTextColorTransparent,
-	]);
-
-	// Generate diagonal fill positions
-	const generateDiagonalFillPositions = useCallback(
-		(
-			characters: string[],
-			canvasWidth: number,
-			canvasHeight: number,
-			maxLines: number = 5
-		): Position[] => {
-			if (characters.length === 0) return [];
-
-			const positions: Position[] = [];
-			let charIndex = 0;
-
-			const totalSpan = canvasWidth + canvasHeight;
-			const step = totalSpan / (maxLines + 1);
-
-			for (let line = 1; line <= maxLines; line++) {
-				const offset = step * line;
-
-				let startX = Math.max(0, offset - canvasHeight);
-				let startY = Math.max(0, canvasHeight - offset);
-
-				let x = startX;
-				let y = startY;
-
-				const spacing = 80;
-
-				while (x < canvasWidth && y < canvasHeight) {
-					const char = characters[charIndex % characters.length];
-					positions.push({
-						char,
-						x,
-						y,
-						size: Math.random() * 40 + 30,
-						rotation: Math.random() * 360,
-						opacity:
-							store.emojiStyle === "randomopacity"
-								? Math.random() * 0.8 + 0.2
-								: 1,
-					});
-
-					x += spacing;
-					y += spacing;
-					charIndex++;
-				}
-			}
-
-			return positions;
-		},
-		[store.emojiStyle]
-	);
-
-	// Draw canvas function
-	const drawCanvas = useCallback(() => {
-		const canvas = canvasRef.current;
-		if (!canvas) return;
-
-		const ctx = canvas.getContext("2d");
-		if (!ctx) return;
-
-		const { width, height } = getCanvasDimensions(store.aspectRatio);
-
-		canvas.width = width;
-		canvas.height = height;
-
-		ctx.clearRect(0, 0, width, height);
-
-		// Draw background
-		if (!store.isTransparent) {
-			ctx.fillStyle = store.backgroundColor;
-			ctx.fillRect(0, 0, width, height);
-		}
-
-		// Draw background image
-		if (store.backgroundImage) {
-			const img = new Image();
-			img.onload = () => {
-				ctx.save();
-
-				const { scale, x, y, rotation, objectFit } = store.backgroundImage!;
-				const centerX = width / 2 + x;
-				const centerY = height / 2 + y;
-
-				ctx.translate(centerX, centerY);
-				ctx.rotate((rotation * Math.PI) / 180);
-
-				let drawWidth, drawHeight;
-				let drawX, drawY;
-
-				switch (objectFit) {
-					case "fill":
-						drawWidth = width * scale;
-						drawHeight = height * scale;
-						break;
-					case "cover":
-						const aspectCanvas = width / height;
-						const aspectImage = img.width / img.height;
-						if (aspectImage > aspectCanvas) {
-							drawHeight = height * scale;
-							drawWidth = drawHeight * aspectImage;
-						} else {
-							drawWidth = width * scale;
-							drawHeight = drawWidth / aspectImage;
-						}
-						break;
-					case "fit":
-					default:
-						const aspectCanvasFit = width / height;
-						const aspectImageFit = img.width / img.height;
-						if (aspectImageFit > aspectCanvasFit) {
-							drawWidth = width * scale;
-							drawHeight = drawWidth / aspectImageFit;
-						} else {
-							drawHeight = height * scale;
-							drawWidth = drawHeight * aspectImageFit;
-						}
-						break;
-				}
-
-				drawX = -drawWidth / 2;
-				drawY = -drawHeight / 2;
-
-				ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-				ctx.restore();
-
-				// Redraw text/emojis after background image loads
-				drawTextEmojis();
-			};
-			img.src = store.backgroundImage.url;
-		} else {
-			drawTextEmojis();
-		}
-
-		function drawTextEmojis() {
-			const positionsToUse =
-				store.layoutMode === "manual"
-					? store.individualEmojis
-					: store.positions;
-
-			positionsToUse.forEach((item) => {
-				const { char, x, y, size, rotation } = item;
-				let opacity = 1;
-				let color = store.textColor;
-				let isColorTransparent = store.isTextColorTransparent;
-
-				if (store.layoutMode === "manual") {
-					const emoji = item as IndividualEmoji;
-					opacity = emoji.opacity;
-					color = emoji.color;
-					isColorTransparent = emoji.isColorTransparent;
-				} else {
-					const pos = item as Position;
-					opacity = (store.textOpacity / 100) * (pos.opacity || 1);
-				}
-				if (!ctx) return;
-				ctx.save();
-				ctx.translate(x, y);
-				ctx.rotate((rotation * Math.PI) / 180);
-
-				const currentFont =
-					store.selectedFont === "custom"
-						? store.customFont
-						: store.selectedFont;
-
-				if (/\p{Emoji}/u.test(char)) {
-					ctx.font = `${size}px ${currentFont}, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif`;
-				} else {
-					ctx.font = `${size}px ${currentFont}, sans-serif`;
-				}
-
-				ctx.textAlign = "center";
-				ctx.textBaseline = "middle";
-				ctx.globalAlpha = opacity;
-
-				// Apply emoji style
-				if (/\p{Emoji}/u.test(char)) {
-					switch (store.emojiStyle) {
-						case "blackandwhite":
-						case "randomopacity":
-							ctx.filter = "grayscale(100%)";
-							break;
-						case "colorful":
-						default:
-							ctx.filter = "none";
-							break;
-					}
-				}
-
-				// Set text color
-				if (!isColorTransparent) {
-					ctx.fillStyle =
-						/\p{Emoji}/u.test(char) && store.emojiStyle === "colorful"
-							? "#000000"
-							: color;
-					ctx.fillText(char, 0, 0);
-				}
-
-				ctx.restore();
-			});
-
-			// Draw selection indicator for selected emoji in adjustment mode
-			if (
-				store.adjustmentMode === "emoji" &&
-				store.layoutMode === "manual" &&
-				store.selectedEmojiIndex >= 0
-			) {
-				const selectedEmoji = store.individualEmojis[store.selectedEmojiIndex];
-				if (selectedEmoji && ctx) {
-					ctx.save();
-					ctx.strokeStyle = "#1890ff";
-					ctx.lineWidth = 3;
-					ctx.setLineDash([5, 5]);
-					const radius = selectedEmoji.size / 2 + 10;
-					ctx.beginPath();
-					ctx.arc(selectedEmoji.x, selectedEmoji.y, radius, 0, 2 * Math.PI);
-					ctx.stroke();
-					ctx.restore();
-				}
-			}
-		}
-	}, [
-		store.aspectRatio,
-		store.isTransparent,
-		store.backgroundColor,
-		store.textOpacity,
-		store.selectedFont,
-		store.customFont,
-		store.emojiStyle,
-		store.layoutMode,
-		store.individualEmojis,
-		store.positions,
-		store.backgroundImage,
-		store.textColor,
-		store.isTextColorTransparent,
-		store.adjustmentMode,
-		store.selectedEmojiIndex,
-	]);
-
-	// Generate new positions
-	const generateNewPositions = useCallback(async () => {
-		if (store.isGenerating) return;
-
-		store.setIsGenerating(true);
-
-		setTimeout(() => {
-			// const characters = [...store.text.trim()].filter(char => char !== ' ');
-			const characters = store.text
-				.trim()
-				.split("\n")
-				.filter((line) => line.trim() !== "");
-			if (characters.length === 0) {
-				store.setPositions([]);
-				store.setIsGenerating(false);
-				return;
-			}
-
-			const { width, height } = getCanvasDimensions(store.aspectRatio);
-
-			if (store.layoutMode === "manual") {
-				const newIndividualEmojis = initializeIndividualEmojis();
-				store.setIndividualEmojis(newIndividualEmojis);
-			} else {
-				const newPositions = generateDiagonalFillPositions(
-					characters,
-					width,
-					height,
-					store.minDistance || 80
-				);
-				store.setPositions(newPositions);
-			}
-
-			store.setIsGenerating(false);
-		}, 10);
-	}, [
-		store,
-		initializeIndividualEmojis,
-		generateDiagonalFillPositions,
-		getCanvasDimensions,
-	]);
-
-	// Handle background image upload
-	const handleBackgroundImageUpload = useCallback(
-		async (file: File) => {
-			try {
-				const imageUrl = URL.createObjectURL(file);
-
-				store.setBackgroundImage({
-					url: imageUrl,
-					objectFit: "cover",
-					scale: 1,
-					x: 0,
-					y: 0,
-					rotation: 0,
-				});
-
-				message.success("Background image uploaded successfully!");
-			} catch (err) {
-				console.error("Background image upload error:", err);
-				message.error("Failed to upload background image. Please try again.");
-			}
-
-			return false;
-		},
-		[store]
-	);
-
-	// Handle font upload
-	const handleFontUpload = useCallback(
-		async (file: File) => {
-			try {
-				const fontUrl = URL.createObjectURL(file);
-				const fontName = file.name.replace(/\.[^/.]+$/, "");
-				const fontFace = new FontFace(fontName, `url(${fontUrl})`);
-				await fontFace.load();
-				(document as any).fonts.add(fontFace);
-
-				store.setUploadedFontUrl(fontUrl);
-				store.setCustomFont(fontName);
-				store.setCustomFontName(fontName);
-
-				message.success(`Font "${fontName}" loaded successfully!`);
-			} catch (err) {
-				console.error("Font upload error:", err);
-				message.error("Failed to load the font. Please try again.");
-			}
-
-			return false;
-		},
-		[store]
-	);
-
-	// Download function
-	const downloadThumbnail = useCallback(() => {
-		const canvas = canvasRef.current;
-		if (!canvas) return;
-
-		if (store.exportFormat === "svg") {
-			// SVG generation logic would go here
-			message.info(
-				"SVG export with background images is complex. Using PNG instead."
-			);
-			const link = document.createElement("a");
-			link.download = "thumbnail.png";
-			link.href = canvas.toDataURL("image/png");
-			link.click();
-			return;
-		}
-
-		let mimeType: string;
-		let quality: number | undefined;
-
-		switch (store.exportFormat) {
-			case "jpg":
-				mimeType = "image/jpeg";
-				quality = 0.9;
-				break;
-			case "webp":
-				mimeType = "image/webp";
-				quality = 0.9;
-				break;
-			case "png":
-			default:
-				mimeType = "image/png";
-				break;
-		}
-
-		const link = document.createElement("a");
-		link.download = `thumbnail.${store.exportFormat}`;
-		link.href = canvas.toDataURL(mimeType, quality);
-		link.click();
-	}, [store.exportFormat]);
-
-	// Effects
-	useEffect(() => {
-		const detectedFonts = detectSystemFonts();
-		store.setSystemFonts(detectedFonts);
-
-		message.success("Success!");
-		notification.success({
-			title: "Yes",
-			description: "Its a success notification!",
-		});
-	}, []);
-
-	// Canvas mouse event listeners
-	useEffect(() => {
-		const canvas = canvasRef.current;
-		if (!canvas) return;
-
-		const mouseDownHandler = (e: MouseEvent) => handleCanvasMouseDown(e);
-		const mouseMoveHandler = (e: MouseEvent) => handleCanvasMouseMove(e);
-		const mouseUpHandler = () => handleCanvasMouseUp();
-		const wheelHandler = (e: WheelEvent) => handleCanvasWheel(e);
-
-		canvas.addEventListener("mousedown", mouseDownHandler);
-		window.addEventListener("mousemove", mouseMoveHandler);
-		window.addEventListener("mouseup", mouseUpHandler);
-		canvas.addEventListener("wheel", wheelHandler);
-
-		return () => {
-			canvas.removeEventListener("mousedown", mouseDownHandler);
-			window.removeEventListener("mousemove", mouseMoveHandler);
-			window.removeEventListener("mouseup", mouseUpHandler);
-			canvas.removeEventListener("wheel", wheelHandler);
-		};
-	}, [
-		handleCanvasMouseDown,
-		handleCanvasMouseMove,
-		handleCanvasMouseUp,
-		handleCanvasWheel,
-	]);
-
-	useEffect(() => {
-		if (store.layoutMode === "manual" && store.text.trim()) {
-			const newIndividualEmojis = initializeIndividualEmojis();
-			store.setIndividualEmojis(newIndividualEmojis);
-		}
-	}, [
-		store.layoutMode,
-		store.emojiCount,
-		store.text,
-		store.aspectRatio,
-		store.textColor,
-		store.isTextColorTransparent,
-	]);
-
-	useEffect(() => {
-		if (store.text.trim()) {
-			generateNewPositions();
-		}
-	}, [store.text, store.aspectRatio]);
-
-	useEffect(() => {
-		if (
-			(store.layoutMode === "manual" && store.individualEmojis.length > 0) ||
-			(store.layoutMode === "auto" && store.positions.length > 0)
-		) {
-			drawCanvas();
-		}
-	}, [
-		store.positions,
-		store.individualEmojis,
-		store.backgroundColor,
-		store.isTransparent,
-		store.textOpacity,
-		store.selectedFont,
-		store.customFont,
-		store.emojiStyle,
-		store.layoutMode,
-		store.backgroundImage,
-		store.textColor,
-		store.isTextColorTransparent,
-		store.aspectRatio,
-		store.adjustmentMode,
-		store.selectedEmojiIndex,
-	]);
-
-	useEffect(() => {
-		if (
-			store.layoutMode === "auto" &&
-			store.text.trim() &&
-			store.minDistance !== undefined
-		) {
-			generateNewPositions();
-		}
-	}, [store.minDistance, store.layoutMode, store.text]);
-
-	const currentDimensions = useMemo(
-		() => getCanvasDimensions(store.aspectRatio),
-		[store.aspectRatio, getCanvasDimensions]
-	);
-
-	return (
-		<div className="min-h-screen bg-gray-50">
-			<div className="max-w-8xl mx-auto p-4">
-				<Title level={2} className="mb-8 text-center">
-					🎨 Enhanced Thumbnail Generator
-				</Title>
-
-				<Row gutter={[30, 12]} className="justify-center">
-					{/* Controls Panel */}
-					<Col xs={12} lg={5}>
-						<div className="space-y-6">
-							<Card title="Basic Settings" size="small">
-								<Space orientation="vertical" className="w-full" size="middle">
-									<div>
-										<label className="mb-2 block text-sm font-medium">
-											Text/Emojis
-										</label>
-										<TextArea
-											value={store.text}
-											onChange={(e) => store.setText(e.target.value)}
-											placeholder="Enter text or emojis..."
-											rows={3}
-										/>
-									</div>
-
-									<div>
-										<label className="mb-2 block text-sm font-medium">
-											Layout Mode
-										</label>
-										<Radio.Group
-											value={store.layoutMode}
-											onChange={(e) => store.setLayoutMode(e.target.value)}
-											className="w-full"
-										>
-											<Radio value="auto">Auto Layout</Radio>
-											<Radio value="manual">Manual Control</Radio>
-										</Radio.Group>
-									</div>
-
-									{store.layoutMode === "manual" && (
-										<div>
-											<label className="mb-2 block text-sm font-medium">
-												Number of Emojis: {store.emojiCount}
-											</label>
-											<Slider
-												min={1}
-												max={20}
-												value={store.emojiCount}
-												onChange={store.setEmojiCount}
-											/>
-										</div>
-									)}
-
-									<div>
-										<label className="mb-2 block text-sm font-medium">
-											Aspect Ratio
-										</label>
-										<Select
-											value={store.aspectRatio}
-											onChange={store.setAspectRatio}
-											className="w-full"
-											options={aspectRatios}
-										/>
-									</div>
-								</Space>
-							</Card>
-
-							<Card title="Background" size="small">
-								<Space orientation="vertical" className="w-full" size="middle">
-									<div>
-										<label className="mb-2 block text-sm font-medium">
-											Background Type
-										</label>
-										<div className="mb-2 flex items-center gap-2">
-											<Button
-												size="small"
-												type={!store.isTransparent ? "primary" : "default"}
-												onClick={() => store.setIsTransparent(false)}
-											>
-												Color
-											</Button>
-											<Button
-												size="small"
-												type={store.isTransparent ? "primary" : "default"}
-												onClick={() => store.setIsTransparent(true)}
-											>
-												Transparent
-											</Button>
-										</div>
-										{!store.isTransparent && (
-											<ColorPicker
-												value={store.backgroundColor}
-												onChange={(color) =>
-													store.setBackgroundColor(color.toHexString())
-												}
-												showText
-												className="w-full"
-											/>
-										)}
-									</div>
-
-									<div>
-										<label className="mb-2 block text-sm font-medium">
-											Background Image
-										</label>
-										<Upload
-											accept="image/*"
-											beforeUpload={handleBackgroundImageUpload}
-											showUploadList={false}
-											className="w-full"
-										>
-											<Button
-												icon={<UploadOutlined />}
-												className="w-full"
-												type="dashed"
-											>
-												Upload Background Image
-											</Button>
-										</Upload>
-
-										{store.backgroundImage && (
-											<div className="mt-3 rounded border p-3">
-												<div className="mb-2 flex items-center justify-between">
-													<span className="text-sm text-green-700">
-														✓ Background image loaded
-													</span>
-													<Button
-														size="small"
-														type="text"
-														icon={<DeleteOutlined />}
-														onClick={() => {
-															if (store.backgroundImage) {
-																URL.revokeObjectURL(store.backgroundImage.url);
-															}
-															store.setBackgroundImage(null);
-															store.setAdjustmentMode("none");
-														}}
-														className="text-red-500 hover:text-red-700"
-													>
-														Remove
-													</Button>
-												</div>
-
-												<Space
-													orientation="vertical"
-													className="w-full"
-													size="small"
-												>
-													<div className="mb-2 flex items-center gap-2">
-														<Checkbox
-															checked={store.adjustmentMode === "background"}
-															onChange={(e) =>
-																store.setAdjustmentMode(
-																	e.target.checked ? "background" : "none"
-																)
-															}
-														>
-															<span className="text-sm font-medium">
-																Interactive Adjustment Mode
-															</span>
-														</Checkbox>
-													</div>
-
-													{store.adjustmentMode === "background" && (
-														<div className="rounded bg-blue-50 p-2 text-sm">
-															<strong>Mouse Controls:</strong>
-															<br />• Drag to move background
-															<br />• Scroll wheel to scale
-															<br />• Use sliders below for precise control
-														</div>
-													)}
-
-													<div>
-														<label className="mb-1 block text-xs font-medium">
-															Object Fit
-														</label>
-														<Select
-															value={store.backgroundImage.objectFit}
-															onChange={(value) =>
-																store.updateBackgroundImage("objectFit", value)
-															}
-															className="w-full"
-															size="small"
-															options={objectFitOptions}
-														/>
-													</div>
-
-													<div>
-														<label className="mb-1 block text-xs font-medium">
-															Scale: {store.backgroundImage.scale.toFixed(2)}x
-														</label>
-														<Slider
-															min={0.1}
-															max={3}
-															step={0.1}
-															value={store.backgroundImage.scale}
-															onChange={(value) =>
-																store.updateBackgroundImage("scale", value)
-															}
-														/>
-													</div>
-
-													<div>
-														<label className="mb-1 block text-xs font-medium">
-															X Position: {store.backgroundImage.x}px
-														</label>
-														<Slider
-															min={-400}
-															max={400}
-															value={store.backgroundImage.x}
-															onChange={(value) =>
-																store.updateBackgroundImage("x", value)
-															}
-														/>
-													</div>
-
-													<div>
-														<label className="mb-1 block text-xs font-medium">
-															Y Position: {store.backgroundImage.y}px
-														</label>
-														<Slider
-															min={-400}
-															max={400}
-															value={store.backgroundImage.y}
-															onChange={(value) =>
-																store.updateBackgroundImage("y", value)
-															}
-														/>
-													</div>
-
-													<div>
-														<label className="mb-1 block text-xs font-medium">
-															Rotation: {store.backgroundImage.rotation}°
-														</label>
-														<Slider
-															min={0}
-															max={360}
-															value={store.backgroundImage.rotation}
-															onChange={(value) =>
-																store.updateBackgroundImage("rotation", value)
-															}
-														/>
-													</div>
-												</Space>
-											</div>
-										)}
-									</div>
-								</Space>
-							</Card>
-
-							<Card title="Text & Emoji Styling" size="small">
-								<Space orientation="vertical" className="w-full" size="middle">
-									<div>
-										<label className="mb-2 block text-sm font-medium">
-											Text/Emoji Color
-										</label>
-										<div className="mb-2 flex items-center gap-2">
-											<Button
-												size="small"
-												type={
-													!store.isTextColorTransparent ? "primary" : "default"
-												}
-												onClick={() => store.setIsTextColorTransparent(false)}
-											>
-												Color
-											</Button>
-											<Button
-												size="small"
-												type={
-													store.isTextColorTransparent ? "primary" : "default"
-												}
-												onClick={() => store.setIsTextColorTransparent(true)}
-											>
-												Transparent
-											</Button>
-										</div>
-										{!store.isTextColorTransparent && (
-											<ColorPicker
-												value={store.textColor}
-												onChange={(color) =>
-													store.setTextColor(color.toHexString())
-												}
-												showText
-												className="w-full"
-											/>
-										)}
-									</div>
-
-									<div>
-										<label className="mb-2 block text-sm font-medium">
-											Emoji Style
-										</label>
-										<Radio.Group
-											value={store.emojiStyle}
-											onChange={(e) => store.setEmojiStyle(e.target.value)}
-											className="w-full"
-										>
-											<Radio value="colorful">Colorful</Radio>
-											<Radio value="blackandwhite">Black & White</Radio>
-											<Radio value="randomopacity">B&W Random Opacity</Radio>
-										</Radio.Group>
-									</div>
-
-									<div>
-										<label className="mb-2 block text-sm font-medium">
-											Font Family
-										</label>
-										<Select
-											value={store.selectedFont}
-											onChange={(value) => {
-												store.setSelectedFont(value);
-												if (value === "custom") {
-													store.setShowCustomFont(true);
-												} else {
-													store.setShowCustomFont(false);
-												}
-											}}
-											className="w-full"
-											showSearch
-											placeholder="Select or search fonts..."
-										>
-											<Select.OptGroup label="Standard Fonts">
-												{fontOptions.map((font) => (
-													<Select.Option key={font.value} value={font.value}>
-														{font.label}
-													</Select.Option>
-												))}
-											</Select.OptGroup>
-											<Select.OptGroup label="System Fonts">
-												{store.systemFonts.map((font) => (
-													<Select.Option key={font.value} value={font.value}>
-														{font.label}
-													</Select.Option>
-												))}
-											</Select.OptGroup>
-										</Select>
-
-										{store.showCustomFont && (
-											<div className="mt-2">
-												<Space
-													orientation="vertical"
-													className="w-full"
-													size="small"
-												>
-													<Dragger
-														beforeUpload={handleFontUpload}
-														showUploadList={false}
-													>
-														<p className="ant-upload-drag-icon">
-															<InboxOutlined />
-														</p>
-														<p className="ant-upload-text">
-															Click or drag font file to this area to upload
-														</p>
-														<p className="ant-upload-hint">
-															Supports: .ttf, .otf, .woff, .woff2
-														</p>
-													</Dragger>
-
-													{store.uploadedFontUrl && (
-														<div className="rounded border bg-green-50 p-2">
-															<div className="flex items-center justify-between">
-																<span className="text-sm text-green-700">
-																	✓ Font "{store.customFontName}" loaded
-																</span>
-																<Button
-																	size="small"
-																	type="text"
-																	onClick={store.clearUploadedFont}
-																	className="text-red-500 hover:text-red-700"
-																>
-																	Remove
-																</Button>
-															</div>
-														</div>
-													)}
-
-													<div>
-														<label className="mb-1 block text-xs font-medium text-gray-600">
-															Or Enter Font Name
-														</label>
-														<Input
-															placeholder="Enter font name manually..."
-															value={store.customFont}
-															onChange={(e) =>
-																store.setCustomFont(e.target.value)
-															}
-															className="w-full"
-															disabled={!!store.uploadedFontUrl}
-														/>
-														<div className="mt-1 text-xs text-gray-500">
-															For system fonts or web fonts already loaded
-														</div>
-													</div>
-												</Space>
-											</div>
-										)}
-									</div>
-
-									{store.layoutMode === "auto" && (
-										<>
-											<div>
-												<label className="mb-2 block text-sm font-medium">
-													Text Opacity: {store.textOpacity}%
-												</label>
-												<Slider
-													min={10}
-													max={100}
-													value={store.textOpacity}
-													onChange={store.setTextOpacity}
-												/>
-											</div>
-
-											<div>
-												<label className="mb-2 block text-sm font-medium">
-													Min Distance: {store.minDistance}px
-												</label>
-												<Slider
-													min={0}
-													max={100}
-													value={store.minDistance}
-													onChange={store.setMinDistance}
-												/>
-											</div>
-										</>
-									)}
-								</Space>
-							</Card>
-
-							{store.layoutMode === "manual" &&
-								store.individualEmojis.length > 0 && (
-									<Card title="Individual Emoji Controls" size="small">
-										<div className="mb-3">
-											<Checkbox
-												checked={store.adjustmentMode === "emoji"}
-												onChange={(e) => {
-													store.setAdjustmentMode(
-														e.target.checked ? "emoji" : "none"
-													);
-													if (!e.target.checked) {
-														store.setSelectedEmojiIndex(-1);
-													}
-												}}
-											>
-												<span className="text-sm font-medium">
-													Interactive Adjustment Mode
-												</span>
-											</Checkbox>
-
-											{store.adjustmentMode === "emoji" && (
-												<div className="mt-2 rounded bg-blue-50 p-2 text-sm">
-													<strong>Mouse Controls:</strong>
-													<br />• Click emoji to select it
-													<br />• Drag to move selected emoji
-													<br />• Scroll wheel to resize selected emoji
-													<br />• Use sliders below for precise control
-													{store.selectedEmojiIndex >= 0 && (
-														<div className="mt-1 font-medium text-blue-700">
-															Selected:{" "}
-															{
-																store.individualEmojis[store.selectedEmojiIndex]
-																	?.char
-															}{" "}
-															Emoji {store.selectedEmojiIndex + 1}
-														</div>
-													)}
-												</div>
-											)}
-										</div>
-
-										<Collapse
-											size="small"
-											items={store.individualEmojis.map((emoji, index) => ({
-												key: index.toString(),
-												label: (
-													<div className="flex items-center justify-between">
-														<span>
-															{emoji.char} Emoji {index + 1}
-														</span>
-														{store.selectedEmojiIndex === index &&
-															store.adjustmentMode === "emoji" && (
-																<span className="mr-2 text-xs text-blue-600">
-																	● SELECTED
-																</span>
-															)}
-													</div>
-												),
-												extra: (
-													<div className="flex items-center gap-1">
-														<Button
-															size="small"
-															type={
-																store.selectedEmojiIndex === index &&
-																store.adjustmentMode === "emoji"
-																	? "primary"
-																	: "default"
-															}
-															onClick={(e) => {
-																e.stopPropagation();
-																if (
-																	store.adjustmentMode === "emoji" &&
-																	store.selectedEmojiIndex === index
-																) {
-																	store.setSelectedEmojiIndex(-1);
-																} else {
-																	store.setAdjustmentMode("emoji");
-																	store.setSelectedEmojiIndex(index);
-																}
-															}}
-														>
-															Select
-														</Button>
-														<SettingOutlined />
-													</div>
-												),
-												children: (
-													<Space
-														orientation="vertical"
-														className="w-full"
-														size="small"
-													>
-														<div>
-															<label className="mb-1 block text-xs font-medium">
-																X Position: {Math.round(emoji.x)}px
-															</label>
-															<Slider
-																min={0}
-																max={currentDimensions.width}
-																value={emoji.x}
-																onChange={(value) =>
-																	store.updateIndividualEmoji(index, "x", value)
-																}
-															/>
-														</div>
-														<div>
-															<label className="mb-1 block text-xs font-medium">
-																Y Position: {Math.round(emoji.y)}px
-															</label>
-															<Slider
-																min={0}
-																max={currentDimensions.height}
-																value={emoji.y}
-																onChange={(value) =>
-																	store.updateIndividualEmoji(index, "y", value)
-																}
-															/>
-														</div>
-														<div>
-															<label className="mb-1 block text-xs font-medium">
-																Size: {Math.round(emoji.size)}px
-															</label>
-															<Slider
-																min={10}
-																max={1000}
-																step={10}
-																value={emoji.size}
-																onChange={(value) =>
-																	store.updateIndividualEmoji(
-																		index,
-																		"size",
-																		value
-																	)
-																}
-															/>
-														</div>
-														<div>
-															<label className="mb-1 block text-xs font-medium">
-																Rotation: {Math.round(emoji.rotation)}°
-															</label>
-															<Slider
-																min={0}
-																max={360}
-																value={emoji.rotation}
-																onChange={(value) =>
-																	store.updateIndividualEmoji(
-																		index,
-																		"rotation",
-																		value
-																	)
-																}
-															/>
-														</div>
-														<div>
-															<label className="mb-1 block text-xs font-medium">
-																Opacity: {Math.round(emoji.opacity * 100)}%
-															</label>
-															<Slider
-																min={0}
-																max={1}
-																step={0.01}
-																value={emoji.opacity}
-																onChange={(value) =>
-																	store.updateIndividualEmoji(
-																		index,
-																		"opacity",
-																		value
-																	)
-																}
-															/>
-														</div>
-														<div>
-															<label className="mb-1 block text-xs font-medium">
-																Color
-															</label>
-															<div className="mb-1 flex items-center gap-2">
-																<Button
-																	size="small"
-																	type={
-																		!emoji.isColorTransparent
-																			? "primary"
-																			: "default"
-																	}
-																	onClick={() =>
-																		store.updateIndividualEmoji(
-																			index,
-																			"isColorTransparent",
-																			false
-																		)
-																	}
-																>
-																	Color
-																</Button>
-																<Button
-																	size="small"
-																	type={
-																		emoji.isColorTransparent
-																			? "primary"
-																			: "default"
-																	}
-																	onClick={() =>
-																		store.updateIndividualEmoji(
-																			index,
-																			"isColorTransparent",
-																			true
-																		)
-																	}
-																>
-																	Transparent
-																</Button>
-															</div>
-															{!emoji.isColorTransparent && (
-																<ColorPicker
-																	value={emoji.color}
-																	onChange={(color) =>
-																		store.updateIndividualEmoji(
-																			index,
-																			"color",
-																			color.toHexString()
-																		)
-																	}
-																	showText
-																	size="small"
-																	className="w-full"
-																/>
-															)}
-														</div>
-													</Space>
-												),
-											}))}
-										/>
-									</Card>
-								)}
-
-							<Card title="Export" size="small">
-								<Space orientation="vertical" className="w-full" size="middle">
-									<div>
-										<label className="mb-2 block text-sm font-medium">
-											Export Format
-										</label>
-										<Select
-											value={store.exportFormat}
-											onChange={store.setExportFormat}
-											className="w-full"
-											options={exportFormats}
-										/>
-									</div>
-
-									<div className="flex gap-2">
-										<Button
-											type="primary"
-											icon={<ReloadOutlined />}
-											onClick={generateNewPositions}
-											className="flex-1"
-											loading={store.isGenerating}
-											disabled={!store.text.trim()}
-										>
-											{store.layoutMode === "manual"
-												? "Reset Positions"
-												: "Regenerate"}
-										</Button>
-										<Button
-											type="default"
-											icon={<DownloadOutlined />}
-											onClick={downloadThumbnail}
-											className="flex-1"
-											disabled={
-												store.layoutMode === "manual"
-													? !store.individualEmojis.length
-													: !store.positions.length
-											}
-										>
-											Download {store.exportFormat.toUpperCase()}
-										</Button>
-									</div>
-								</Space>
-							</Card>
-						</div>
-					</Col>
-
-					{/* Sticky Preview Panel */}
-					<Col xs={12}>
-						<div className="sticky top-4">
-							<Card title="Preview" className="h-full">
-								<div className="flex min-h-96 items-center justify-center">
-									<div
-										className="overflow-hidden rounded-lg border border-gray-300 shadow-lg"
-										ref={canvasContainerRef}
-									>
-										<canvas
-											ref={canvasRef}
-											className={`block h-auto max-w-full ${store.adjustmentMode === "background" ? "cursor-move" : store.adjustmentMode === "emoji" ? "cursor-pointer" : "cursor-default"}`}
-											style={{ maxHeight: "500px" }}
-										/>
-									</div>
-								</div>
-								<div className="mt-4 text-center text-sm text-gray-500">
-									Canvas Size: {currentDimensions.width} ×{" "}
-									{currentDimensions.height}px
-									{store.isGenerating && (
-										<span className="ml-2 text-blue-500">(Generating...)</span>
-									)}
-									<br />
-									Mode:{" "}
-									{store.layoutMode === "manual"
-										? `Manual (${store.individualEmojis.length} emojis)`
-										: "Auto Layout"}{" "}
-									| Font:{" "}
-									{store.selectedFont === "custom"
-										? store.customFont || "Custom Font"
-										: store.selectedFont}{" "}
-									| Style: {store.emojiStyle} | Format:{" "}
-									{store.exportFormat.toUpperCase()}
-									{store.backgroundImage && (
-										<span className="ml-2">| Background: ✓</span>
-									)}
-									{store.adjustmentMode !== "none" && (
-										<span className="ml-2 text-blue-600">
-											| Interactive Mode:{" "}
-											{store.adjustmentMode === "background"
-												? "Background"
-												: "Emoji"}
-											{store.adjustmentMode === "emoji" &&
-												store.selectedEmojiIndex >= 0 &&
-												` (${store.individualEmojis[store.selectedEmojiIndex]?.char} ${store.selectedEmojiIndex + 1})`}
-										</span>
-									)}
-								</div>
-							</Card>
-						</div>
-					</Col>
-				</Row>
-			</div>
-		</div>
-	);
+  const { message } = useAntd();
+  const wrapperRef = React.useRef<HTMLDivElement | null>(null);
+  const [blob, setBlob] = React.useState<BlobState>({ src: null, w: 0, h: 0 });
+  const [options, setOptions] = React.useState({
+    aspectRatio: 'aspect-auto',
+    bgPattern: 'none',
+    canvasColors: ['#ff40ff', '#fec700'],
+    backgroundAngle: '45deg',
+    padding: 'p-20',
+    position: 'center',
+    rounded: 'rounded-xl',
+    roundedWrapper: 'rounded-xl',
+    shadow: 'shadow-xl',
+    noise: false,
+    browserBar: 'hidden',
+    resolution: '4k',
+  });
+
+  const gradientPresets = [
+    {
+      label: 'Default Gradients & Colors',
+      defaultOpen: true,
+      colors: [
+        [
+          { color: '#f9a8d4', percent: 0 },
+          { color: '#fed7aa', percent: 50 },
+          { color: '#fca5a5', percent: 100 },
+        ],
+        [
+          { color: '#86efac', percent: 0 },
+          { color: '#fef08a', percent: 50 },
+          { color: '#bbf7d0', percent: 100 },
+        ],
+        [
+          { color: '#bbf7d0', percent: 0 },
+          { color: '#bfdbfe', percent: 50 },
+          { color: '#93c5fd', percent: 100 },
+        ],
+        [
+          { color: '#c7d2fe', percent: 0 },
+          { color: '#60a5fa', percent: 50 },
+          { color: '#8b5cf6', percent: 100 },
+        ],
+        [
+          { color: '#fca5a5', percent: 0 },
+          { color: '#fdba74', percent: 50 },
+          { color: '#fde68a', percent: 100 },
+        ],
+        [
+          { color: '#f9a8d4', percent: 0 },
+          { color: '#f472b6', percent: 50 },
+          { color: '#f87171', percent: 100 },
+        ],
+        [
+          { color: '#94a3b8', percent: 0 },
+          { color: '#6b7280', percent: 50 },
+          { color: '#374151', percent: 100 },
+        ],
+        [
+          { color: '#fdba74', percent: 0 },
+          { color: '#fb923c', percent: 50 },
+          { color: '#f87171', percent: 100 },
+        ],
+        [
+          { color: '#5eead4', percent: 0 },
+          { color: '#22d3ee', percent: 100 },
+        ],
+        [
+          { color: '#f87171', percent: 0 },
+          { color: '#9333ea', percent: 100 },
+        ],
+        // Solid colors
+        '#ffffff',
+        '#000000',
+      ],
+    },
+  ];
+
+  React.useEffect(() => {
+    const preset = localStorage.getItem('options');
+    if (preset) {
+      setOptions(JSON.parse(preset));
+    }
+  }, []);
+
+  React.useEffect(() => {
+    document.addEventListener('keydown', handleShortcuts);
+
+    return () => {
+      document.removeEventListener('keydown', handleShortcuts);
+    };
+  }, [blob]);
+
+  React.useEffect(() => {
+    localStorage.setItem('options', JSON.stringify(options));
+  }, [options]);
+
+  const imageStyle = useMemo<React.CSSProperties | undefined>(() => {
+    if (!blob?.w) return undefined;
+
+    return {
+      width: `${blob.w / (window.devicePixelRatio || 1)}px`,
+    };
+  }, [blob?.w]);
+
+  const handleShortcuts = (e: KeyboardEvent) => {
+    if ((e.key === 'c' && e.ctrlKey) || (e.key === 'c' && e.metaKey)) {
+      e.preventDefault();
+      copyImage();
+    }
+
+    if ((e.key === 's' && e.ctrlKey) || (e.key === 's' && e.metaKey)) {
+      e.preventDefault();
+      saveImage();
+    }
+  };
+
+  const snapshotCreator = (): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      try {
+        const scale = window.devicePixelRatio;
+        const element = wrapperRef.current; // Reference to the element
+        if (element) {
+          domtoimage
+            .toBlob(element, {
+              height: element.offsetHeight * scale,
+              width: element.offsetWidth * scale,
+              style: {
+                transform: `scale(${scale})`,
+                transformOrigin: 'top left',
+                width: `${element.offsetWidth}px`,
+                height: `${element.offsetHeight}px`,
+              },
+            })
+            .then((blob: Blob | null) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Failed to create blob'));
+              }
+            })
+            .catch((error: Error) => {
+              reject(error);
+            });
+        } else {
+          reject(new Error('Element not found'));
+        }
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  const saveImage = async () => {
+    if (!blob?.src) {
+      message.error('Nothing to save, make sure to add a screenshot first!');
+      return;
+    }
+
+    const savingmessage = message.loading('Exporting image...');
+    const scale = window.devicePixelRatio;
+
+    // Define aspect ratio dimensions with optional 4K support
+    const getAspectRatioDimensions = (aspectRatio: string, is4K: boolean) => {
+      if (!wrapperRef.current) {
+        return { width: 700, height: 300 };
+      }
+      const baseWidth = is4K ? 3840 : wrapperRef.current.offsetWidth * scale; // 4K width or original width
+      switch (aspectRatio) {
+        case 'aspect-square': // 1:1
+          return { width: baseWidth, height: baseWidth };
+        case 'aspect-[9/16]': // 9:16
+          return { width: baseWidth, height: (baseWidth * 16) / 9 };
+        case 'aspect-video': // 16:9
+          return { width: baseWidth, height: (baseWidth * 9) / 16 };
+        case 'aspect-[4/5]': // 4:5
+          return { width: baseWidth, height: (baseWidth * 5) / 4 };
+        case 'aspect-[4/3]': // 4:3
+          return { width: baseWidth, height: (baseWidth * 3) / 4 };
+        case 'aspect-[3/2]': // 3:2
+          return { width: baseWidth, height: (baseWidth * 2) / 3 };
+        case 'aspect-[21/9]': // 21:9
+          return { width: baseWidth, height: (baseWidth * 9) / 21 };
+        case 'aspect-crx-thumb': // 1.6:1
+          return { width: baseWidth, height: (baseWidth * 1) / 1.6 };
+        case 'aspect-auto': // Auto, use original dimensions
+        default:
+          return {
+            width: wrapperRef.current.offsetWidth * scale,
+            height: wrapperRef.current.offsetHeight * scale,
+          };
+      }
+    };
+
+    const is4K = options.resolution === '4k'; // Assuming resolution is stored in `options`
+    const { width, height } = getAspectRatioDimensions(options.aspectRatio, is4K);
+    if (wrapperRef.current)
+      htmlToImage
+        .toPng(wrapperRef.current, {
+          height,
+          width,
+          style: {
+            transform: 'scale(' + scale + ')',
+            transformOrigin: 'top left',
+            width: wrapperRef.current.offsetWidth + 'px',
+            height: wrapperRef.current.offsetHeight + 'px',
+            border: 'none',
+          },
+        })
+        .then((data) => {
+          const a = document.createElement('A') as HTMLAnchorElement;
+          a.href = data;
+          a.download = `pika-${is4K ? '4k-' : ''}${new Date().toISOString()}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          message.success('Image exported!');
+        })
+        .catch((error) => {
+          console.error('Error exporting image:', error);
+          message.error('Failed to export image.');
+        });
+  };
+
+  const copyImage = () => {
+    if (!blob?.src) {
+      message.error('Nothing to copy, make sure to add a screenshot first!');
+      return;
+    }
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator?.userAgent);
+    const isNotFirefox = navigator.userAgent.indexOf('Firefox') < 0;
+
+    if (isSafari) {
+      navigator.clipboard
+        .write([
+          new ClipboardItem({
+            'image/png': new Promise((resolve, reject) => {
+              (async () => {
+                try {
+                  await snapshotCreator();
+                  const blob = await snapshotCreator();
+                  resolve(new Blob([blob], { type: 'image/png' }));
+                } catch (err) {
+                  reject(err);
+                }
+              })();
+            }),
+          }),
+        ])
+        .then(() => message.success('Image copied to clipboard'))
+        .catch((err) =>
+          // Error
+          message.success(err)
+        );
+    } else if (isNotFirefox) {
+      navigator?.permissions?.query({ name: 'clipboard-write' as unknown as PermissionName }).then(async (result) => {
+        if (result.state === 'granted') {
+          const type = 'image/png';
+          await snapshotCreator();
+          const blob = await snapshotCreator();
+          const data = [new ClipboardItem({ [type]: blob })];
+          navigator.clipboard
+            .write(data)
+            .then(() => {
+              // Success
+            })
+            .catch((err) => {
+              // Error
+              console.error('Error:', err);
+            });
+        }
+      });
+    } else {
+      alert('Firefox does not support this functionality');
+    }
+  };
+
+  const onPaste = (event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>) => {
+    let files: File[] = [];
+
+    // 📋 Clipboard paste
+    if ('clipboardData' in event && event.clipboardData) {
+      files = Array.from(event.clipboardData.items)
+        .filter((item) => item.kind === 'file')
+        .map((item) => item.getAsFile())
+        .filter(Boolean) as File[];
+    }
+
+    // 🖱️ Drag & drop
+    else if ('dataTransfer' in event && event.dataTransfer) {
+      files = Array.from(event.dataTransfer.files);
+    }
+
+    // 📁 File input (FIXED)
+    else if (event.target instanceof HTMLInputElement && event.target.files) {
+      files = Array.from(event.target.files);
+    }
+
+    if (!files.length) return;
+
+    files.forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result;
+        if (!result) return;
+
+        setBlob((prev) => ({
+          ...prev,
+          src: result,
+        }));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  return (
+    <div
+      className="min-h-screen bg-gray-50"
+      onPaste={onPaste}
+      onDragOver={(e) => e.preventDefault()}
+      onDragEnter={(e) => e.preventDefault()}
+      onDragLeave={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        onPaste(e);
+      }}
+    >
+      <div className="max-w-8xl mx-auto p-4">
+        <Title level={2} className="mb-8 text-center">
+          🎨 Enhanced Thumbnail Generator
+        </Title>
+
+        <Row gutter={[30, 12]} className="justify-center">
+          {/* Sticky Preview Panel */}
+          <Col xs={12}>
+            <div className="sticky top-4">
+              <Card title="Preview" className="h-full">
+                {blob?.src ? (
+                  <>
+                    <div
+                      className={`${options?.roundedWrapper} overflow-hidden shadow-xl duration-200 ease-in-out relative my-5`}
+                      style={{
+                        background: options?.canvasColors
+                          ? options.canvasColors.length === 1
+                            ? options.canvasColors[0] // single color
+                            : `linear-gradient(${options.backgroundAngle}, ${options.canvasColors
+                                .map((c, i) => {
+                                  const percent = Math.round((i / (options.canvasColors.length - 1)) * 100);
+                                  return `${c} ${percent}%`;
+                                })
+                                .join(', ')})`
+                          : 'transparent',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <PatternBox className="w-full h-full absolute mix-blend-soft-light inset-0" patternName={cn(options?.bgPattern)} />
+                      <Activity mode={options?.noise ? 'visible' : 'hidden'}>
+                        <div
+                          style={{ backgroundImage: `url("/noise.svg")` }}
+                          className={`absolute inset-0 w-full h-full bg-repeat opacity-[0.15] ${options?.rounded} ${options.browserBar !== 'hidden' ? 'rounded-t-none' : ''}`}
+                        />
+                      </Activity>
+
+                      <div
+                        ref={(el) => {
+                          wrapperRef.current = el;
+                        }}
+                        className={cn(
+                          'transition-all duration-200 relative ease-in-out overflow-hidden max-w-[80vw] flex-col',
+                          options?.aspectRatio,
+                          options?.roundedWrapper,
+                          options?.padding,
+                          options?.position
+                        )}
+                      >
+                        {/* Browser Bar  */}
+                        <Activity mode={options?.browserBar === 'hidden' ? 'hidden' : 'visible'}>
+                          <div className={cn('flex items-center w-full px-4 py-2.5 rounded-t-lg  z-10', options?.browserBar === 'light' ? 'bg-white' : 'bg-black')} style={imageStyle}>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-3 h-3 bg-red-400 rounded-full" />
+                              <div className="w-3 h-3 bg-yellow-300 rounded-full" />
+                              <div className="w-3 h-3 bg-green-500 rounded-full" />
+                            </div>
+                          </div>
+                        </Activity>
+
+                        <img
+                          alt="Generated Image"
+                          src={blob?.src as any}
+                          style={imageStyle}
+                          className={cn('relative z-10', options?.shadow, options?.rounded, options?.browserBar == 'hidden' ? '' : 'rounded-t-none')}
+                          onLoad={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            setBlob({
+                              ...blob,
+                              w: target.naturalWidth,
+                              h: target.naturalHeight,
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center min-h-[50vh] lg:min-h-[80vh]">
+                    <label
+                      className="flex flex-col items-center justify-center text-lg opacity-30 select-none max-w-[550px] rounded-2xl p-10 mt-20 text-center dark:text-white cursor-pointer border-2 border-dashed border-gray-400 hover:opacity-50 duration-300"
+                      htmlFor="imagesUpload"
+                    >
+                      <input
+                        className="hidden"
+                        id="imagesUpload"
+                        type="file"
+                        onChange={(e: any) => {
+                          onPaste(e);
+                        }}
+                      />
+                      <span className="w-6 h-6 mb-2">{PasteIcon}</span>
+                      <p>Paste your screenshot(Cmd/Ctrl+V)</p>
+                      <p>or drag and drop your screenshot here</p>
+                      <p>or click here to add one</p>
+                    </label>
+                  </div>
+                )}
+              </Card>
+            </div>
+          </Col>
+          {/* Controls Panel */}
+          <Col xs={12} lg={5}>
+            <div className="space-y-6">
+              <Card title="Screenshot Options" size="small">
+                <Space orientation="vertical" className="w-full" size="middle">
+                  <div>
+                    <label>Browser Wrapper</label>
+                    <Select
+                      className="w-full"
+                      value={options.browserBar}
+                      placeholder="Browser Wrapper"
+                      options={[
+                        { value: 'hidden', label: 'None' },
+                        { value: 'light', label: 'Light' },
+                        { value: 'dark', label: 'Dark' },
+                      ]}
+                      onChange={(browserBar) => {
+                        updateState(setOptions, { browserBar });
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label>Padding</label>
+                    <Select
+                      className="w-full"
+                      value={options.padding}
+                      placeholder="Padding"
+                      options={[
+                        { value: 'p-0', label: 'None' },
+                        { value: 'p-10', label: 'Small' },
+                        { value: 'p-20', label: 'Medium' },
+                        { value: 'p-32', label: 'Large' },
+                      ]}
+                      onChange={(padding) => {
+                        updateState(setOptions, { padding });
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label>Rounded Corners</label>
+                    <Select
+                      className="w-full"
+                      value={options.rounded}
+                      placeholder="Rounded Corners"
+                      options={[
+                        { value: 'rounded-none', label: 'None' },
+                        { value: 'rounded-lg', label: 'Small' },
+                        { value: 'rounded-xl', label: 'Medium' },
+                        { value: 'rounded-3xl', label: 'Large' },
+                      ]}
+                      onChange={(rounded) => {
+                        updateState(setOptions, { rounded });
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label>Shreenshot Shadow</label>
+                    <Select
+                      className="w-full"
+                      value={options.shadow}
+                      placeholder="Shadow"
+                      options={[
+                        { value: 'shadow-none', label: 'None' },
+                        { value: 'shadow-lg', label: 'Small' },
+                        { value: 'shadow-xl', label: 'Medium' },
+                        { value: 'shadow-3xl', label: 'Large' },
+                      ]}
+                      onChange={(shadow) => {
+                        updateState(setOptions, { shadow });
+                      }}
+                    />
+                  </div>
+                  <div className="flex w-full">
+                    <div className="w-full flex items-center gap-2 pr-3 justify-between">
+                      <label>Position</label>
+                      <div className="buttons-list relative grid w-12 h-12 grid-cols-3 p-1 bg-white border border-gray-200 rounded-lg dark:border-gray-700 place-content-around place-items-center aspect-square dark:bg-gray-900 shadow hover:scale-[1.4] duration-300 ease-[cubic-bezier(.75,-0.5,0,1.75)]">
+                        {[
+                          { value: 'pl-0 pt-0', label: 'Top left' },
+                          { value: 'pt-0', label: 'Top center' },
+                          { value: 'pt-0 pr-0', label: 'Top right' },
+
+                          { value: 'pl-0', label: 'Center left' },
+                          { value: '', label: 'Center' },
+                          { value: 'pr-0', label: 'Center right' },
+
+                          { value: 'pb-0 pl-0', label: 'Bottom left' },
+                          { value: 'pb-0', label: 'Bottom center' },
+                          { value: 'pb-0 pr-0', label: 'Bottom right' },
+                        ].map((item, i) => {
+                          return (
+                            <span
+                              key={i}
+                              className="w-2 h-2 rounded-full cursor-pointer bg-gray-300 hover:bg-gray-500 dark:hover:bg-gray-400 dark:bg-gray-600/50"
+                              onClick={() => {
+                                updateState(setOptions, { position: item.value });
+                              }}
+                            ></span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <Divider orientation="vertical" className="h-auto" />
+                    <div className="w-full flex items-center gap-2 pl-3 justify-between">
+                      <label>Noise</label>
+                      <Switch
+                        checked={options.noise}
+                        onChange={(noise) => {
+                          updateState(setOptions, { noise });
+                        }}
+                      />
+                    </div>
+                  </div>
+                </Space>
+              </Card>
+
+              <Card title="Canvas Options" size="small">
+                <Space orientation="vertical" className="w-full" size="middle">
+                  <div>
+                    <label>Aspect Ratio</label>
+                    <Select
+                      className="w-full"
+                      value={options.aspectRatio}
+                      placeholder="Aspect Ratio"
+                      options={[
+                        { value: 'aspect-auto', label: 'Auto' },
+                        { value: 'aspect-square', label: '1:1 — Square' },
+                        { value: 'aspect-video', label: '16:9 — Video' },
+                        { value: 'aspect-[9/16]', label: '9:16 — Mobile / Story' },
+                        { value: 'aspect-[1280/800]', label: 'Extension Thumbnail' },
+                        { value: 'aspect-[440/280]', label: 'Chrome Promo Tile' },
+                        { value: 'aspect-[4/5]', label: '4:5 — Instagram Portrait' },
+                        { value: 'aspect-[4/3]', label: '4:3 — Classic' },
+                        { value: 'aspect-[3/2]', label: '3:2 — Photography' },
+                        { value: 'aspect-[21/9]', label: '21:9 — Ultrawide' },
+                      ]}
+                      onChange={(aspectRatio) => {
+                        updateState(setOptions, { aspectRatio });
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label>Rounded Corners</label>
+                    <Select
+                      className="w-full"
+                      value={options.roundedWrapper}
+                      placeholder="Rounded Corners"
+                      options={[
+                        { value: 'rounded-none', label: 'None' },
+                        { value: 'rounded-lg', label: 'Small' },
+                        { value: 'rounded-xl', label: 'Medium' },
+                        { value: 'rounded-3xl', label: 'Large' },
+                      ]}
+                      onChange={(roundedWrapper) => {
+                        updateState(setOptions, { roundedWrapper });
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex w-full">
+                    <div className="w-full flex items-center gap-2 pr-3 justify-between">
+                      <label className="block">Background</label>
+                      <ColorPicker
+                        format="hex"
+                        mode={['single', 'gradient']}
+                        defaultValue={[
+                          {
+                            color: options.canvasColors[0],
+                            percent: 0,
+                          },
+                          {
+                            color: options.canvasColors[1],
+                            percent: 100,
+                          },
+                        ]}
+                        presets={gradientPresets}
+                        onChangeComplete={(color) => {
+                          const colors = color.getColors();
+                          const canvasColorsHex = colors.map((c) => c.color.toHexString());
+
+                          updateState(setOptions, { canvasColors: canvasColorsHex });
+                        }}
+                      />
+                    </div>
+                    <Divider orientation="vertical" className="h-auto" />
+                    <div className="w-full flex items-center gap-2 pl-3 justify-between">
+                      <label>Angle</label>
+                      <div className="buttons-list justify-around grid grid-cols-4 gap-0.5">
+                        {[
+                          { direction: 'To top', angle: 0 },
+                          { direction: 'To top right', angle: 45 },
+                          { direction: 'To right', angle: 90 },
+                          { direction: 'To bottom right', angle: 135 },
+                          { direction: 'To bottom', angle: 180 },
+                          { direction: 'To bottom left', angle: 225 },
+                          { direction: 'To left', angle: 270 },
+                          { direction: 'To top left', angle: 315 },
+                        ].map(({ direction, angle }, i) => {
+                          return (
+                            <Button key={i} size="small" title={direction} onClick={() => updateState(setOptions, { backgroundAngle: `${angle}deg` })} className="border border-gray-200 rounded-lg">
+                              <ArrowRightOutlined
+                                style={{
+                                  transform: `rotate(${angle - 90}deg)`,
+                                  fontSize: '10px',
+                                }}
+                              />
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label>Background Pattern</label>
+                    <Select
+                      className="w-full"
+                      value={options.bgPattern}
+                      showSearch={{
+                        filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
+                      }}
+                      placeholder="Pattern"
+                      options={[
+                        { value: '', label: 'None' },
+                        { value: 'jigsaw', label: 'jigsaw' },
+                        { value: 'ripples', label: 'ripples' },
+                        { value: 'topography', label: 'topography' },
+                        { value: 'texture', label: 'texture' },
+                        { value: 'hub', label: 'hub' },
+                        { value: 'architect', label: 'architect' },
+                        { value: 'voxel', label: 'voxel' },
+                        { value: 'crosses', label: 'crosses' },
+                        { value: 'graph', label: 'graph' },
+                        { value: 'squares', label: 'squares' },
+                        { value: 'falling-triangles', label: 'falling-triangles' },
+                        { value: 'pies', label: 'pies' },
+                        { value: 'hexagons', label: 'hexagons' },
+                        { value: 'zig-zag', label: 'zig-zag' },
+                        { value: 'zig-zag-2', label: 'zig-zag-2' },
+                        { value: 'autumn', label: 'autumn' },
+                        { value: 'temple', label: 'temple' },
+                        { value: 'death-star', label: 'death-star' },
+                        { value: 'overlapping-hexagons', label: 'overlapping-hexagons' },
+                        { value: 'stars', label: 'stars' },
+                        { value: 'bamboo', label: 'bamboo' },
+                        { value: 'floor', label: 'floor' },
+                        { value: 'cork-screw', label: 'cork-screw' },
+                        { value: 'kiwi', label: 'kiwi' },
+                        { value: 'lips', label: 'lips' },
+                        { value: 'checkered', label: 'checkered' },
+                        { value: 'x-equals', label: 'x-equals' },
+                        { value: 'bevel-circle', label: 'bevel-circle' },
+                        { value: 'brick-wall', label: 'brick-wall' },
+                        { value: 'fancy-rectangles', label: 'fancy-rectangles' },
+                        { value: 'heavy-rain', label: 'heavy-rain' },
+                        { value: 'overlapping-circles', label: 'overlapping-circles' },
+                        { value: 'plus', label: 'plus' },
+                        { value: 'plus-connected', label: 'plus-connected' },
+                        { value: 'volcano-lamp', label: 'volcano-lamp' },
+                        { value: 'wiggle', label: 'wiggle' },
+                        { value: 'bubbles', label: 'bubbles' },
+                        { value: 'cage', label: 'cage' },
+                        { value: 'connections', label: 'connections' },
+                        { value: 'current', label: 'current' },
+                        { value: 'diagonal-stripes', label: 'diagonal-stripes' },
+                        { value: 'flipped-diamonds', label: 'flipped-diamonds' },
+                        { value: 'houndstooth', label: 'houndstooth' },
+                        { value: 'leaf', label: 'leaf' },
+                        { value: 'lines-in-motion', label: 'lines-in-motion' },
+                        { value: 'moroccan', label: 'moroccan' },
+                        { value: 'morphing-diamonds', label: 'morphing-diamonds' },
+                        { value: 'rails', label: 'rails' },
+                        { value: 'rain', label: 'rain' },
+                        { value: 'squares-in-squares', label: 'squares-in-squares' },
+                        { value: 'stripes', label: 'stripes' },
+                        { value: 'tic-tac-toe', label: 'tic-tac-toe' },
+                        { value: 'aztec', label: 'aztec' },
+                        { value: 'bank-note', label: 'bank-note' },
+                        { value: 'boxes', label: 'boxes' },
+                        { value: 'circles-and-squares', label: 'circles-and-squares' },
+                        { value: 'circuit-board', label: 'circuit-board' },
+                        { value: 'curtain', label: 'curtain' },
+                        { value: 'clouds', label: 'clouds' },
+                        { value: 'eyes', label: 'eyes' },
+                        { value: 'tiles', label: 'tiles' },
+                        { value: 'groovy', label: 'groovy' },
+                        { value: 'intersecting-circles', label: 'intersecting-circles' },
+                        { value: 'melt', label: 'melt' },
+                        { value: 'overlapping-diamonds', label: 'overlapping-diamonds' },
+                        { value: 'wood', label: 'wood' },
+                        { value: 'polka', label: 'polka' },
+                        { value: 'signal', label: 'signal' },
+                        { value: 'slanted', label: 'slanted' },
+                        { value: 'lines-diagonal-right', label: 'lines-diagonal-right' },
+                        { value: 'lines-diagonal-left', label: 'lines-diagonal-left' },
+                        { value: 'lines-horizontal', label: 'lines-horizontal' },
+                        { value: 'lines-vertical', label: 'lines-vertical' },
+                        { value: 'sprinkles', label: 'sprinkles' },
+                        { value: 'waves', label: 'waves' },
+                        { value: 'hive', label: 'hive' },
+                        { value: 'squiggles', label: 'squiggles' },
+                        { value: 'triangles', label: 'triangles' },
+                        { value: 'grid', label: 'grid' },
+                        { value: 'zebra', label: 'zebra' },
+                        { value: 'pattern-dots', label: 'Dots (pattern-dots)' },
+                        { value: 'pattern-boxes', label: 'Boxes (pattern-boxes)' },
+                        { value: 'pattern-cross', label: 'Cross (pattern-cross)' },
+                        { value: 'pattern-zigzag', label: 'Zigzag (pattern-zigzag)' },
+                        { value: 'pattern-zigzag-3d', label: 'Zigzag 3D (pattern-zigzag-3d)' },
+                        { value: 'pattern-isometric', label: 'Isometric (pattern-isometric)' },
+                        { value: 'pattern-wavy', label: 'Wavy (pattern-wavy)' },
+                        { value: 'pattern-triangles', label: 'Triangles (pattern-triangles)' },
+                        { value: 'pattern-moon', label: 'Moon (pattern-moon)' },
+                        { value: 'pattern-paper', label: 'Paper (pattern-paper)' },
+                      ]}
+                      onChange={(bgPattern) => {
+                        updateState(setOptions, { bgPattern });
+                      }}
+                    />
+                  </div>
+                </Space>
+              </Card>
+
+              <Card
+                title="Export"
+                size="small"
+                extra={
+                  <Button onClick={() => setBlob({ src: null, w: 0, h: 0 })} type="text">
+                    <span className="size-4">{ResetIcon}</span>
+                    Reset
+                  </Button>
+                }
+              >
+                <Space orientation="vertical" className="w-full" size="middle">
+                  <div className="flex gap-2">
+                    <Button type="primary" icon={<CopyOutlined />} onClick={copyImage} className="flex-1" title="Use Ctrl/Cmd + C to copy the image">
+                      Copy
+                    </Button>
+
+                    <Button type="default" icon={<DownloadOutlined />} onClick={saveImage} className="flex-1">
+                      Save
+                    </Button>
+                  </div>
+                </Space>
+              </Card>
+
+              <div className="hidden mx-auto text-sm text-center opacity-50 dark:text-white lg:block">
+                <div className="mb-1">
+                  Use <span className="px-2 py-px font-mono rounded-lg dark:bg-black/40 bg-white/80">Cmd/Ctrl+C</span> to copy or
+                </div>
+                <div>
+                  <span className="px-2 py-px font-mono rounded-lg bg-white/80 dark:bg-black/40">Cmd/Ctrl+S</span> to save output image
+                </div>
+              </div>
+            </div>
+          </Col>
+        </Row>
+      </div>
+    </div>
+  );
 };
 
 export default ThumbnailGenerator;

@@ -26,3 +26,8 @@ type Language = (typeof LANGUAGES)[number];
 type Providers = (typeof PROVIDERS)[number];
 type ResType = (typeof RES_TYPES)[number];
 type ResTone = (typeof RES_TONES)[number];
+
+declare module 'dom-to-image-more' {
+  import domToImage = require('dom-to-image-more');
+  export = domToImage;
+}

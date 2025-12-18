@@ -134,7 +134,7 @@ export default defineContentScript({
       }
     };
 
-    chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
+    browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
       console.log(msg);
       const { message } = msg;
       afterGetMsg(message);
@@ -210,7 +210,7 @@ export default defineContentScript({
         // Create a promise to handle the asynchronous messaging
         const sendMessage = () =>
           new Promise((resolve, reject) => {
-            chrome.runtime.sendMessage(
+            browser.runtime.sendMessage(
               {
                 captureVisibleTab: true,
               },
@@ -266,7 +266,7 @@ export default defineContentScript({
 
         // Convert the canvas to a data URL
         let screenshotDataUrl = canvas.toDataURL(`image/${response.png}`);
-        chrome.storage.local.set({
+        browser.storage.local.set({
           base64Image: screenshotDataUrl,
         });
 
@@ -342,7 +342,7 @@ export default defineContentScript({
       // let eraserBtn = createBtn('cancelButton', 'Images/Light bolt.svg');
 
       // let middleLine = document.createElement('img');
-      // middleLine.src = chrome.runtime.getURL('Images/MiddleLine.svg');
+      // middleLine.src = browser.runtime.getURL('Images/MiddleLine.svg');
       // middleLine.style.height = '40px';
 
       // // Append buttons to overlayDiv
@@ -455,7 +455,7 @@ export default defineContentScript({
         clearGrabElements();
       }
 
-      chrome.runtime.sendMessage({
+      browser.runtime.sendMessage({
         message: 'showOptions',
       });
     }
@@ -529,37 +529,6 @@ export default defineContentScript({
       event.preventDefault();
       event.stopPropagation();
       if (eraserElement) eraserElement.remove();
-    }
-
-    function createBtn(idValue: string, imgValue: string) {
-      let ele = document.createElement('div');
-      ele.id = idValue;
-      ele.style.width = '29px';
-      ele.style.height = '32px';
-      ele.style.color = '#FFFFFF';
-      ele.style.backgroundColor = '#690553';
-      ele.style.borderRadius = '15px';
-      ele.style.borderColor = 'rgb(171, 181, 238)';
-      ele.style.fontSize = '12px';
-      ele.style.display = 'flex';
-      ele.style.justifyContent = 'center';
-      ele.style.alignItems = 'center';
-      ele.style.cursor = 'pointer';
-
-      // Create an <img> element for the download icon
-      let icon = document.createElement('img');
-      icon.src = chrome.runtime.getURL(imgValue);
-
-      // Append the <img> element to the download button
-      ele.appendChild(icon);
-
-      ele.addEventListener('mouseover', () => {
-        ele.style.backgroundColor = 'rgba(51, 51, 51, 0.50)';
-      });
-      ele.addEventListener('mouseout', () => {
-        ele.style.backgroundColor = '#690553';
-      });
-      return ele;
     }
 
     //if clicked the Esc key
