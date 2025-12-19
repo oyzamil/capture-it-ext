@@ -1,5 +1,7 @@
-const manifest = browser.runtime.getManifest();
+import { settingsHook } from '@/hooks/useSettings';
 import { createAndMountUI } from '@/providers/ThemeProvider';
+
+const manifest = browser.runtime.getManifest();
 // const selector = new ElementSelector({
 //   showEraser: true,
 //   onCapture: (element, rect, base64) => {
@@ -16,7 +18,7 @@ import { CaptureMessage } from '@/utils/constants';
 import ActionButtons from './ActionButtons';
 
 export default defineContentScript({
-  matches: ['*://*.example.com/*'],
+  matches: ['<all_urls>'],
   // 2. Set cssInjectionMode
   cssInjectionMode: 'ui',
 
@@ -27,7 +29,6 @@ export default defineContentScript({
     let borderDiv: Nullable<HTMLDivElement> = null;
     let divElement: Nullable<HTMLDivElement> = null;
     let buttonClicked: boolean = false;
-    let base64ImageData: string | null = null;
     let currentUrl: string = window.location.href;
     let eraserElement: Nullable<HTMLElement> = null;
     let isEventListenerAdded: boolean = false;
@@ -266,9 +267,11 @@ export default defineContentScript({
 
         // Convert the canvas to a data URL
         let screenshotDataUrl = canvas.toDataURL(`image/${response.png}`);
-        browser.storage.local.set({
-          base64Image: screenshotDataUrl,
-        });
+
+        settingsHook.saveSettings({ base64Image: screenshotDataUrl });
+        // browser.storage.local.set({
+        //   base64Image: screenshotDataUrl,
+        // });
 
         return screenshotDataUrl;
       } catch (err) {

@@ -72,25 +72,25 @@
   }
 
   .stack > * {
-    @apply col-start-1 row-start-1 w-full h-full z-[1] opacity-60;
-    transform: translateY(14%) scale(0.9);
+    @apply col-start-1 row-start-1 w-full h-full z-1 min-h-[30px];
+    transform: translateY(17%) scale(0.9);
   }
 
   .stack > :nth-child(2) {
-    @apply z-[2] opacity-80;
-    transform: translateY(7%) scale(0.95);
+    @apply z-2;
+    transform: translateY(10%) scale(0.95);
   }
 
   .stack > :first-child {
-    @apply z-[3] opacity-100;
+    @apply z-3;
     transform: translateY(0) scale(1);
   }
 
   .stack-top > * {
-    transform: translateY(-14%) scale(0.9);
+    transform: translateY(-20%) scale(0.9);
   }
 
   .stack-top > :nth-child(2) {
-    transform: translateY(-7%) scale(0.95);
+    transform: translateY(-10%) scale(0.95);
   }
 }

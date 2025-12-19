@@ -43,7 +43,7 @@ function isEqual(a: any, b: any): boolean {
 
 // Global state management without external dependencies
 class SettingsStore {
-  private settings: Settings = SETTINGS;
+  private settings: Settings = structuredClone(SETTINGS);
   private listeners: Set<(state: ReturnType<SettingsStore['getState']>) => void> = new Set();
   private loadingSettings = false;
   private hasHydrated = false;
@@ -183,7 +183,7 @@ class SettingsStore {
 
     try {
       await browser.storage.local.remove('settings');
-      this.settings = SETTINGS;
+      this.settings = structuredClone(SETTINGS);
       this.loadingSettings = false;
       this.notifyListeners();
     } catch (error) {
@@ -194,7 +194,16 @@ class SettingsStore {
   }
 
   async resetSettings(): Promise<void> {
-    await this.loadSettings();
+    this.loadingSettings = true;
+    this.notifyListeners();
+
+    try {
+      await browser.storage.local.set({ settings: SETTINGS });
+      this.settings = SETTINGS;
+    } finally {
+      this.loadingSettings = false;
+      this.notifyListeners();
+    }
   }
 }
 

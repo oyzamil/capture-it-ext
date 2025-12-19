@@ -16,23 +16,9 @@ type BlobState = {
 
 const ThumbnailGenerator: React.FC = () => {
   const { message } = useAntd();
-  const wrapperRef = React.useRef<HTMLDivElement | null>(null);
-  const [blob, setBlob] = React.useState<BlobState>({ src: null, w: 0, h: 0 });
-  const [options, setOptions] = React.useState({
-    aspectRatio: 'aspect-auto',
-    bgPattern: 'jigsaw',
-    canvasColors: ['#ff40ff', '#fec700'],
-    backgroundAngle: '45deg',
-    padding: 'p-20',
-    position: 'place-items-center',
-    rounded: 'rounded-xl',
-    roundedWrapper: 'rounded-xl',
-    shadow: 'shadow-xl',
-    noise: false,
-    browserBar: 'hidden',
-    resolution: '4k',
-    scale: 1,
-  });
+  const { settings, saveSettings, resetSettings } = useSettings();
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [blob, setBlob] = useState<BlobState>({ src: null, w: 0, h: 0 });
 
   const gradientPresets = [
     {
@@ -188,24 +174,22 @@ const ThumbnailGenerator: React.FC = () => {
     { value: 'pattern-paper', label: 'Paper (pattern-paper)' },
   ];
 
-  React.useEffect(() => {
-    const preset = localStorage.getItem('options');
-    if (preset) {
-      setOptions(JSON.parse(preset));
+  useEffect(() => {
+    if (settings.base64Image) {
+      setBlob((prev) => ({
+        ...prev,
+        src: settings.base64Image,
+      }));
     }
-  }, []);
+  }, [settings]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     document.addEventListener('keydown', handleShortcuts);
 
     return () => {
       document.removeEventListener('keydown', handleShortcuts);
     };
   }, [blob]);
-
-  React.useEffect(() => {
-    localStorage.setItem('options', JSON.stringify(options));
-  }, [options]);
 
   const imageStyle = useMemo<React.CSSProperties | undefined>(() => {
     if (!blob?.w) return undefined;
@@ -304,8 +288,8 @@ const ThumbnailGenerator: React.FC = () => {
       }
     };
 
-    const is4K = options.resolution === '4k'; // Assuming resolution is stored in `options`
-    const { width, height } = getAspectRatioDimensions(options.aspectRatio, is4K);
+    const is4K = settings.resolution === '4k'; // Assuming resolution is stored in `options`
+    const { width, height } = getAspectRatioDimensions(settings.aspectRatio, is4K);
     if (wrapperRef.current)
       htmlToImage
         .toPng(wrapperRef.current, {
@@ -428,6 +412,13 @@ const ThumbnailGenerator: React.FC = () => {
     });
   };
 
+  function hexToRgba(hex: string, opacity: number) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  }
+
   return (
     <div
       className="min-h-screen bg-gray-50"
@@ -457,7 +448,7 @@ const ThumbnailGenerator: React.FC = () => {
                 extra={
                   <Button onClick={() => setBlob({ src: null, w: 0, h: 0 })} type="text" danger>
                     <span className="size-4">{ResetIcon}</span>
-                    Reset
+                    Reset Canvas
                   </Button>
                 }
               >
@@ -467,14 +458,14 @@ const ThumbnailGenerator: React.FC = () => {
                       ref={(el) => {
                         wrapperRef.current = el;
                       }}
-                      className={cn('overflow-hidden shadow-xl relative my-5 grid max-h-screen', options.aspectRatio, options.roundedWrapper, options.padding, options.position)}
+                      className={cn('overflow-hidden shadow-xl relative my-5 grid max-h-screen', settings.aspectRatio, settings.roundedWrapper, settings.padding, settings.position)}
                       style={{
-                        background: options.canvasColors
-                          ? options.canvasColors.length === 1
-                            ? options.canvasColors[0] // single color
-                            : `linear-gradient(${options.backgroundAngle}, ${options.canvasColors
+                        background: settings.canvasColors
+                          ? settings.canvasColors.length === 1
+                            ? settings.canvasColors[0] // single color
+                            : `linear-gradient(${settings.backgroundAngle}, ${settings.canvasColors
                                 .map((c, i) => {
-                                  const percent = Math.round((i / (options.canvasColors.length - 1)) * 100);
+                                  const percent = Math.round((i / (settings.canvasColors.length - 1)) * 100);
                                   return `${c} ${percent}%`;
                                 })
                                 .join(', ')})`
@@ -482,19 +473,19 @@ const ThumbnailGenerator: React.FC = () => {
                         boxSizing: 'border-box',
                       }}
                     >
-                      <PatternBox className="w-full h-full absolute mix-blend-soft-light inset-0" patternName={cn(options.bgPattern)} />
-                      <Activity mode={options.noise ? 'visible' : 'hidden'}>
+                      <PatternBox className="w-full h-full absolute mix-blend-soft-light inset-0" patternName={cn(settings.bgPattern)} />
+                      <Activity mode={settings.noise ? 'visible' : 'hidden'}>
                         <div
                           style={{ backgroundImage: `url("/noise.svg")` }}
-                          className={`absolute inset-0 w-full h-full bg-repeat opacity-[0.15] ${options.rounded} ${options.browserBar !== 'hidden' ? 'rounded-t-none' : ''}`}
+                          className={`absolute inset-0 w-full h-full bg-repeat opacity-[0.15] ${settings.rounded} ${settings.browserBar !== 'hidden' ? 'rounded-t-none' : ''}`}
                         />
                       </Activity>
-                      <div className={cn('grid stack stack-top', options.scale)}>
-                        <div className={cn('stack-item relative overflow-hidden', options.rounded, options.shadow)}>
+                      <div className={cn('grid stack stack-top', settings.scale)}>
+                        <div className={cn('stack-item relative overflow-hidden', settings.rounded, settings.shadow)}>
                           {/* Browser Bar  */}
-                          <Activity mode={options.browserBar === 'hidden' ? 'hidden' : 'visible'}>
+                          <Activity mode={settings.browserBar === 'hidden' ? 'hidden' : 'visible'}>
                             <div
-                              className={cn(options.rounded, 'flex items-center w-full px-4 py-2.5 rounded-b-none z-10', options.browserBar === 'light' ? 'bg-white' : 'bg-black')}
+                              className={cn(settings.rounded, 'flex items-center w-full px-4 py-2.5 rounded-b-none z-10', settings.browserBar === 'light' ? 'bg-white' : 'bg-black')}
                               style={imageStyle}
                             >
                               <div className="flex items-center space-x-2">
@@ -515,7 +506,7 @@ const ThumbnailGenerator: React.FC = () => {
                               backgroundSize: 'contain', // or 'cover' if you want crop
                               aspectRatio: `${blob?.w} / ${blob?.h}`,
                             }}
-                            className={cn('relative z-10', options.rounded, options.browserBar === 'hidden' ? '' : 'rounded-t-none')}
+                            className={cn('relative z-10', settings.rounded, settings.browserBar === 'hidden' ? '' : 'rounded-t-none')}
                           >
                             {/* hidden img only for natural size detection */}
                             <img
@@ -533,8 +524,14 @@ const ThumbnailGenerator: React.FC = () => {
                             />
                           </div>
                         </div>
-                        {[...Array(2)].map((_, i) => (
-                          <div key={i} className={cn(options.rounded, options.browserBar === 'dark' ? 'bg-black' : 'bg-white', 'stack-item ')}></div>
+                        {[0.9, 0.7].map((opacity, i) => (
+                          <div
+                            key={i}
+                            className={cn(settings.rounded, 'stack-item ')}
+                            style={{
+                              backgroundColor: settings.browserBar === 'dark' ? hexToRgba('#000000', opacity) : hexToRgba('#ffffff', opacity),
+                            }}
+                          ></div>
                         ))}
                       </div>
                     </div>
@@ -566,13 +563,22 @@ const ThumbnailGenerator: React.FC = () => {
           {/* Controls Panel */}
           <Col xs={12} lg={5}>
             <div className="space-y-6">
-              <Card title="Canvas Options" size="small">
+              <Card
+                title="Canvas Options"
+                size="small"
+                extra={
+                  <Button onClick={resetSettings} type="text" danger>
+                    <span className="size-4">{ResetIcon}</span>
+                    Reset Settings
+                  </Button>
+                }
+              >
                 <Space orientation="vertical" className="w-full" size="middle">
                   <div>
                     <label>Aspect Ratio</label>
                     <Select
                       className="w-full"
-                      value={options.aspectRatio}
+                      value={settings.aspectRatio}
                       placeholder="Aspect Ratio"
                       options={[
                         { value: 'aspect-auto', label: 'Auto' },
@@ -587,7 +593,7 @@ const ThumbnailGenerator: React.FC = () => {
                         { value: 'aspect-[21/9] w-full', label: '21:9 — Ultrawide' },
                       ]}
                       onChange={(aspectRatio) => {
-                        updateState(setOptions, { aspectRatio });
+                        saveSettings({ aspectRatio });
                       }}
                     />
                   </div>
@@ -596,7 +602,7 @@ const ThumbnailGenerator: React.FC = () => {
                     <label>Rounded Corners</label>
                     <Select
                       className="w-full"
-                      value={options.roundedWrapper}
+                      value={settings.roundedWrapper}
                       placeholder="Rounded Corners"
                       options={[
                         { value: 'rounded-none', label: 'None' },
@@ -605,7 +611,7 @@ const ThumbnailGenerator: React.FC = () => {
                         { value: 'rounded-3xl', label: 'Large' },
                       ]}
                       onChange={(roundedWrapper) => {
-                        updateState(setOptions, { roundedWrapper });
+                        saveSettings({ roundedWrapper });
                       }}
                     />
                   </div>
@@ -618,11 +624,11 @@ const ThumbnailGenerator: React.FC = () => {
                         mode={['single', 'gradient']}
                         defaultValue={[
                           {
-                            color: options.canvasColors[0],
+                            color: settings.canvasColors[0],
                             percent: 0,
                           },
                           {
-                            color: options.canvasColors[1],
+                            color: settings.canvasColors[1],
                             percent: 100,
                           },
                         ]}
@@ -631,7 +637,7 @@ const ThumbnailGenerator: React.FC = () => {
                           const colors = color.getColors();
                           const canvasColorsHex = colors.map((c) => c.color.toHexString());
 
-                          updateState(setOptions, { canvasColors: canvasColorsHex });
+                          saveSettings({ canvasColors: canvasColorsHex });
                         }}
                       />
                     </div>
@@ -645,19 +651,19 @@ const ThumbnailGenerator: React.FC = () => {
                           { direction: 'To top right', angle: 45 },
 
                           { direction: 'To left', angle: 270 },
-                          { direction: 'Center', angle: 0, icon: '', disabled: true },
+                          { direction: 'Center', angle: 0, disabled: true },
                           { direction: 'To right', angle: 90 },
 
                           { direction: 'To bottom left', angle: 225 },
                           { direction: 'To bottom', angle: 180 },
                           { direction: 'To bottom right', angle: 135 },
-                        ].map(({ direction, angle, icon, disabled }, i) => {
+                        ].map(({ direction, angle, disabled }, i) => {
                           return (
                             <Button
                               key={i}
                               size="small"
                               title={direction}
-                              onClick={() => updateState(setOptions, { backgroundAngle: `${angle}deg` })}
+                              onClick={() => saveSettings({ backgroundAngle: `${angle}deg` })}
                               className={cn('border border-gray-200 rounded-lg size-4', disabled ? 'opacity-0 cursor-auto' : '')}
                               disabled={disabled}
                             >
@@ -678,7 +684,7 @@ const ThumbnailGenerator: React.FC = () => {
                     <label>Background Pattern</label>
                     <Select
                       className="w-full"
-                      value={options.bgPattern}
+                      value={settings.bgPattern}
                       placeholder="Pattern"
                       options={bgPatterns}
                       showSearch={false}
@@ -686,17 +692,17 @@ const ThumbnailGenerator: React.FC = () => {
                         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                           e.preventDefault();
 
-                          const currentIndex = bgPatterns.findIndex((o) => o.value === options.bgPattern);
+                          const currentIndex = bgPatterns.findIndex((o) => o.value === settings.bgPattern);
 
                           const nextIndex = e.key === 'ArrowDown' ? Math.min(currentIndex + 1, bgPatterns.length - 1) : Math.max(currentIndex - 1, 0);
 
-                          updateState(setOptions, {
+                          saveSettings({
                             bgPattern: bgPatterns[nextIndex].value,
                           });
                         }
                       }}
                       onChange={(bgPattern) => {
-                        updateState(setOptions, { bgPattern });
+                        saveSettings({ bgPattern });
                       }}
                     />
                   </div>
@@ -708,7 +714,7 @@ const ThumbnailGenerator: React.FC = () => {
                     <label>Browser Bar</label>
                     <Select
                       className="w-full"
-                      value={options.browserBar}
+                      value={settings.browserBar}
                       placeholder="Browser Bar"
                       options={[
                         { value: 'hidden', label: 'None' },
@@ -716,7 +722,7 @@ const ThumbnailGenerator: React.FC = () => {
                         { value: 'dark', label: 'Dark' },
                       ]}
                       onChange={(browserBar) => {
-                        updateState(setOptions, { browserBar });
+                        saveSettings({ browserBar });
                       }}
                     />
                   </div>
@@ -724,7 +730,7 @@ const ThumbnailGenerator: React.FC = () => {
                     <label>Scale</label>
                     <Select
                       className="w-full"
-                      value={options.scale}
+                      value={settings.scale}
                       placeholder="Scale"
                       options={[
                         { value: 'scale-0', label: '0' },
@@ -740,7 +746,7 @@ const ThumbnailGenerator: React.FC = () => {
                         { value: 'scale-200', label: '2' },
                       ]}
                       onChange={(scale) => {
-                        updateState(setOptions, { scale });
+                        saveSettings({ scale });
                       }}
                     />
                   </div>
@@ -749,7 +755,7 @@ const ThumbnailGenerator: React.FC = () => {
                     <label>Spacing</label>
                     <Select
                       className="w-full"
-                      value={options.padding}
+                      value={settings.padding}
                       placeholder="Spacing"
                       options={[
                         { value: 'p-0', label: 'None' },
@@ -758,7 +764,7 @@ const ThumbnailGenerator: React.FC = () => {
                         { value: 'p-32', label: 'Large' },
                       ]}
                       onChange={(padding) => {
-                        updateState(setOptions, { padding });
+                        saveSettings({ padding });
                       }}
                     />
                   </div>
@@ -767,7 +773,7 @@ const ThumbnailGenerator: React.FC = () => {
                     <label>Rounded</label>
                     <Select
                       className="w-full"
-                      value={options.rounded}
+                      value={settings.rounded}
                       placeholder="Rounded"
                       options={[
                         { value: 'rounded-none', label: 'None' },
@@ -776,7 +782,7 @@ const ThumbnailGenerator: React.FC = () => {
                         { value: 'rounded-3xl', label: 'Large' },
                       ]}
                       onChange={(rounded) => {
-                        updateState(setOptions, { rounded });
+                        saveSettings({ rounded });
                       }}
                     />
                   </div>
@@ -785,7 +791,7 @@ const ThumbnailGenerator: React.FC = () => {
                     <label>Shadow</label>
                     <Select
                       className="w-full"
-                      value={options.shadow}
+                      value={settings.shadow}
                       placeholder="Shadow"
                       options={[
                         { value: 'shadow-none', label: 'None' },
@@ -794,7 +800,7 @@ const ThumbnailGenerator: React.FC = () => {
                         { value: 'shadow-2xl', label: 'Large' },
                       ]}
                       onChange={(shadow) => {
-                        updateState(setOptions, { shadow });
+                        saveSettings({ shadow });
                       }}
                     />
                   </div>
@@ -820,7 +826,7 @@ const ThumbnailGenerator: React.FC = () => {
                               key={i}
                               className="w-2 h-2 rounded-full cursor-pointer bg-gray-300 hover:bg-gray-500 dark:hover:bg-gray-400 dark:bg-gray-600/50"
                               onClick={() => {
-                                updateState(setOptions, { position: item.value });
+                                saveSettings({ position: item.value });
                               }}
                             ></span>
                           );
@@ -831,9 +837,9 @@ const ThumbnailGenerator: React.FC = () => {
                     <div className="w-full flex items-center gap-2 pl-3 justify-between">
                       <label>Noise</label>
                       <Switch
-                        checked={options.noise}
+                        checked={settings.noise}
                         onChange={(noise) => {
-                          updateState(setOptions, { noise });
+                          saveSettings({ noise });
                         }}
                       />
                     </div>
