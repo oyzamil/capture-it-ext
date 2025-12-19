@@ -27,7 +27,8 @@ export const config = {
     shadow: 'shadow-xl',
     noise: false,
     browserBar: 'hidden',
-    resolution: '4k',
+    quality: '4k',
+    fileFormat: 'png',
     scale: 1,
   },
   ROUTES: {

@@ -1,8 +1,8 @@
 import { useAntd } from '@/providers/ThemeProvider';
-import { ArrowRightOutlined, CopyOutlined, DownloadOutlined } from '@ant-design/icons';
+import { CopyOutlined, DownloadOutlined } from '@ant-design/icons';
 import { Button, Card, Col, ColorPicker, Divider, Row, Select, Space, Switch, Typography } from 'antd';
 import domtoimage from 'dom-to-image-more';
-import * as htmlToImage from 'html-to-image';
+import { toPng } from 'html-to-image';
 
 import React, { Activity } from 'react';
 
@@ -13,6 +13,8 @@ type BlobState = {
   w: number;
   h: number;
 };
+
+const TOAST_KEY = 'TOAST_KEY';
 
 const ThumbnailGenerator: React.FC = () => {
   const { message } = useAntd();
@@ -246,78 +248,118 @@ const ThumbnailGenerator: React.FC = () => {
       }
     });
   };
+  // const saveImage = async () => {
+  //   if (!blob?.src) {
+  //     message.error('Nothing to save, make sure to add a screenshot first!');
+  //     return;
+  //   }
+
+  //   const savingmessage = message.loading('Exporting image...');
+  //   const scale = window.devicePixelRatio;
+
+  //   // Define aspect ratio dimensions with optional 4K support
+  //   const getAspectRatioDimensions = (aspectRatio: string, is4K: boolean) => {
+  //     if (!wrapperRef.current) {
+  //       return { width: 700, height: 300 };
+  //     }
+  //     const baseWidth = is4K ? 3840 : wrapperRef.current.offsetWidth * scale; // 4K width or original width
+  //     switch (aspectRatio) {
+  //       case 'aspect-square': // 1:1
+  //         return { width: baseWidth, height: baseWidth };
+  //       case 'aspect-[9/16]': // 9:16
+  //         return { width: baseWidth, height: (baseWidth * 16) / 9 };
+  //       case 'aspect-video': // 16:9
+  //         return { width: baseWidth, height: (baseWidth * 9) / 16 };
+  //       case 'aspect-[4/5]': // 4:5
+  //         return { width: baseWidth, height: (baseWidth * 5) / 4 };
+  //       case 'aspect-[4/3]': // 4:3
+  //         return { width: baseWidth, height: (baseWidth * 3) / 4 };
+  //       case 'aspect-[3/2]': // 3:2
+  //         return { width: baseWidth, height: (baseWidth * 2) / 3 };
+  //       case 'aspect-[21/9]': // 21:9
+  //         return { width: baseWidth, height: (baseWidth * 9) / 21 };
+  //       case 'aspect-crx-thumb': // 1.6:1
+  //         return { width: baseWidth, height: (baseWidth * 1) / 1.6 };
+  //       case 'aspect-auto': // Auto, use original dimensions
+  //       default:
+  //         return {
+  //           width: wrapperRef.current.offsetWidth * scale,
+  //           height: wrapperRef.current.offsetHeight * scale,
+  //         };
+  //     }
+  //   };
+
+  //   const is4K = settings.resolution === '4k'; // Assuming resolution is stored in `options`
+  //   const { width, height } = getAspectRatioDimensions(settings.aspectRatio, is4K);
+  //   if (wrapperRef.current)
+  //     htmlToImage
+  //       .toPng(wrapperRef.current, {
+  //         height,
+  //         width,
+  //         style: {
+  //           transform: 'scale(' + scale + ')',
+  //           transformOrigin: 'top left',
+  //           width: wrapperRef.current.offsetWidth + 'px',
+  //           height: wrapperRef.current.offsetHeight + 'px',
+  //           border: 'none',
+  //         },
+  //       })
+  //       .then((data) => {
+  //         const a = document.createElement('A') as HTMLAnchorElement;
+  //         a.href = data;
+  //         a.download = `${getPackageProp('name')}-${is4K ? '4k-' : ''}${new Date().toISOString()}.png`;
+  //         document.body.appendChild(a);
+  //         a.click();
+  //         document.body.removeChild(a);
+  //         message.success('Image exported!');
+  //       })
+  //       .catch((error) => {
+  //         console.error('Error exporting image:', error);
+  //         message.error('Failed to export image.');
+  //       });
+  // };
 
   const saveImage = async () => {
-    if (!blob?.src) {
-      message.error('Nothing to save, make sure to add a screenshot first!');
-      return;
+    message.open({
+      key: TOAST_KEY,
+      type: 'loading',
+      content: 'Exporting Image...',
+    });
+    if (!wrapperRef.current) return;
+
+    try {
+      const scale = settings.quality === '4k' ? 4 : 1;
+      const width = wrapperRef.current.offsetWidth;
+      const height = wrapperRef.current.offsetHeight;
+
+      const dataUrl = await toPng(wrapperRef.current, {
+        quality: 1,
+        pixelRatio: scale,
+        width: width,
+        height: height,
+      });
+
+      const link = document.createElement('a');
+      link.download = `export-${settings.quality}-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+
+      message.open({
+        key: TOAST_KEY,
+        type: 'success',
+        content: 'Export Completed!',
+        duration: 2,
+      });
+    } catch (err) {
+      console.error('Error generating PNG:', err);
+      message.open({
+        key: TOAST_KEY,
+        type: 'error',
+        content: 'Failed to generate PNG. Please try again.',
+        duration: 2,
+      });
     }
-
-    const savingmessage = message.loading('Exporting image...');
-    const scale = window.devicePixelRatio;
-
-    // Define aspect ratio dimensions with optional 4K support
-    const getAspectRatioDimensions = (aspectRatio: string, is4K: boolean) => {
-      if (!wrapperRef.current) {
-        return { width: 700, height: 300 };
-      }
-      const baseWidth = is4K ? 3840 : wrapperRef.current.offsetWidth * scale; // 4K width or original width
-      switch (aspectRatio) {
-        case 'aspect-square': // 1:1
-          return { width: baseWidth, height: baseWidth };
-        case 'aspect-[9/16]': // 9:16
-          return { width: baseWidth, height: (baseWidth * 16) / 9 };
-        case 'aspect-video': // 16:9
-          return { width: baseWidth, height: (baseWidth * 9) / 16 };
-        case 'aspect-[4/5]': // 4:5
-          return { width: baseWidth, height: (baseWidth * 5) / 4 };
-        case 'aspect-[4/3]': // 4:3
-          return { width: baseWidth, height: (baseWidth * 3) / 4 };
-        case 'aspect-[3/2]': // 3:2
-          return { width: baseWidth, height: (baseWidth * 2) / 3 };
-        case 'aspect-[21/9]': // 21:9
-          return { width: baseWidth, height: (baseWidth * 9) / 21 };
-        case 'aspect-crx-thumb': // 1.6:1
-          return { width: baseWidth, height: (baseWidth * 1) / 1.6 };
-        case 'aspect-auto': // Auto, use original dimensions
-        default:
-          return {
-            width: wrapperRef.current.offsetWidth * scale,
-            height: wrapperRef.current.offsetHeight * scale,
-          };
-      }
-    };
-
-    const is4K = settings.resolution === '4k'; // Assuming resolution is stored in `options`
-    const { width, height } = getAspectRatioDimensions(settings.aspectRatio, is4K);
-    if (wrapperRef.current)
-      htmlToImage
-        .toPng(wrapperRef.current, {
-          height,
-          width,
-          style: {
-            transform: 'scale(' + scale + ')',
-            transformOrigin: 'top left',
-            width: wrapperRef.current.offsetWidth + 'px',
-            height: wrapperRef.current.offsetHeight + 'px',
-            border: 'none',
-          },
-        })
-        .then((data) => {
-          const a = document.createElement('A') as HTMLAnchorElement;
-          a.href = data;
-          a.download = `${getPackageProp('name')}-${is4K ? '4k-' : ''}${new Date().toISOString()}.png`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          message.success('Image exported!');
-        })
-        .catch((error) => {
-          console.error('Error exporting image:', error);
-          message.error('Failed to export image.');
-        });
   };
-
   const copyImage = () => {
     if (!blob?.src) {
       message.error('Nothing to copy, make sure to add a screenshot first!');
@@ -453,11 +495,12 @@ const ThumbnailGenerator: React.FC = () => {
                 }
               >
                 {blob?.src ? (
-                  <>
+                  <div
+                    ref={(el) => {
+                      wrapperRef.current = el;
+                    }}
+                  >
                     <div
-                      ref={(el) => {
-                        wrapperRef.current = el;
-                      }}
                       className={cn('overflow-hidden shadow-xl relative my-5 grid max-h-screen', settings.aspectRatio, settings.roundedWrapper, settings.padding, settings.position)}
                       style={{
                         background: settings.canvasColors
@@ -499,7 +542,7 @@ const ThumbnailGenerator: React.FC = () => {
                           <div
                             aria-label="Generated Image"
                             style={{
-                              ...imageStyle,
+                              // ...imageStyle,
                               backgroundImage: `url(${blob?.src})`,
                               backgroundRepeat: 'no-repeat',
                               backgroundPosition: 'center',
@@ -535,7 +578,7 @@ const ThumbnailGenerator: React.FC = () => {
                         ))}
                       </div>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <div className="flex items-center justify-center min-h-[50vh] lg:min-h-[80vh]">
                     <label
@@ -620,6 +663,7 @@ const ThumbnailGenerator: React.FC = () => {
                     <div className="w-full flex items-center gap-2 pr-3 justify-between">
                       <label className="block">Background</label>
                       <ColorPicker
+                        className="hover-scale flex"
                         format="hex"
                         mode={['single', 'gradient']}
                         defaultValue={[
@@ -644,7 +688,7 @@ const ThumbnailGenerator: React.FC = () => {
                     <Divider orientation="vertical" className="h-auto" />
                     <div className="w-full flex items-center gap-2 justify-between">
                       <label>Angle</label>
-                      <div className="buttons-list justify-around grid grid-cols-3 gap-0.5">
+                      <div className="hover-scale">
                         {[
                           { direction: 'To top left', angle: 315 },
                           { direction: 'To top', angle: 0 },
@@ -664,15 +708,24 @@ const ThumbnailGenerator: React.FC = () => {
                               size="small"
                               title={direction}
                               onClick={() => saveSettings({ backgroundAngle: `${angle}deg` })}
-                              className={cn('border border-gray-200 rounded-lg size-4', disabled ? 'opacity-0 cursor-auto' : '')}
+                              className={cn('p-0 rounded-lg size-3', settings.backgroundAngle === `${angle}deg` ? 'bg-black text-white border-black' : '', disabled ? 'opacity-0 cursor-auto' : '')}
                               disabled={disabled}
                             >
-                              <ArrowRightOutlined
+                              <svg
                                 style={{
                                   transform: `rotate(${angle - 90}deg)`,
                                   fontSize: '10px',
                                 }}
-                              />
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                className=""
+                              >
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M9 6c0 -.852 .986 -1.297 1.623 -.783l.084 .076l6 6a1 1 0 0 1 .083 1.32l-.083 .094l-6 6l-.094 .083l-.077 .054l-.096 .054l-.036 .017l-.067 .027l-.108 .032l-.053 .01l-.06 .01l-.057 .004l-.059 .002l-.059 -.002l-.058 -.005l-.06 -.009l-.052 -.01l-.108 -.032l-.067 -.027l-.132 -.07l-.09 -.065l-.081 -.073l-.083 -.094l-.054 -.077l-.054 -.096l-.017 -.036l-.027 -.067l-.032 -.108l-.01 -.053l-.01 -.06l-.004 -.057l-.002 -12.059z" />
+                              </svg>
                             </Button>
                           );
                         })}
@@ -807,7 +860,7 @@ const ThumbnailGenerator: React.FC = () => {
                   <div className="flex w-full border border-gray-300 rounded-md p-2">
                     <div className="w-full flex items-center gap-2 pr-3 justify-between">
                       <label>Position</label>
-                      <div className="buttons-list relative grid w-12 h-12 grid-cols-3 p-1 bg-white border border-gray-200 rounded-lg dark:border-gray-700 place-content-around place-items-center aspect-square dark:bg-gray-900 shadow hover:scale-[1.4] duration-300 ease-[cubic-bezier(.75,-0.5,0,1.75)]">
+                      <div className="hover-scale">
                         {[
                           { value: 'place-items-start', label: 'Top left' },
                           { value: 'place-items-start justify-items-center', label: 'Top center' },
@@ -824,7 +877,7 @@ const ThumbnailGenerator: React.FC = () => {
                           return (
                             <span
                               key={i}
-                              className="w-2 h-2 rounded-full cursor-pointer bg-gray-300 hover:bg-gray-500 dark:hover:bg-gray-400 dark:bg-gray-600/50"
+                              className={cn('w-2 h-2 rounded-full cursor-pointer bg-gray-300', settings.position === item.value ? 'bg-black' : 'hover:bg-gray-500')}
                               onClick={() => {
                                 saveSettings({ position: item.value });
                               }}
@@ -848,6 +901,33 @@ const ThumbnailGenerator: React.FC = () => {
               </Card>
               <Card title="Export" size="small">
                 <Space orientation="vertical" className="w-full" size="middle">
+                  <div className="flex w-full border border-gray-300 rounded-md p-2">
+                    <div className="w-full flex items-center gap-2 pr-3 justify-between">
+                      <label>Format</label>
+                      <Select
+                        className="w-full"
+                        value={settings.fileFormat}
+                        placeholder="Shadow"
+                        options={[
+                          { value: 'png', label: 'PNG' },
+                          { value: 'jpeg', label: 'JPEG' },
+                        ]}
+                        onChange={(fileFormat) => {
+                          saveSettings({ fileFormat });
+                        }}
+                      />
+                    </div>
+                    <Divider orientation="vertical" className="h-auto" />
+                    <div className="w-full flex items-center gap-2 pl-3 justify-between">
+                      <label>4K</label>
+                      <Switch
+                        checked={settings.quality === '4k'}
+                        onChange={(checked) => {
+                          saveSettings({ quality: checked ? '4k' : 'normal' });
+                        }}
+                      />
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <Button type="primary" icon={<CopyOutlined />} onClick={copyImage} className="flex-1" title="Use Ctrl/Cmd + C to copy the image">
                       Copy
