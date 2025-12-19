@@ -1,6 +1,6 @@
 {
-  "name": "wxt-starter-template",
-  "description": "A starter template to make browser extension using WXT",
+  "name": "capture-it-ext",
+  "description": "A browser extension to take beautiful screenshots.",
   "private": true,
   "version": "0.0.1",
   "type": "module",

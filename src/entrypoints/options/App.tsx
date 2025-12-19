@@ -1,4 +1,3 @@
-import { ResetIcon } from '@/components/Icons';
 import { useAntd } from '@/providers/ThemeProvider';
 import { ArrowRightOutlined, CopyOutlined, DownloadOutlined } from '@ant-design/icons';
 import { Button, Card, Col, ColorPicker, Divider, Row, Select, Space, Switch, Typography } from 'antd';
@@ -21,17 +20,18 @@ const ThumbnailGenerator: React.FC = () => {
   const [blob, setBlob] = React.useState<BlobState>({ src: null, w: 0, h: 0 });
   const [options, setOptions] = React.useState({
     aspectRatio: 'aspect-auto',
-    bgPattern: 'none',
+    bgPattern: 'jigsaw',
     canvasColors: ['#ff40ff', '#fec700'],
     backgroundAngle: '45deg',
     padding: 'p-20',
-    position: 'center',
+    position: 'place-items-center',
     rounded: 'rounded-xl',
     roundedWrapper: 'rounded-xl',
     shadow: 'shadow-xl',
     noise: false,
     browserBar: 'hidden',
     resolution: '4k',
+    scale: 1,
   });
 
   const gradientPresets = [
@@ -92,6 +92,100 @@ const ThumbnailGenerator: React.FC = () => {
         '#000000',
       ],
     },
+  ];
+
+  const bgPatterns = [
+    { value: '', label: 'None' },
+    { value: 'jigsaw', label: 'jigsaw' },
+    { value: 'ripples', label: 'ripples' },
+    { value: 'topography', label: 'topography' },
+    { value: 'texture', label: 'texture' },
+    { value: 'hub', label: 'hub' },
+    { value: 'architect', label: 'architect' },
+    { value: 'voxel', label: 'voxel' },
+    { value: 'crosses', label: 'crosses' },
+    { value: 'graph', label: 'graph' },
+    { value: 'squares', label: 'squares' },
+    { value: 'falling-triangles', label: 'falling-triangles' },
+    { value: 'pies', label: 'pies' },
+    { value: 'hexagons', label: 'hexagons' },
+    { value: 'zig-zag', label: 'zig-zag' },
+    { value: 'zig-zag-2', label: 'zig-zag-2' },
+    { value: 'autumn', label: 'autumn' },
+    { value: 'temple', label: 'temple' },
+    { value: 'death-star', label: 'death-star' },
+    { value: 'overlapping-hexagons', label: 'overlapping-hexagons' },
+    { value: 'stars', label: 'stars' },
+    { value: 'bamboo', label: 'bamboo' },
+    { value: 'floor', label: 'floor' },
+    { value: 'cork-screw', label: 'cork-screw' },
+    { value: 'kiwi', label: 'kiwi' },
+    { value: 'lips', label: 'lips' },
+    { value: 'checkered', label: 'checkered' },
+    { value: 'x-equals', label: 'x-equals' },
+    { value: 'bevel-circle', label: 'bevel-circle' },
+    { value: 'brick-wall', label: 'brick-wall' },
+    { value: 'fancy-rectangles', label: 'fancy-rectangles' },
+    { value: 'heavy-rain', label: 'heavy-rain' },
+    { value: 'overlapping-circles', label: 'overlapping-circles' },
+    { value: 'plus', label: 'plus' },
+    { value: 'plus-connected', label: 'plus-connected' },
+    { value: 'volcano-lamp', label: 'volcano-lamp' },
+    { value: 'wiggle', label: 'wiggle' },
+    { value: 'bubbles', label: 'bubbles' },
+    { value: 'cage', label: 'cage' },
+    { value: 'connections', label: 'connections' },
+    { value: 'current', label: 'current' },
+    { value: 'diagonal-stripes', label: 'diagonal-stripes' },
+    { value: 'flipped-diamonds', label: 'flipped-diamonds' },
+    { value: 'houndstooth', label: 'houndstooth' },
+    { value: 'leaf', label: 'leaf' },
+    { value: 'lines-in-motion', label: 'lines-in-motion' },
+    { value: 'moroccan', label: 'moroccan' },
+    { value: 'morphing-diamonds', label: 'morphing-diamonds' },
+    { value: 'rails', label: 'rails' },
+    { value: 'rain', label: 'rain' },
+    { value: 'squares-in-squares', label: 'squares-in-squares' },
+    { value: 'stripes', label: 'stripes' },
+    { value: 'tic-tac-toe', label: 'tic-tac-toe' },
+    { value: 'aztec', label: 'aztec' },
+    { value: 'bank-note', label: 'bank-note' },
+    { value: 'boxes', label: 'boxes' },
+    { value: 'circles-and-squares', label: 'circles-and-squares' },
+    { value: 'circuit-board', label: 'circuit-board' },
+    { value: 'curtain', label: 'curtain' },
+    { value: 'clouds', label: 'clouds' },
+    { value: 'eyes', label: 'eyes' },
+    { value: 'tiles', label: 'tiles' },
+    { value: 'groovy', label: 'groovy' },
+    { value: 'intersecting-circles', label: 'intersecting-circles' },
+    { value: 'melt', label: 'melt' },
+    { value: 'overlapping-diamonds', label: 'overlapping-diamonds' },
+    { value: 'wood', label: 'wood' },
+    { value: 'polka', label: 'polka' },
+    { value: 'signal', label: 'signal' },
+    { value: 'slanted', label: 'slanted' },
+    { value: 'lines-diagonal-right', label: 'lines-diagonal-right' },
+    { value: 'lines-diagonal-left', label: 'lines-diagonal-left' },
+    { value: 'lines-horizontal', label: 'lines-horizontal' },
+    { value: 'lines-vertical', label: 'lines-vertical' },
+    { value: 'sprinkles', label: 'sprinkles' },
+    { value: 'waves', label: 'waves' },
+    { value: 'hive', label: 'hive' },
+    { value: 'squiggles', label: 'squiggles' },
+    { value: 'triangles', label: 'triangles' },
+    { value: 'grid', label: 'grid' },
+    { value: 'zebra', label: 'zebra' },
+    { value: 'pattern-dots', label: 'Dots (pattern-dots)' },
+    { value: 'pattern-boxes', label: 'Boxes (pattern-boxes)' },
+    { value: 'pattern-cross', label: 'Cross (pattern-cross)' },
+    { value: 'pattern-zigzag', label: 'Zigzag (pattern-zigzag)' },
+    { value: 'pattern-zigzag-3d', label: 'Zigzag 3D (pattern-zigzag-3d)' },
+    { value: 'pattern-isometric', label: 'Isometric (pattern-isometric)' },
+    { value: 'pattern-wavy', label: 'Wavy (pattern-wavy)' },
+    { value: 'pattern-triangles', label: 'Triangles (pattern-triangles)' },
+    { value: 'pattern-moon', label: 'Moon (pattern-moon)' },
+    { value: 'pattern-paper', label: 'Paper (pattern-paper)' },
   ];
 
   React.useEffect(() => {
@@ -228,7 +322,7 @@ const ThumbnailGenerator: React.FC = () => {
         .then((data) => {
           const a = document.createElement('A') as HTMLAnchorElement;
           a.href = data;
-          a.download = `pika-${is4K ? '4k-' : ''}${new Date().toISOString()}.png`;
+          a.download = `${getPackageProp('name')}-${is4K ? '4k-' : ''}${new Date().toISOString()}.png`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -355,13 +449,27 @@ const ThumbnailGenerator: React.FC = () => {
           {/* Sticky Preview Panel */}
           <Col xs={12}>
             <div className="sticky top-4">
-              <Card title="Preview" className="h-full">
+              <Card
+                title="Preview"
+                classNames={{
+                  body: 'preview-area relative w-full h-full overflow-hidden flex justify-center',
+                }}
+                extra={
+                  <Button onClick={() => setBlob({ src: null, w: 0, h: 0 })} type="text" danger>
+                    <span className="size-4">{ResetIcon}</span>
+                    Reset
+                  </Button>
+                }
+              >
                 {blob?.src ? (
                   <>
                     <div
-                      className={`${options?.roundedWrapper} overflow-hidden shadow-xl duration-200 ease-in-out relative my-5`}
+                      ref={(el) => {
+                        wrapperRef.current = el;
+                      }}
+                      className={cn('overflow-hidden shadow-xl relative my-5 grid max-h-screen', options.aspectRatio, options.roundedWrapper, options.padding, options.position)}
                       style={{
-                        background: options?.canvasColors
+                        background: options.canvasColors
                           ? options.canvasColors.length === 1
                             ? options.canvasColors[0] // single color
                             : `linear-gradient(${options.backgroundAngle}, ${options.canvasColors
@@ -374,58 +482,67 @@ const ThumbnailGenerator: React.FC = () => {
                         boxSizing: 'border-box',
                       }}
                     >
-                      <PatternBox className="w-full h-full absolute mix-blend-soft-light inset-0" patternName={cn(options?.bgPattern)} />
-                      <Activity mode={options?.noise ? 'visible' : 'hidden'}>
+                      <PatternBox className="w-full h-full absolute mix-blend-soft-light inset-0" patternName={cn(options.bgPattern)} />
+                      <Activity mode={options.noise ? 'visible' : 'hidden'}>
                         <div
                           style={{ backgroundImage: `url("/noise.svg")` }}
-                          className={`absolute inset-0 w-full h-full bg-repeat opacity-[0.15] ${options?.rounded} ${options.browserBar !== 'hidden' ? 'rounded-t-none' : ''}`}
+                          className={`absolute inset-0 w-full h-full bg-repeat opacity-[0.15] ${options.rounded} ${options.browserBar !== 'hidden' ? 'rounded-t-none' : ''}`}
                         />
                       </Activity>
-
-                      <div
-                        ref={(el) => {
-                          wrapperRef.current = el;
-                        }}
-                        className={cn(
-                          'transition-all duration-200 relative ease-in-out overflow-hidden max-w-[80vw] flex-col',
-                          options?.aspectRatio,
-                          options?.roundedWrapper,
-                          options?.padding,
-                          options?.position
-                        )}
-                      >
-                        {/* Browser Bar  */}
-                        <Activity mode={options?.browserBar === 'hidden' ? 'hidden' : 'visible'}>
-                          <div className={cn('flex items-center w-full px-4 py-2.5 rounded-t-lg  z-10', options?.browserBar === 'light' ? 'bg-white' : 'bg-black')} style={imageStyle}>
-                            <div className="flex items-center space-x-2">
-                              <div className="w-3 h-3 bg-red-400 rounded-full" />
-                              <div className="w-3 h-3 bg-yellow-300 rounded-full" />
-                              <div className="w-3 h-3 bg-green-500 rounded-full" />
+                      <div className={cn('grid stack stack-top', options.scale)}>
+                        <div className={cn('stack-item relative overflow-hidden', options.rounded, options.shadow)}>
+                          {/* Browser Bar  */}
+                          <Activity mode={options.browserBar === 'hidden' ? 'hidden' : 'visible'}>
+                            <div
+                              className={cn(options.rounded, 'flex items-center w-full px-4 py-2.5 rounded-b-none z-10', options.browserBar === 'light' ? 'bg-white' : 'bg-black')}
+                              style={imageStyle}
+                            >
+                              <div className="flex items-center space-x-2">
+                                {['bg-red-400', 'bg-yellow-300', 'bg-green-500'].map((color, i) => (
+                                  <div key={i} className={cn('w-3 h-3 rounded-full', color)}></div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        </Activity>
+                          </Activity>
 
-                        <img
-                          alt="Generated Image"
-                          src={blob?.src as any}
-                          style={imageStyle}
-                          className={cn('relative z-10', options?.shadow, options?.rounded, options?.browserBar == 'hidden' ? '' : 'rounded-t-none')}
-                          onLoad={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            setBlob({
-                              ...blob,
-                              w: target.naturalWidth,
-                              h: target.naturalHeight,
-                            });
-                          }}
-                        />
+                          <div
+                            aria-label="Generated Image"
+                            style={{
+                              ...imageStyle,
+                              backgroundImage: `url(${blob?.src})`,
+                              backgroundRepeat: 'no-repeat',
+                              backgroundPosition: 'center',
+                              backgroundSize: 'contain', // or 'cover' if you want crop
+                              aspectRatio: `${blob?.w} / ${blob?.h}`,
+                            }}
+                            className={cn('relative z-10', options.rounded, options.browserBar === 'hidden' ? '' : 'rounded-t-none')}
+                          >
+                            {/* hidden img only for natural size detection */}
+                            <img
+                              src={blob?.src as any}
+                              alt=""
+                              className="hidden"
+                              onLoad={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                setBlob({
+                                  ...blob,
+                                  w: target.naturalWidth,
+                                  h: target.naturalHeight,
+                                });
+                              }}
+                            />
+                          </div>
+                        </div>
+                        {[...Array(2)].map((_, i) => (
+                          <div key={i} className={cn(options.rounded, options.browserBar === 'dark' ? 'bg-black' : 'bg-white', 'stack-item ')}></div>
+                        ))}
                       </div>
                     </div>
                   </>
                 ) : (
                   <div className="flex items-center justify-center min-h-[50vh] lg:min-h-[80vh]">
                     <label
-                      className="flex flex-col items-center justify-center text-lg opacity-30 select-none max-w-[550px] rounded-2xl p-10 mt-20 text-center dark:text-white cursor-pointer border-2 border-dashed border-gray-400 hover:opacity-50 duration-300"
+                      className="flex flex-col items-center justify-center text-md opacity-30 select-none max-w-[550px] rounded-md p-10 mt-20 text-center dark:text-white cursor-pointer border-2 border-dashed border-gray-400 hover:opacity-50 duration-300"
                       htmlFor="imagesUpload"
                     >
                       <input
@@ -449,14 +566,150 @@ const ThumbnailGenerator: React.FC = () => {
           {/* Controls Panel */}
           <Col xs={12} lg={5}>
             <div className="space-y-6">
+              <Card title="Canvas Options" size="small">
+                <Space orientation="vertical" className="w-full" size="middle">
+                  <div>
+                    <label>Aspect Ratio</label>
+                    <Select
+                      className="w-full"
+                      value={options.aspectRatio}
+                      placeholder="Aspect Ratio"
+                      options={[
+                        { value: 'aspect-auto', label: 'Auto' },
+                        { value: 'aspect-square', label: '1:1 — Square' },
+                        { value: 'aspect-video w-full', label: '16:9 — Video' },
+                        { value: 'aspect-[9/16]', label: '9:16 — Mobile / Story' },
+                        { value: 'aspect-[1280/800] w-full', label: 'Extension Thumbnail' },
+                        { value: 'aspect-[440/280] w-full', label: 'Chrome Promo Tile' },
+                        { value: 'aspect-[4/5]', label: '4:5 — Instagram Portrait' },
+                        { value: 'aspect-[4/3] w-full', label: '4:3 — Classic' },
+                        { value: 'aspect-[3/2] w-full', label: '3:2 — Photography' },
+                        { value: 'aspect-[21/9] w-full', label: '21:9 — Ultrawide' },
+                      ]}
+                      onChange={(aspectRatio) => {
+                        updateState(setOptions, { aspectRatio });
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label>Rounded Corners</label>
+                    <Select
+                      className="w-full"
+                      value={options.roundedWrapper}
+                      placeholder="Rounded Corners"
+                      options={[
+                        { value: 'rounded-none', label: 'None' },
+                        { value: 'rounded-lg', label: 'Small' },
+                        { value: 'rounded-xl', label: 'Medium' },
+                        { value: 'rounded-3xl', label: 'Large' },
+                      ]}
+                      onChange={(roundedWrapper) => {
+                        updateState(setOptions, { roundedWrapper });
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex w-full border border-gray-300 rounded-md p-2">
+                    <div className="w-full flex items-center gap-2 pr-3 justify-between">
+                      <label className="block">Background</label>
+                      <ColorPicker
+                        format="hex"
+                        mode={['single', 'gradient']}
+                        defaultValue={[
+                          {
+                            color: options.canvasColors[0],
+                            percent: 0,
+                          },
+                          {
+                            color: options.canvasColors[1],
+                            percent: 100,
+                          },
+                        ]}
+                        presets={gradientPresets}
+                        onChangeComplete={(color) => {
+                          const colors = color.getColors();
+                          const canvasColorsHex = colors.map((c) => c.color.toHexString());
+
+                          updateState(setOptions, { canvasColors: canvasColorsHex });
+                        }}
+                      />
+                    </div>
+                    <Divider orientation="vertical" className="h-auto" />
+                    <div className="w-full flex items-center gap-2 justify-between">
+                      <label>Angle</label>
+                      <div className="buttons-list justify-around grid grid-cols-3 gap-0.5">
+                        {[
+                          { direction: 'To top left', angle: 315 },
+                          { direction: 'To top', angle: 0 },
+                          { direction: 'To top right', angle: 45 },
+
+                          { direction: 'To left', angle: 270 },
+                          { direction: 'Center', angle: 0, icon: '', disabled: true },
+                          { direction: 'To right', angle: 90 },
+
+                          { direction: 'To bottom left', angle: 225 },
+                          { direction: 'To bottom', angle: 180 },
+                          { direction: 'To bottom right', angle: 135 },
+                        ].map(({ direction, angle, icon, disabled }, i) => {
+                          return (
+                            <Button
+                              key={i}
+                              size="small"
+                              title={direction}
+                              onClick={() => updateState(setOptions, { backgroundAngle: `${angle}deg` })}
+                              className={cn('border border-gray-200 rounded-lg size-4', disabled ? 'opacity-0 cursor-auto' : '')}
+                              disabled={disabled}
+                            >
+                              <ArrowRightOutlined
+                                style={{
+                                  transform: `rotate(${angle - 90}deg)`,
+                                  fontSize: '10px',
+                                }}
+                              />
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label>Background Pattern</label>
+                    <Select
+                      className="w-full"
+                      value={options.bgPattern}
+                      placeholder="Pattern"
+                      options={bgPatterns}
+                      showSearch={false}
+                      onInputKeyDown={(e) => {
+                        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                          e.preventDefault();
+
+                          const currentIndex = bgPatterns.findIndex((o) => o.value === options.bgPattern);
+
+                          const nextIndex = e.key === 'ArrowDown' ? Math.min(currentIndex + 1, bgPatterns.length - 1) : Math.max(currentIndex - 1, 0);
+
+                          updateState(setOptions, {
+                            bgPattern: bgPatterns[nextIndex].value,
+                          });
+                        }
+                      }}
+                      onChange={(bgPattern) => {
+                        updateState(setOptions, { bgPattern });
+                      }}
+                    />
+                  </div>
+                </Space>
+              </Card>
               <Card title="Screenshot Options" size="small">
                 <Space orientation="vertical" className="w-full" size="middle">
                   <div>
-                    <label>Browser Wrapper</label>
+                    <label>Browser Bar</label>
                     <Select
                       className="w-full"
                       value={options.browserBar}
-                      placeholder="Browser Wrapper"
+                      placeholder="Browser Bar"
                       options={[
                         { value: 'hidden', label: 'None' },
                         { value: 'light', label: 'Light' },
@@ -467,13 +720,37 @@ const ThumbnailGenerator: React.FC = () => {
                       }}
                     />
                   </div>
+                  <div>
+                    <label>Scale</label>
+                    <Select
+                      className="w-full"
+                      value={options.scale}
+                      placeholder="Scale"
+                      options={[
+                        { value: 'scale-0', label: '0' },
+                        { value: 'scale-50', label: '0.5' },
+                        { value: 'scale-75', label: '0.75' },
+                        { value: 'scale-90', label: '0.9' },
+                        { value: 'scale-95', label: '0.95' },
+                        { value: 'scale-100', label: '1' },
+                        { value: 'scale-105', label: '1.05' },
+                        { value: 'scale-110', label: '1.1' },
+                        { value: 'scale-125', label: '1.25' },
+                        { value: 'scale-150', label: '1.5' },
+                        { value: 'scale-200', label: '2' },
+                      ]}
+                      onChange={(scale) => {
+                        updateState(setOptions, { scale });
+                      }}
+                    />
+                  </div>
 
                   <div>
-                    <label>Padding</label>
+                    <label>Spacing</label>
                     <Select
                       className="w-full"
                       value={options.padding}
-                      placeholder="Padding"
+                      placeholder="Spacing"
                       options={[
                         { value: 'p-0', label: 'None' },
                         { value: 'p-10', label: 'Small' },
@@ -487,11 +764,11 @@ const ThumbnailGenerator: React.FC = () => {
                   </div>
 
                   <div>
-                    <label>Rounded Corners</label>
+                    <label>Rounded</label>
                     <Select
                       className="w-full"
                       value={options.rounded}
-                      placeholder="Rounded Corners"
+                      placeholder="Rounded"
                       options={[
                         { value: 'rounded-none', label: 'None' },
                         { value: 'rounded-lg', label: 'Small' },
@@ -505,7 +782,7 @@ const ThumbnailGenerator: React.FC = () => {
                   </div>
 
                   <div>
-                    <label>Shreenshot Shadow</label>
+                    <label>Shadow</label>
                     <Select
                       className="w-full"
                       value={options.shadow}
@@ -514,29 +791,29 @@ const ThumbnailGenerator: React.FC = () => {
                         { value: 'shadow-none', label: 'None' },
                         { value: 'shadow-lg', label: 'Small' },
                         { value: 'shadow-xl', label: 'Medium' },
-                        { value: 'shadow-3xl', label: 'Large' },
+                        { value: 'shadow-2xl', label: 'Large' },
                       ]}
                       onChange={(shadow) => {
                         updateState(setOptions, { shadow });
                       }}
                     />
                   </div>
-                  <div className="flex w-full">
+                  <div className="flex w-full border border-gray-300 rounded-md p-2">
                     <div className="w-full flex items-center gap-2 pr-3 justify-between">
                       <label>Position</label>
                       <div className="buttons-list relative grid w-12 h-12 grid-cols-3 p-1 bg-white border border-gray-200 rounded-lg dark:border-gray-700 place-content-around place-items-center aspect-square dark:bg-gray-900 shadow hover:scale-[1.4] duration-300 ease-[cubic-bezier(.75,-0.5,0,1.75)]">
                         {[
-                          { value: 'pl-0 pt-0', label: 'Top left' },
-                          { value: 'pt-0', label: 'Top center' },
-                          { value: 'pt-0 pr-0', label: 'Top right' },
+                          { value: 'place-items-start', label: 'Top left' },
+                          { value: 'place-items-start justify-items-center', label: 'Top center' },
+                          { value: 'place-items-start justify-items-end', label: 'Top right' },
 
-                          { value: 'pl-0', label: 'Center left' },
-                          { value: '', label: 'Center' },
-                          { value: 'pr-0', label: 'Center right' },
+                          { value: 'place-items-center justify-items-start', label: 'Center left' },
+                          { value: 'place-items-center', label: 'Center' },
+                          { value: 'place-items-center justify-items-end', label: 'Center right' },
 
-                          { value: 'pb-0 pl-0', label: 'Bottom left' },
-                          { value: 'pb-0', label: 'Bottom center' },
-                          { value: 'pb-0 pr-0', label: 'Bottom right' },
+                          { value: 'place-items-end justify-items-start', label: 'Bottom left' },
+                          { value: 'place-items-end justify-items-center', label: 'Bottom center' },
+                          { value: 'place-items-end', label: 'Bottom right' },
                         ].map((item, i) => {
                           return (
                             <span
@@ -563,225 +840,7 @@ const ThumbnailGenerator: React.FC = () => {
                   </div>
                 </Space>
               </Card>
-
-              <Card title="Canvas Options" size="small">
-                <Space orientation="vertical" className="w-full" size="middle">
-                  <div>
-                    <label>Aspect Ratio</label>
-                    <Select
-                      className="w-full"
-                      value={options.aspectRatio}
-                      placeholder="Aspect Ratio"
-                      options={[
-                        { value: 'aspect-auto', label: 'Auto' },
-                        { value: 'aspect-square', label: '1:1 — Square' },
-                        { value: 'aspect-video', label: '16:9 — Video' },
-                        { value: 'aspect-[9/16]', label: '9:16 — Mobile / Story' },
-                        { value: 'aspect-[1280/800]', label: 'Extension Thumbnail' },
-                        { value: 'aspect-[440/280]', label: 'Chrome Promo Tile' },
-                        { value: 'aspect-[4/5]', label: '4:5 — Instagram Portrait' },
-                        { value: 'aspect-[4/3]', label: '4:3 — Classic' },
-                        { value: 'aspect-[3/2]', label: '3:2 — Photography' },
-                        { value: 'aspect-[21/9]', label: '21:9 — Ultrawide' },
-                      ]}
-                      onChange={(aspectRatio) => {
-                        updateState(setOptions, { aspectRatio });
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label>Rounded Corners</label>
-                    <Select
-                      className="w-full"
-                      value={options.roundedWrapper}
-                      placeholder="Rounded Corners"
-                      options={[
-                        { value: 'rounded-none', label: 'None' },
-                        { value: 'rounded-lg', label: 'Small' },
-                        { value: 'rounded-xl', label: 'Medium' },
-                        { value: 'rounded-3xl', label: 'Large' },
-                      ]}
-                      onChange={(roundedWrapper) => {
-                        updateState(setOptions, { roundedWrapper });
-                      }}
-                    />
-                  </div>
-
-                  <div className="flex w-full">
-                    <div className="w-full flex items-center gap-2 pr-3 justify-between">
-                      <label className="block">Background</label>
-                      <ColorPicker
-                        format="hex"
-                        mode={['single', 'gradient']}
-                        defaultValue={[
-                          {
-                            color: options.canvasColors[0],
-                            percent: 0,
-                          },
-                          {
-                            color: options.canvasColors[1],
-                            percent: 100,
-                          },
-                        ]}
-                        presets={gradientPresets}
-                        onChangeComplete={(color) => {
-                          const colors = color.getColors();
-                          const canvasColorsHex = colors.map((c) => c.color.toHexString());
-
-                          updateState(setOptions, { canvasColors: canvasColorsHex });
-                        }}
-                      />
-                    </div>
-                    <Divider orientation="vertical" className="h-auto" />
-                    <div className="w-full flex items-center gap-2 pl-3 justify-between">
-                      <label>Angle</label>
-                      <div className="buttons-list justify-around grid grid-cols-4 gap-0.5">
-                        {[
-                          { direction: 'To top', angle: 0 },
-                          { direction: 'To top right', angle: 45 },
-                          { direction: 'To right', angle: 90 },
-                          { direction: 'To bottom right', angle: 135 },
-                          { direction: 'To bottom', angle: 180 },
-                          { direction: 'To bottom left', angle: 225 },
-                          { direction: 'To left', angle: 270 },
-                          { direction: 'To top left', angle: 315 },
-                        ].map(({ direction, angle }, i) => {
-                          return (
-                            <Button key={i} size="small" title={direction} onClick={() => updateState(setOptions, { backgroundAngle: `${angle}deg` })} className="border border-gray-200 rounded-lg">
-                              <ArrowRightOutlined
-                                style={{
-                                  transform: `rotate(${angle - 90}deg)`,
-                                  fontSize: '10px',
-                                }}
-                              />
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label>Background Pattern</label>
-                    <Select
-                      className="w-full"
-                      value={options.bgPattern}
-                      showSearch={{
-                        filterOption: (input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase()),
-                      }}
-                      placeholder="Pattern"
-                      options={[
-                        { value: '', label: 'None' },
-                        { value: 'jigsaw', label: 'jigsaw' },
-                        { value: 'ripples', label: 'ripples' },
-                        { value: 'topography', label: 'topography' },
-                        { value: 'texture', label: 'texture' },
-                        { value: 'hub', label: 'hub' },
-                        { value: 'architect', label: 'architect' },
-                        { value: 'voxel', label: 'voxel' },
-                        { value: 'crosses', label: 'crosses' },
-                        { value: 'graph', label: 'graph' },
-                        { value: 'squares', label: 'squares' },
-                        { value: 'falling-triangles', label: 'falling-triangles' },
-                        { value: 'pies', label: 'pies' },
-                        { value: 'hexagons', label: 'hexagons' },
-                        { value: 'zig-zag', label: 'zig-zag' },
-                        { value: 'zig-zag-2', label: 'zig-zag-2' },
-                        { value: 'autumn', label: 'autumn' },
-                        { value: 'temple', label: 'temple' },
-                        { value: 'death-star', label: 'death-star' },
-                        { value: 'overlapping-hexagons', label: 'overlapping-hexagons' },
-                        { value: 'stars', label: 'stars' },
-                        { value: 'bamboo', label: 'bamboo' },
-                        { value: 'floor', label: 'floor' },
-                        { value: 'cork-screw', label: 'cork-screw' },
-                        { value: 'kiwi', label: 'kiwi' },
-                        { value: 'lips', label: 'lips' },
-                        { value: 'checkered', label: 'checkered' },
-                        { value: 'x-equals', label: 'x-equals' },
-                        { value: 'bevel-circle', label: 'bevel-circle' },
-                        { value: 'brick-wall', label: 'brick-wall' },
-                        { value: 'fancy-rectangles', label: 'fancy-rectangles' },
-                        { value: 'heavy-rain', label: 'heavy-rain' },
-                        { value: 'overlapping-circles', label: 'overlapping-circles' },
-                        { value: 'plus', label: 'plus' },
-                        { value: 'plus-connected', label: 'plus-connected' },
-                        { value: 'volcano-lamp', label: 'volcano-lamp' },
-                        { value: 'wiggle', label: 'wiggle' },
-                        { value: 'bubbles', label: 'bubbles' },
-                        { value: 'cage', label: 'cage' },
-                        { value: 'connections', label: 'connections' },
-                        { value: 'current', label: 'current' },
-                        { value: 'diagonal-stripes', label: 'diagonal-stripes' },
-                        { value: 'flipped-diamonds', label: 'flipped-diamonds' },
-                        { value: 'houndstooth', label: 'houndstooth' },
-                        { value: 'leaf', label: 'leaf' },
-                        { value: 'lines-in-motion', label: 'lines-in-motion' },
-                        { value: 'moroccan', label: 'moroccan' },
-                        { value: 'morphing-diamonds', label: 'morphing-diamonds' },
-                        { value: 'rails', label: 'rails' },
-                        { value: 'rain', label: 'rain' },
-                        { value: 'squares-in-squares', label: 'squares-in-squares' },
-                        { value: 'stripes', label: 'stripes' },
-                        { value: 'tic-tac-toe', label: 'tic-tac-toe' },
-                        { value: 'aztec', label: 'aztec' },
-                        { value: 'bank-note', label: 'bank-note' },
-                        { value: 'boxes', label: 'boxes' },
-                        { value: 'circles-and-squares', label: 'circles-and-squares' },
-                        { value: 'circuit-board', label: 'circuit-board' },
-                        { value: 'curtain', label: 'curtain' },
-                        { value: 'clouds', label: 'clouds' },
-                        { value: 'eyes', label: 'eyes' },
-                        { value: 'tiles', label: 'tiles' },
-                        { value: 'groovy', label: 'groovy' },
-                        { value: 'intersecting-circles', label: 'intersecting-circles' },
-                        { value: 'melt', label: 'melt' },
-                        { value: 'overlapping-diamonds', label: 'overlapping-diamonds' },
-                        { value: 'wood', label: 'wood' },
-                        { value: 'polka', label: 'polka' },
-                        { value: 'signal', label: 'signal' },
-                        { value: 'slanted', label: 'slanted' },
-                        { value: 'lines-diagonal-right', label: 'lines-diagonal-right' },
-                        { value: 'lines-diagonal-left', label: 'lines-diagonal-left' },
-                        { value: 'lines-horizontal', label: 'lines-horizontal' },
-                        { value: 'lines-vertical', label: 'lines-vertical' },
-                        { value: 'sprinkles', label: 'sprinkles' },
-                        { value: 'waves', label: 'waves' },
-                        { value: 'hive', label: 'hive' },
-                        { value: 'squiggles', label: 'squiggles' },
-                        { value: 'triangles', label: 'triangles' },
-                        { value: 'grid', label: 'grid' },
-                        { value: 'zebra', label: 'zebra' },
-                        { value: 'pattern-dots', label: 'Dots (pattern-dots)' },
-                        { value: 'pattern-boxes', label: 'Boxes (pattern-boxes)' },
-                        { value: 'pattern-cross', label: 'Cross (pattern-cross)' },
-                        { value: 'pattern-zigzag', label: 'Zigzag (pattern-zigzag)' },
-                        { value: 'pattern-zigzag-3d', label: 'Zigzag 3D (pattern-zigzag-3d)' },
-                        { value: 'pattern-isometric', label: 'Isometric (pattern-isometric)' },
-                        { value: 'pattern-wavy', label: 'Wavy (pattern-wavy)' },
-                        { value: 'pattern-triangles', label: 'Triangles (pattern-triangles)' },
-                        { value: 'pattern-moon', label: 'Moon (pattern-moon)' },
-                        { value: 'pattern-paper', label: 'Paper (pattern-paper)' },
-                      ]}
-                      onChange={(bgPattern) => {
-                        updateState(setOptions, { bgPattern });
-                      }}
-                    />
-                  </div>
-                </Space>
-              </Card>
-
-              <Card
-                title="Export"
-                size="small"
-                extra={
-                  <Button onClick={() => setBlob({ src: null, w: 0, h: 0 })} type="text">
-                    <span className="size-4">{ResetIcon}</span>
-                    Reset
-                  </Button>
-                }
-              >
+              <Card title="Export" size="small">
                 <Space orientation="vertical" className="w-full" size="middle">
                   <div className="flex gap-2">
                     <Button type="primary" icon={<CopyOutlined />} onClick={copyImage} className="flex-1" title="Use Ctrl/Cmd + C to copy the image">

@@ -1,8 +1,8 @@
 @layer theme, base, antd, components, utilities;
 
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/preflight.css" layer(base);
-@import "tailwindcss/utilities.css" layer(utilities);
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css' layer(utilities);
 
 @plugin "./../../plugins/tailwind-color";
 @plugin "./../../plugins/tailwind-slider";
@@ -11,22 +11,22 @@
 
 @layer base {
   @font-face {
-    font-family: "Poppins";
-    src: url("/fonts/poppins/Poppins-Regular.ttf") format("truetype");
+    font-family: 'Poppins';
+    src: url('/fonts/poppins/Poppins-Regular.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
   }
 
   @font-face {
-    font-family: "Poppins";
-    src: url("/fonts/poppins/Poppins-SemiBold.ttf") format("truetype");
+    font-family: 'Poppins';
+    src: url('/fonts/poppins/Poppins-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
   }
 
   @font-face {
-    font-family: "Poppins";
-    src: url("/fonts/poppins/Poppins-Bold.ttf") format("truetype");
+    font-family: 'Poppins';
+    src: url('/fonts/poppins/Poppins-Bold.ttf') format('truetype');
     font-weight: 700;
     font-style: normal;
   }
@@ -62,5 +62,35 @@
   }
   .glass {
     @apply min-h-[70px] w-full rounded-lg bg-linear-to-r from-white/10 to-white/50 p-6 shadow-md backdrop-blur-lg;
+  }
+  .preview-area {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .stack {
+    @apply grid;
+  }
+
+  .stack > * {
+    @apply col-start-1 row-start-1 w-full h-full z-[1] opacity-60;
+    transform: translateY(14%) scale(0.9);
+  }
+
+  .stack > :nth-child(2) {
+    @apply z-[2] opacity-80;
+    transform: translateY(7%) scale(0.95);
+  }
+
+  .stack > :first-child {
+    @apply z-[3] opacity-100;
+    transform: translateY(0) scale(1);
+  }
+
+  .stack-top > * {
+    transform: translateY(-14%) scale(0.9);
+  }
+
+  .stack-top > :nth-child(2) {
+    transform: translateY(-7%) scale(0.95);
   }
 }
