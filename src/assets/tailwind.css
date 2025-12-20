@@ -73,27 +73,86 @@
 
   .stack > * {
     @apply col-start-1 row-start-1 w-full h-full z-1 min-h-[30px];
-    transform: translateY(17%) scale(0.9);
+    transform: translateY(-16%) scale(0.8);
   }
-
-  .stack > :nth-child(2) {
-    @apply z-2;
-    transform: translateY(10%) scale(0.95);
-  }
-
   .stack > :first-child {
     @apply z-3;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
+  }
+  .stack > :nth-child(2) {
+    @apply z-2;
+    transform: translateY(-8%) scale(0.9);
+  }
+  .stack > :nth-child(3) {
+    @apply z-1;
+    transform: translateY(-24%) scale(0.7);
   }
 
-  .stack-top > * {
-    transform: translateY(-20%) scale(0.9);
+  .animate-spark {
+    /* 0.8s spark + 1s pause = 1.8s total */
+    animation: spark 1.8s ease-out infinite;
   }
 
-  .stack-top > :nth-child(2) {
-    transform: translateY(-10%) scale(0.95);
+  .animate-spark-fast {
+    /* 0.5s spark + 1s pause = 1.5s total */
+    animation: spark-fast 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
 }
 
 @layer utilities {
+  @keyframes spark {
+    /* spark happens here */
+    0% {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+
+    15% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    40% {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+
+    /* pause zone */
+    60%,
+    100% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+  }
+
+  @keyframes spark-fast {
+    /* spark */
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+
+    20% {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+
+    50% {
+      opacity: 0.6;
+    }
+
+    /* pause */
+    65%,
+    100% {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spark,
+  .animate-spark-fast {
+    animation: none;
+  }
 }

@@ -1,16 +1,13 @@
-import { settingsHook } from '@/hooks/useSettings';
-
 export default defineBackground(() => {
   try {
-    const { settings } = settingsHook.getState();
-    console.log(settings);
+    // const { settings } = settingsHook.getState();
+    // console.log(settings);
 
-    settingsHook.subscribe(({ settings }) => {
-      console.log('settings changed', settings);
-    });
+    // settingsHook.subscribe(({ settings }) => {
+    //   console.log('settings changed', settings);
+    // });
 
     browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      console.log({ sender });
       if (request.captureVisibleTab) {
         browser.tabs
           .captureVisibleTab(sender.tab!.windowId!, { format: 'png' })

@@ -20,6 +20,7 @@ export const config = {
     bgPattern: 'jigsaw',
     canvasColors: ['#ff40ff', '#fec700'],
     backgroundAngle: '45deg',
+    gradientType: 'linear' as 'linear' | 'radial' | 'conic',
     padding: 'p-20',
     position: 'place-items-center',
     rounded: 'rounded-xl',
@@ -29,7 +30,7 @@ export const config = {
     browserBar: 'hidden',
     quality: '4k',
     fileFormat: 'png',
-    scale: 1,
+    scale: 'scale-100',
   },
   ROUTES: {
     HOME: '/',

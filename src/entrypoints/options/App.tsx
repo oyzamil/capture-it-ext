@@ -1,8 +1,9 @@
+import { AppSettings } from '@/app.config';
+import { BG_PATTERNS } from '@/components/PatternBox';
 import { useAntd } from '@/providers/ThemeProvider';
 import { CopyOutlined, DownloadOutlined } from '@ant-design/icons';
 import { Button, Card, Col, ColorPicker, Divider, Row, Select, Space, Switch, Typography } from 'antd';
-import domtoimage from 'dom-to-image-more';
-import { toPng } from 'html-to-image';
+import { toBlob, toPng } from 'html-to-image';
 
 import React, { Activity } from 'react';
 
@@ -21,160 +22,6 @@ const ThumbnailGenerator: React.FC = () => {
   const { settings, saveSettings, resetSettings } = useSettings();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [blob, setBlob] = useState<BlobState>({ src: null, w: 0, h: 0 });
-
-  const gradientPresets = [
-    {
-      label: 'Default Gradients & Colors',
-      defaultOpen: true,
-      colors: [
-        [
-          { color: '#f9a8d4', percent: 0 },
-          { color: '#fed7aa', percent: 50 },
-          { color: '#fca5a5', percent: 100 },
-        ],
-        [
-          { color: '#86efac', percent: 0 },
-          { color: '#fef08a', percent: 50 },
-          { color: '#bbf7d0', percent: 100 },
-        ],
-        [
-          { color: '#bbf7d0', percent: 0 },
-          { color: '#bfdbfe', percent: 50 },
-          { color: '#93c5fd', percent: 100 },
-        ],
-        [
-          { color: '#c7d2fe', percent: 0 },
-          { color: '#60a5fa', percent: 50 },
-          { color: '#8b5cf6', percent: 100 },
-        ],
-        [
-          { color: '#fca5a5', percent: 0 },
-          { color: '#fdba74', percent: 50 },
-          { color: '#fde68a', percent: 100 },
-        ],
-        [
-          { color: '#f9a8d4', percent: 0 },
-          { color: '#f472b6', percent: 50 },
-          { color: '#f87171', percent: 100 },
-        ],
-        [
-          { color: '#94a3b8', percent: 0 },
-          { color: '#6b7280', percent: 50 },
-          { color: '#374151', percent: 100 },
-        ],
-        [
-          { color: '#fdba74', percent: 0 },
-          { color: '#fb923c', percent: 50 },
-          { color: '#f87171', percent: 100 },
-        ],
-        [
-          { color: '#5eead4', percent: 0 },
-          { color: '#22d3ee', percent: 100 },
-        ],
-        [
-          { color: '#f87171', percent: 0 },
-          { color: '#9333ea', percent: 100 },
-        ],
-        // Solid colors
-        '#ffffff',
-        '#000000',
-      ],
-    },
-  ];
-
-  const bgPatterns = [
-    { value: '', label: 'None' },
-    { value: 'jigsaw', label: 'jigsaw' },
-    { value: 'ripples', label: 'ripples' },
-    { value: 'topography', label: 'topography' },
-    { value: 'texture', label: 'texture' },
-    { value: 'hub', label: 'hub' },
-    { value: 'architect', label: 'architect' },
-    { value: 'voxel', label: 'voxel' },
-    { value: 'crosses', label: 'crosses' },
-    { value: 'graph', label: 'graph' },
-    { value: 'squares', label: 'squares' },
-    { value: 'falling-triangles', label: 'falling-triangles' },
-    { value: 'pies', label: 'pies' },
-    { value: 'hexagons', label: 'hexagons' },
-    { value: 'zig-zag', label: 'zig-zag' },
-    { value: 'zig-zag-2', label: 'zig-zag-2' },
-    { value: 'autumn', label: 'autumn' },
-    { value: 'temple', label: 'temple' },
-    { value: 'death-star', label: 'death-star' },
-    { value: 'overlapping-hexagons', label: 'overlapping-hexagons' },
-    { value: 'stars', label: 'stars' },
-    { value: 'bamboo', label: 'bamboo' },
-    { value: 'floor', label: 'floor' },
-    { value: 'cork-screw', label: 'cork-screw' },
-    { value: 'kiwi', label: 'kiwi' },
-    { value: 'lips', label: 'lips' },
-    { value: 'checkered', label: 'checkered' },
-    { value: 'x-equals', label: 'x-equals' },
-    { value: 'bevel-circle', label: 'bevel-circle' },
-    { value: 'brick-wall', label: 'brick-wall' },
-    { value: 'fancy-rectangles', label: 'fancy-rectangles' },
-    { value: 'heavy-rain', label: 'heavy-rain' },
-    { value: 'overlapping-circles', label: 'overlapping-circles' },
-    { value: 'plus', label: 'plus' },
-    { value: 'plus-connected', label: 'plus-connected' },
-    { value: 'volcano-lamp', label: 'volcano-lamp' },
-    { value: 'wiggle', label: 'wiggle' },
-    { value: 'bubbles', label: 'bubbles' },
-    { value: 'cage', label: 'cage' },
-    { value: 'connections', label: 'connections' },
-    { value: 'current', label: 'current' },
-    { value: 'diagonal-stripes', label: 'diagonal-stripes' },
-    { value: 'flipped-diamonds', label: 'flipped-diamonds' },
-    { value: 'houndstooth', label: 'houndstooth' },
-    { value: 'leaf', label: 'leaf' },
-    { value: 'lines-in-motion', label: 'lines-in-motion' },
-    { value: 'moroccan', label: 'moroccan' },
-    { value: 'morphing-diamonds', label: 'morphing-diamonds' },
-    { value: 'rails', label: 'rails' },
-    { value: 'rain', label: 'rain' },
-    { value: 'squares-in-squares', label: 'squares-in-squares' },
-    { value: 'stripes', label: 'stripes' },
-    { value: 'tic-tac-toe', label: 'tic-tac-toe' },
-    { value: 'aztec', label: 'aztec' },
-    { value: 'bank-note', label: 'bank-note' },
-    { value: 'boxes', label: 'boxes' },
-    { value: 'circles-and-squares', label: 'circles-and-squares' },
-    { value: 'circuit-board', label: 'circuit-board' },
-    { value: 'curtain', label: 'curtain' },
-    { value: 'clouds', label: 'clouds' },
-    { value: 'eyes', label: 'eyes' },
-    { value: 'tiles', label: 'tiles' },
-    { value: 'groovy', label: 'groovy' },
-    { value: 'intersecting-circles', label: 'intersecting-circles' },
-    { value: 'melt', label: 'melt' },
-    { value: 'overlapping-diamonds', label: 'overlapping-diamonds' },
-    { value: 'wood', label: 'wood' },
-    { value: 'polka', label: 'polka' },
-    { value: 'signal', label: 'signal' },
-    { value: 'slanted', label: 'slanted' },
-    { value: 'lines-diagonal-right', label: 'lines-diagonal-right' },
-    { value: 'lines-diagonal-left', label: 'lines-diagonal-left' },
-    { value: 'lines-horizontal', label: 'lines-horizontal' },
-    { value: 'lines-vertical', label: 'lines-vertical' },
-    { value: 'sprinkles', label: 'sprinkles' },
-    { value: 'waves', label: 'waves' },
-    { value: 'hive', label: 'hive' },
-    { value: 'squiggles', label: 'squiggles' },
-    { value: 'triangles', label: 'triangles' },
-    { value: 'grid', label: 'grid' },
-    { value: 'zebra', label: 'zebra' },
-    { value: 'pattern-dots', label: 'Dots (pattern-dots)' },
-    { value: 'pattern-boxes', label: 'Boxes (pattern-boxes)' },
-    { value: 'pattern-cross', label: 'Cross (pattern-cross)' },
-    { value: 'pattern-zigzag', label: 'Zigzag (pattern-zigzag)' },
-    { value: 'pattern-zigzag-3d', label: 'Zigzag 3D (pattern-zigzag-3d)' },
-    { value: 'pattern-isometric', label: 'Isometric (pattern-isometric)' },
-    { value: 'pattern-wavy', label: 'Wavy (pattern-wavy)' },
-    { value: 'pattern-triangles', label: 'Triangles (pattern-triangles)' },
-    { value: 'pattern-moon', label: 'Moon (pattern-moon)' },
-    { value: 'pattern-paper', label: 'Paper (pattern-paper)' },
-  ];
 
   useEffect(() => {
     if (settings.base64Image) {
@@ -214,110 +61,41 @@ const ThumbnailGenerator: React.FC = () => {
   };
 
   const snapshotCreator = (): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
-        const scale = window.devicePixelRatio;
-        const element = wrapperRef.current; // Reference to the element
-        if (element) {
-          domtoimage
-            .toBlob(element, {
-              height: element.offsetHeight * scale,
-              width: element.offsetWidth * scale,
-              style: {
-                transform: `scale(${scale})`,
-                transformOrigin: 'top left',
-                width: `${element.offsetWidth}px`,
-                height: `${element.offsetHeight}px`,
-              },
-            })
-            .then((blob: Blob | null) => {
-              if (blob) {
-                resolve(blob);
-              } else {
-                reject(new Error('Failed to create blob'));
-              }
-            })
-            .catch((error: Error) => {
-              reject(error);
-            });
-        } else {
+        const element = wrapperRef.current;
+        if (!element) {
           reject(new Error('Element not found'));
+          return;
         }
+
+        const scale = settings.quality === '4k' ? 4 : window.devicePixelRatio || 1;
+
+        const width = element.offsetWidth;
+        const height = element.offsetHeight;
+
+        const blob = await toBlob(element, {
+          width: width * scale,
+          height: height * scale,
+          style: {
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+            width: `${width}px`,
+            height: `${height}px`,
+          },
+        });
+
+        if (!blob) {
+          reject(new Error('Failed to create blob'));
+          return;
+        }
+
+        resolve(blob);
       } catch (error) {
         reject(error);
       }
     });
   };
-  // const saveImage = async () => {
-  //   if (!blob?.src) {
-  //     message.error('Nothing to save, make sure to add a screenshot first!');
-  //     return;
-  //   }
-
-  //   const savingmessage = message.loading('Exporting image...');
-  //   const scale = window.devicePixelRatio;
-
-  //   // Define aspect ratio dimensions with optional 4K support
-  //   const getAspectRatioDimensions = (aspectRatio: string, is4K: boolean) => {
-  //     if (!wrapperRef.current) {
-  //       return { width: 700, height: 300 };
-  //     }
-  //     const baseWidth = is4K ? 3840 : wrapperRef.current.offsetWidth * scale; // 4K width or original width
-  //     switch (aspectRatio) {
-  //       case 'aspect-square': // 1:1
-  //         return { width: baseWidth, height: baseWidth };
-  //       case 'aspect-[9/16]': // 9:16
-  //         return { width: baseWidth, height: (baseWidth * 16) / 9 };
-  //       case 'aspect-video': // 16:9
-  //         return { width: baseWidth, height: (baseWidth * 9) / 16 };
-  //       case 'aspect-[4/5]': // 4:5
-  //         return { width: baseWidth, height: (baseWidth * 5) / 4 };
-  //       case 'aspect-[4/3]': // 4:3
-  //         return { width: baseWidth, height: (baseWidth * 3) / 4 };
-  //       case 'aspect-[3/2]': // 3:2
-  //         return { width: baseWidth, height: (baseWidth * 2) / 3 };
-  //       case 'aspect-[21/9]': // 21:9
-  //         return { width: baseWidth, height: (baseWidth * 9) / 21 };
-  //       case 'aspect-crx-thumb': // 1.6:1
-  //         return { width: baseWidth, height: (baseWidth * 1) / 1.6 };
-  //       case 'aspect-auto': // Auto, use original dimensions
-  //       default:
-  //         return {
-  //           width: wrapperRef.current.offsetWidth * scale,
-  //           height: wrapperRef.current.offsetHeight * scale,
-  //         };
-  //     }
-  //   };
-
-  //   const is4K = settings.resolution === '4k'; // Assuming resolution is stored in `options`
-  //   const { width, height } = getAspectRatioDimensions(settings.aspectRatio, is4K);
-  //   if (wrapperRef.current)
-  //     htmlToImage
-  //       .toPng(wrapperRef.current, {
-  //         height,
-  //         width,
-  //         style: {
-  //           transform: 'scale(' + scale + ')',
-  //           transformOrigin: 'top left',
-  //           width: wrapperRef.current.offsetWidth + 'px',
-  //           height: wrapperRef.current.offsetHeight + 'px',
-  //           border: 'none',
-  //         },
-  //       })
-  //       .then((data) => {
-  //         const a = document.createElement('A') as HTMLAnchorElement;
-  //         a.href = data;
-  //         a.download = `${getPackageProp('name')}-${is4K ? '4k-' : ''}${new Date().toISOString()}.png`;
-  //         document.body.appendChild(a);
-  //         a.click();
-  //         document.body.removeChild(a);
-  //         message.success('Image exported!');
-  //       })
-  //       .catch((error) => {
-  //         console.error('Error exporting image:', error);
-  //         message.error('Failed to export image.');
-  //       });
-  // };
 
   const saveImage = async () => {
     message.open({
@@ -360,56 +138,60 @@ const ThumbnailGenerator: React.FC = () => {
       });
     }
   };
-  const copyImage = () => {
+  const copyImage = async () => {
+    message.open({
+      key: TOAST_KEY,
+      type: 'loading',
+      content: 'Copying Image...',
+    });
+
     if (!blob?.src) {
       message.error('Nothing to copy, make sure to add a screenshot first!');
       return;
     }
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator?.userAgent);
-    const isNotFirefox = navigator.userAgent.indexOf('Firefox') < 0;
 
-    if (isSafari) {
-      navigator.clipboard
-        .write([
-          new ClipboardItem({
-            'image/png': new Promise((resolve, reject) => {
-              (async () => {
-                try {
-                  await snapshotCreator();
-                  const blob = await snapshotCreator();
-                  resolve(new Blob([blob], { type: 'image/png' }));
-                } catch (err) {
-                  reject(err);
-                }
-              })();
-            }),
-          }),
-        ])
-        .then(() => message.success('Image copied to clipboard'))
-        .catch((err) =>
-          // Error
-          message.success(err)
-        );
-    } else if (isNotFirefox) {
-      navigator?.permissions?.query({ name: 'clipboard-write' as unknown as PermissionName }).then(async (result) => {
-        if (result.state === 'granted') {
-          const type = 'image/png';
-          await snapshotCreator();
-          const blob = await snapshotCreator();
-          const data = [new ClipboardItem({ [type]: blob })];
-          navigator.clipboard
-            .write(data)
-            .then(() => {
-              // Success
-            })
-            .catch((err) => {
-              // Error
-              console.error('Error:', err);
-            });
-        }
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isFirefox = navigator.userAgent.includes('Firefox');
+
+    if (isFirefox) {
+      message.open({
+        key: TOAST_KEY,
+        type: 'error',
+        content: 'Firefox does not support this functionality!',
+        duration: 2,
       });
-    } else {
-      alert('Firefox does not support this functionality');
+      return;
+    }
+
+    try {
+      // ✅ Create blob ONCE
+      const imageBlob = await snapshotCreator();
+
+      const clipboardItem = new ClipboardItem({
+        'image/png': imageBlob,
+      });
+
+      // Safari requires direct write without permissions API
+      if (isSafari) {
+        await navigator.clipboard.write([clipboardItem]);
+      } else {
+        await navigator.clipboard.write([clipboardItem]);
+      }
+
+      message.open({
+        key: TOAST_KEY,
+        type: 'success',
+        content: 'Image Copied!',
+        duration: 2,
+      });
+    } catch (err) {
+      console.error('Clipboard error:', err);
+      message.open({
+        key: TOAST_KEY,
+        type: 'error',
+        content: 'Failed to copy image.',
+        duration: 2,
+      });
     }
   };
 
@@ -454,12 +236,28 @@ const ThumbnailGenerator: React.FC = () => {
     });
   };
 
-  function hexToRgba(hex: string, opacity: number) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  }
+  const getGradientBackground = (settings: AppSettings) => {
+    const { canvasColors, backgroundAngle = 180, gradientType } = settings;
+
+    if (!canvasColors || canvasColors.length === 0) return 'transparent';
+
+    if (canvasColors.length === 1) return canvasColors[0]; // single color
+    // multiple colors → build gradient string
+    const colorStops = canvasColors.map((c, i) => {
+      const percent = Math.round((i / (canvasColors.length - 1)) * 100);
+      return `${c} ${percent}%`;
+    });
+
+    if (gradientType === 'linear') {
+      return `linear-gradient(${backgroundAngle}, ${colorStops.join(', ')})`;
+    } else if (gradientType === 'radial') {
+      return `radial-gradient(circle, ${colorStops.join(', ')})`;
+    } else if (gradientType === 'conic') {
+      return `conic-gradient(${colorStops.join(', ')})`;
+    }
+
+    return 'transparent'; // fallback
+  };
 
   return (
     <div
@@ -485,10 +283,17 @@ const ThumbnailGenerator: React.FC = () => {
               <Card
                 title="Preview"
                 classNames={{
-                  body: 'preview-area relative w-full h-full overflow-hidden flex justify-center',
+                  body: '',
                 }}
                 extra={
-                  <Button onClick={() => setBlob({ src: null, w: 0, h: 0 })} type="text" danger>
+                  <Button
+                    onClick={() => {
+                      saveSettings({ base64Image: null });
+                      setBlob({ src: null, w: 0, h: 0 });
+                    }}
+                    type="text"
+                    danger
+                  >
                     <span className="size-4">{ResetIcon}</span>
                     Reset Canvas
                   </Button>
@@ -499,20 +304,12 @@ const ThumbnailGenerator: React.FC = () => {
                     ref={(el) => {
                       wrapperRef.current = el;
                     }}
+                    className="preview-area relative w-full h-full overflow-hidden flex justify-center"
                   >
                     <div
-                      className={cn('overflow-hidden shadow-xl relative my-5 grid max-h-screen', settings.aspectRatio, settings.roundedWrapper, settings.padding, settings.position)}
+                      className={cn('overflow-hidden relative grid max-h-screen', settings.aspectRatio, settings.roundedWrapper, settings.padding, settings.position)}
                       style={{
-                        background: settings.canvasColors
-                          ? settings.canvasColors.length === 1
-                            ? settings.canvasColors[0] // single color
-                            : `linear-gradient(${settings.backgroundAngle}, ${settings.canvasColors
-                                .map((c, i) => {
-                                  const percent = Math.round((i / (settings.canvasColors.length - 1)) * 100);
-                                  return `${c} ${percent}%`;
-                                })
-                                .join(', ')})`
-                          : 'transparent',
+                        background: getGradientBackground(settings),
                         boxSizing: 'border-box',
                       }}
                     >
@@ -523,8 +320,8 @@ const ThumbnailGenerator: React.FC = () => {
                           className={`absolute inset-0 w-full h-full bg-repeat opacity-[0.15] ${settings.rounded} ${settings.browserBar !== 'hidden' ? 'rounded-t-none' : ''}`}
                         />
                       </Activity>
-                      <div className={cn('grid stack stack-top', settings.scale)}>
-                        <div className={cn('stack-item relative overflow-hidden', settings.rounded, settings.shadow)}>
+                      <StackEffect className={settings.rounded} rootClassName={cn('grid', settings.scale)} shade={settings.browserBar === 'dark' ? '#000000' : '#ffffff'}>
+                        <div className={cn('relative overflow-hidden', settings.rounded, settings.shadow)}>
                           {/* Browser Bar  */}
                           <Activity mode={settings.browserBar === 'hidden' ? 'hidden' : 'visible'}>
                             <div
@@ -542,14 +339,14 @@ const ThumbnailGenerator: React.FC = () => {
                           <div
                             aria-label="Generated Image"
                             style={{
-                              // ...imageStyle,
+                              ...imageStyle,
                               backgroundImage: `url(${blob?.src})`,
                               backgroundRepeat: 'no-repeat',
                               backgroundPosition: 'center',
-                              backgroundSize: 'contain', // or 'cover' if you want crop
+                              backgroundSize: 'contain',
                               aspectRatio: `${blob?.w} / ${blob?.h}`,
                             }}
-                            className={cn('relative z-10', settings.rounded, settings.browserBar === 'hidden' ? '' : 'rounded-t-none')}
+                            className={cn('relative', settings.rounded, settings.browserBar === 'hidden' ? '' : 'rounded-t-none')}
                           >
                             {/* hidden img only for natural size detection */}
                             <img
@@ -567,7 +364,7 @@ const ThumbnailGenerator: React.FC = () => {
                             />
                           </div>
                         </div>
-                        {[0.9, 0.7].map((opacity, i) => (
+                        {/* {[0.7, 0.8, 0.9].reverse().map((opacity, i) => (
                           <div
                             key={i}
                             className={cn(settings.rounded, 'stack-item ')}
@@ -575,8 +372,11 @@ const ThumbnailGenerator: React.FC = () => {
                               backgroundColor: settings.browserBar === 'dark' ? hexToRgba('#000000', opacity) : hexToRgba('#ffffff', opacity),
                             }}
                           ></div>
-                        ))}
-                      </div>
+                        ))} */}
+                      </StackEffect>
+                    </div>
+                    <div className="absolute bottom-0 w-full flex justify-center items-center">
+                      <Watermark className="pl-1 pr-2 py-2 mb-2 rounded bg-white" />
                     </div>
                   </div>
                 ) : (
@@ -663,6 +463,7 @@ const ThumbnailGenerator: React.FC = () => {
                     <div className="w-full flex items-center gap-2 pr-3 justify-between">
                       <label className="block">Background</label>
                       <ColorPicker
+                        size="large"
                         className="hover-scale flex"
                         format="hex"
                         mode={['single', 'gradient']}
@@ -734,23 +535,40 @@ const ThumbnailGenerator: React.FC = () => {
                   </div>
 
                   <div>
+                    <label>Gradient Type</label>
+                    <Select
+                      className="w-full"
+                      value={settings.gradientType}
+                      placeholder="Gradient Type"
+                      options={[
+                        { value: 'linear', label: 'Linear' },
+                        { value: 'radial', label: 'Radial' },
+                        { value: 'conic', label: 'Conic' },
+                      ]}
+                      onChange={(gradientType) => {
+                        saveSettings({ gradientType });
+                      }}
+                    />
+                  </div>
+
+                  <div>
                     <label>Background Pattern</label>
                     <Select
                       className="w-full"
                       value={settings.bgPattern}
                       placeholder="Pattern"
-                      options={bgPatterns}
-                      showSearch={false}
+                      options={BG_PATTERNS}
+                      // showSearch={true}
                       onInputKeyDown={(e) => {
                         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                           e.preventDefault();
 
-                          const currentIndex = bgPatterns.findIndex((o) => o.value === settings.bgPattern);
+                          const currentIndex = BG_PATTERNS.findIndex((o) => o.value === settings.bgPattern);
 
-                          const nextIndex = e.key === 'ArrowDown' ? Math.min(currentIndex + 1, bgPatterns.length - 1) : Math.max(currentIndex - 1, 0);
+                          const nextIndex = e.key === 'ArrowDown' ? Math.min(currentIndex + 1, BG_PATTERNS.length - 1) : Math.max(currentIndex - 1, 0);
 
                           saveSettings({
-                            bgPattern: bgPatterns[nextIndex].value,
+                            bgPattern: BG_PATTERNS[nextIndex].value,
                           });
                         }
                       }}
@@ -877,6 +695,7 @@ const ThumbnailGenerator: React.FC = () => {
                           return (
                             <span
                               key={i}
+                              title={item.label}
                               className={cn('w-2 h-2 rounded-full cursor-pointer bg-gray-300', settings.position === item.value ? 'bg-black' : 'hover:bg-gray-500')}
                               onClick={() => {
                                 saveSettings({ position: item.value });
