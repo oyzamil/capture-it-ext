@@ -1,32 +1,29 @@
 import { Button, Space } from 'antd';
 
-interface Rectangle {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
-
 interface ActionButtonsProps {
-  position: Rectangle;
+  ref?: React.Ref<HTMLDivElement>;
+  selection: { y: number; x: number; width: number; height: number };
   showEraser: boolean;
   onEdit: () => void;
   onCopy: () => void;
   onDownload: () => void;
   onEraser: () => void;
   onCancel: () => void;
+  isDownloading: boolean;
+  isCopying: boolean;
 }
 
-const ActionButtons: React.FC<ActionButtonsProps> = ({ position, showEraser, onEdit, onCopy, onDownload, onEraser, onCancel }) => {
-  const isCloserToBottom = position.top + position.height + 40 > window.innerHeight;
-  const isCloserToLeft = position.left + 220 > window.innerWidth;
+const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, selection, showEraser, onEdit, onCopy, onDownload, onEraser, onCancel, isCopying, isDownloading }) => {
+  const isCloserToBottom = selection.y + selection.height + 40 > window.innerHeight;
+  const isCloserToLeft = selection.x + 220 > window.innerWidth;
 
-  const top = isCloserToBottom ? Math.floor(position.top) - 45 : Math.floor(position.top + position.height) + 5;
+  const top = isCloserToBottom ? Math.floor(selection.y) - 45 : Math.floor(selection.y + selection.height) + 5;
 
-  const left = isCloserToLeft ? Math.floor(position.left - 100) : Math.floor(position.left);
+  const left = isCloserToLeft ? Math.floor(selection.x - 100) : Math.floor(selection.x);
 
   return (
     <div
+      ref={ref}
       style={{
         top: `${top}px`,
         left: `${left}px`,
@@ -56,6 +53,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ position, showEraser, onE
         <Button
           type="primary"
           onClick={onCopy}
+          loading={isCopying}
           title="Copy"
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24">
@@ -72,6 +70,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ position, showEraser, onE
         <Button
           type="primary"
           onClick={onDownload}
+          loading={isDownloading}
           title="Download"
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24">

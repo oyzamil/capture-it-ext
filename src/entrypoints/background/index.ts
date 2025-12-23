@@ -8,7 +8,7 @@ export default defineBackground(() => {
     // });
 
     browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      if (request.captureVisibleTab) {
+      if (request.action === EXT_MESSAGES.CAPTURE_VISIBLE) {
         browser.tabs
           .captureVisibleTab(sender.tab!.windowId!, { format: 'png' })
           .then((screenshotUrl) => {
@@ -19,16 +19,23 @@ export default defineBackground(() => {
             sendResponse({ error: err.message });
           });
 
-        return true; // keep the message channel open
+        return true;
       }
 
-      if (request.message === 'showOptions') {
+      if (request.action === EXT_MESSAGES.SHOW_EDITOR) {
         browser.tabs.create({
           url: browser.runtime.getURL('/options.html'),
         });
       }
 
-      if (request.message === 'internalPage') {
+      if (request.action === EXT_MESSAGES.DOWNLOAD) {
+        const { dataUrl, filename } = request;
+        if (!dataUrl) return;
+        handleImageDownload(dataUrl, filename);
+
+        return true;
+      }
+      if (request.action === EXT_MESSAGES.INTERNAL_PAGE) {
         notify("The extension doesn't work on internal pages.");
       }
     });
@@ -45,3 +52,21 @@ function notify(msg: string) {
     message: msg,
   });
 }
+
+const handleImageDownload = (dataUrl: string, filename: string) => {
+  chrome.downloads.download(
+    {
+      url: dataUrl,
+      filename,
+      // saveAs: true,
+    },
+    (downloadId) => {
+      if (chrome.runtime.lastError) {
+        console.error('Download failed:', chrome.runtime.lastError);
+      } else {
+        notify('Downloading Image!');
+        console.log('Download started, id:', downloadId);
+      }
+    }
+  );
+};

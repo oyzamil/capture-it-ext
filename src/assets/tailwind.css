@@ -97,6 +97,9 @@
     /* 0.5s spark + 1s pause = 1.5s total */
     animation: spark-fast 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
+  .resize-handle {
+    @apply absolute w-3 h-3 bg-white border-2 border-app-500 rounded-full;
+  }
 }
 
 @layer utilities {

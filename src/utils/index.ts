@@ -127,3 +127,25 @@ export function hexToShade(hex: string, factor = 0.7, inHex = false): string {
     return `rgb(${R}, ${G}, ${B})`;
   }
 }
+export const validFilename = (name: string, extension = 'png') => {
+  // 1. Trim whitespace
+  let filename = name.trim();
+
+  // 2. Replace invalid characters: \ / : * ? " < > |
+  filename = filename.replace(/[\\/:*?"<>|]/g, '_');
+
+  // 3. Replace multiple underscores with single underscore
+  filename = filename.replace(/_+/g, '_');
+
+  // 4. Ensure it's not empty
+  if (!filename) {
+    filename = `download_${Date.now()}`;
+  }
+
+  // 5. Append extension if not already present
+  if (!filename.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
+    filename += `.${extension}`;
+  }
+
+  return `${t('appName')}_${Date.now()}_${filename}`;
+};

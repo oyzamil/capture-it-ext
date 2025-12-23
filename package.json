@@ -37,7 +37,8 @@
     "color": "^5.0.3",
     "dom-to-image-more": "^3.7.2",
     "html-to-image": "^1.11.13",
-    "html2canvas-pro": "^1.6.1",
+    "html2canvas": "^1.4.1",
+    "html2canvas-pro": "^1.6.2",
     "lodash": "^4.17.21",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
@@ -59,7 +60,7 @@
     "eslint-plugin-import": "^2.32.0",
     "prettier": "^3.7.4",
     "typescript": "^5.9.3",
-    "wxt": "^0.20.11"
+    "wxt": "^0.20.13"
   },
   "overrides": {
     "@wxt-dev/browser": "^0.1.4"

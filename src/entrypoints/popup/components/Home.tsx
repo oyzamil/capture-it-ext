@@ -1,19 +1,16 @@
-import { AppSettings } from '@/app.config';
+import { SETTINGS_TYPE } from '@/app.config';
 import { useAntd } from '@/providers/ThemeProvider';
-import { CaptureMessage } from '@/utils/constants';
-import { Button, Form, Segmented, Typography } from 'antd';
+import { Button, Form, Segmented } from 'antd';
 import { debounce } from 'lodash';
-
-const { Text } = Typography;
 
 function Home() {
   const { message } = useAntd();
   const { settings, saveSettings } = useSettings();
-  const [form] = Form.useForm<AppSettings>();
+  const [form] = Form.useForm<SETTINGS_TYPE>();
 
   const debouncedSubmit = useRef(debounce(onSubmit, 500)).current;
 
-  async function onSubmit(settings: AppSettings) {
+  async function onSubmit(settings: SETTINGS_TYPE) {
     message.open({
       key: 'saving',
       type: 'loading',
@@ -31,7 +28,7 @@ function Home() {
     }
   }
 
-  const handleCapture = (captureType: CaptureMessage): void => {
+  const handleCapture = (captureType: EXT_MESSAGES_TYPE): void => {
     browser.tabs.query({ active: true, currentWindow: true }, (tabs: Browser.tabs.Tab[]) => {
       const activeTab = tabs[0];
 
@@ -45,11 +42,11 @@ function Home() {
 
       if (isInternalPage) {
         browser.runtime.sendMessage({
-          message: 'internalPage',
+          action: EXT_MESSAGES.INTERNAL_PAGE,
         });
       } else {
         browser.tabs.sendMessage(activeTab.id, {
-          message: captureType,
+          action: captureType,
         });
         window.close();
       }
@@ -57,7 +54,7 @@ function Home() {
   };
 
   return (
-    <div className="glass p-3!">
+    <div className="p-3!">
       <Form
         form={form}
         initialValues={settings}
@@ -85,17 +82,26 @@ function Home() {
         <Button
           type="primary"
           onClick={() => {
-            handleCapture(CaptureMessage.CAPTURE_DIV);
+            handleCapture(EXT_MESSAGES.CAPTURE_DIV);
           }}
         >
           Capture Element
+        </Button>
+
+        <Button
+          type="primary"
+          onClick={() => {
+            handleCapture(EXT_MESSAGES.CAPTURE_VISIBLE);
+          }}
+        >
+          Capture Visible
         </Button>
 
         {/* Custom Capture */}
         <Button
           type="primary"
           onClick={() => {
-            handleCapture(CaptureMessage.CUSTOM_CAPTURE);
+            handleCapture(EXT_MESSAGES.CAPTURE_CUSTOM);
           }}
         >
           Custom Capture

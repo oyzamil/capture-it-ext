@@ -173,6 +173,8 @@ export const createAndMountUI = async (ctx: any, props: CreateAndMountUI) => {
       onMount: (uiContainer, shadow, shadowHost) => {
         const cssContainer = shadow.querySelector('head')!;
         shadowHost.id = id;
+        shadowHost.dataset.html2canvasIgnore = 'true';
+        shadowHost.dataset.domToImageIgnore = 'true';
 
         function buildFontFaces() {
           return `

@@ -1,8 +1,8 @@
-import { AppSettings } from '@/app.config';
+import { SETTINGS_TYPE } from '@/app.config';
 import { BG_PATTERNS } from '@/components/PatternBox';
 import { useAntd } from '@/providers/ThemeProvider';
 import { CopyOutlined, DownloadOutlined } from '@ant-design/icons';
-import { Button, Card, Col, ColorPicker, Divider, Row, Select, Space, Switch, Typography } from 'antd';
+import { Button, Card, Col, ColorPicker, Divider, Popconfirm, Row, Select, Space, Switch, Typography } from 'antd';
 import { toBlob, toPng } from 'html-to-image';
 
 import React, { Activity } from 'react';
@@ -15,12 +15,10 @@ type BlobState = {
   h: number;
 };
 
-const TOAST_KEY = 'TOAST_KEY';
-
 const ThumbnailGenerator: React.FC = () => {
   const { message } = useAntd();
   const { settings, saveSettings, resetSettings } = useSettings();
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const wrapperRef = useRef<HTMLElement | null>(null);
   const [blob, setBlob] = useState<BlobState>({ src: null, w: 0, h: 0 });
 
   useEffect(() => {
@@ -48,58 +46,66 @@ const ThumbnailGenerator: React.FC = () => {
     };
   }, [blob?.w]);
 
+  const showToast = ({ type, content, key = 'PRIMARY_TOAST', duration }: { type: 'loading' | 'success' | 'error' | 'info'; content: string; key?: string; duration?: number }) => {
+    message.open({
+      key,
+      type,
+      content,
+      duration,
+    });
+  };
+
   const handleShortcuts = (e: KeyboardEvent) => {
     if ((e.key === 'c' && e.ctrlKey) || (e.key === 'c' && e.metaKey)) {
       e.preventDefault();
-      copyImage();
+      handleCopyImage();
     }
 
     if ((e.key === 's' && e.ctrlKey) || (e.key === 's' && e.metaKey)) {
       e.preventDefault();
-      saveImage();
+      handleImageSave();
     }
   };
 
-  const snapshotCreator = (): Promise<Blob> => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const element = wrapperRef.current;
-        if (!element) {
-          reject(new Error('Element not found'));
-          return;
-        }
+  // const snapshotCreator = (): Promise<Blob> => {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       const element = wrapperRef.current;
+  //       if (!element) {
+  //         reject(new Error('Element not found'));
+  //         return;
+  //       }
 
-        const scale = settings.quality === '4k' ? 4 : window.devicePixelRatio || 1;
+  //       const scale = settings.quality === '4k' ? 4 : window.devicePixelRatio || 1;
 
-        const width = element.offsetWidth;
-        const height = element.offsetHeight;
+  //       const width = element.offsetWidth;
+  //       const height = element.offsetHeight;
 
-        const blob = await toBlob(element, {
-          width: width * scale,
-          height: height * scale,
-          style: {
-            transform: `scale(${scale})`,
-            transformOrigin: 'top left',
-            width: `${width}px`,
-            height: `${height}px`,
-          },
-        });
+  //       const blob = await toBlob(element, {
+  //         width: width * scale,
+  //         height: height * scale,
+  //         style: {
+  //           transform: `scale(${scale})`,
+  //           transformOrigin: 'top left',
+  //           width: `${width}px`,
+  //           height: `${height}px`,
+  //         },
+  //       });
 
-        if (!blob) {
-          reject(new Error('Failed to create blob'));
-          return;
-        }
+  //       if (!blob) {
+  //         reject(new Error('Failed to create blob'));
+  //         return;
+  //       }
 
-        resolve(blob);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  };
+  //       resolve(blob);
+  //     } catch (error) {
+  //       reject(error);
+  //     }
+  //   });
+  // };
 
-  const saveImage = async () => {
-    message.open({
-      key: TOAST_KEY,
+  const handleImageSave = async () => {
+    showToast({
       type: 'loading',
       content: 'Exporting Image...',
     });
@@ -117,84 +123,116 @@ const ThumbnailGenerator: React.FC = () => {
         height: height,
       });
 
-      const link = document.createElement('a');
-      link.download = `export-${settings.quality}-${Date.now()}.png`;
-      link.href = dataUrl;
-      link.click();
+      await browser.runtime.sendMessage({
+        action: EXT_MESSAGES.DOWNLOAD,
+        filename: validFilename(`export-${settings.quality}`, 'png'),
+        dataUrl,
+      });
 
-      message.open({
-        key: TOAST_KEY,
+      // const link = document.createElement('a');
+      // link.download = `export-${settings.quality}-${Date.now()}.png`;
+      // link.href = dataUrl;
+      // link.click();
+
+      showToast({
         type: 'success',
         content: 'Export Completed!',
         duration: 2,
       });
     } catch (err) {
       console.error('Error generating PNG:', err);
-      message.open({
-        key: TOAST_KEY,
+      showToast({
         type: 'error',
         content: 'Failed to generate PNG. Please try again.',
         duration: 2,
       });
     }
   };
-  const copyImage = async () => {
-    message.open({
-      key: TOAST_KEY,
+
+  // const handleCopyImage = async () => {
+  //   showToast({
+  //     type: 'loading',
+  //     content: 'Copying Image...',
+  //   });
+
+  //   if (!wrapperRef.current || !blob?.src) {
+  //     message.error('Nothing to copy, make sure to add a screenshot first!');
+  //     return;
+  //   }
+
+  //   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  //   const isFirefox = navigator.userAgent.includes('Firefox');
+
+  //   if (isFirefox) {
+  //     showToast({
+  //       type: 'error',
+  //       content: 'Firefox does not support this functionality!',
+  //       duration: 2,
+  //     });
+  //     return;
+  //   }
+
+  //   try {
+  //     // ✅ Create blob ONCE
+  //     const imageBlob = await snapshotCreator(wrapperRef.current, settings.quality);
+
+  //     const clipboardItem = new ClipboardItem({
+  //       'image/png': imageBlob,
+  //     });
+
+  //     // Safari requires direct write without permissions API
+  //     if (isSafari) {
+  //       await navigator.clipboard.write([clipboardItem]);
+  //     } else {
+  //       await navigator.clipboard.write([clipboardItem]);
+  //     }
+
+  //     showToast({
+  //       type: 'success',
+  //       content: 'Image Copied!',
+  //       duration: 2,
+  //     });
+  //   } catch (err) {
+  //     console.error('Clipboard error:', err);
+  //     showToast({
+  //       type: 'error',
+  //       content: 'Failed to copy image.',
+  //       duration: 2,
+  //     });
+  //   }
+  // };
+
+  const handleCopyImage = async () => {
+    showToast({
       type: 'loading',
       content: 'Copying Image...',
     });
 
-    if (!blob?.src) {
-      message.error('Nothing to copy, make sure to add a screenshot first!');
-      return;
-    }
-
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    const isFirefox = navigator.userAgent.includes('Firefox');
-
-    if (isFirefox) {
-      message.open({
-        key: TOAST_KEY,
+    if (!wrapperRef.current || !blob?.src) {
+      showToast({
         type: 'error',
-        content: 'Firefox does not support this functionality!',
+        content: 'Nothing to copy, make sure to add a screenshot first!',
         duration: 2,
       });
       return;
     }
 
-    try {
-      // ✅ Create blob ONCE
-      const imageBlob = await snapshotCreator();
-
-      const clipboardItem = new ClipboardItem({
-        'image/png': imageBlob,
-      });
-
-      // Safari requires direct write without permissions API
-      if (isSafari) {
-        await navigator.clipboard.write([clipboardItem]);
-      } else {
-        await navigator.clipboard.write([clipboardItem]);
-      }
-
-      message.open({
-        key: TOAST_KEY,
-        type: 'success',
-        content: 'Image Copied!',
-        duration: 2,
-      });
-    } catch (err) {
-      console.error('Clipboard error:', err);
-      message.open({
-        key: TOAST_KEY,
-        type: 'error',
-        content: 'Failed to copy image.',
-        duration: 2,
-      });
-    }
+    copyImage(wrapperRef.current, settings.quality)
+      .then((message) =>
+        showToast({
+          type: 'success',
+          content: message,
+          duration: 2,
+        })
+      )
+      .catch((err) =>
+        showToast({
+          type: 'error',
+          content: err,
+          duration: 2,
+        })
+      );
   };
-
   const onPaste = (event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>) => {
     let files: File[] = [];
 
@@ -236,7 +274,7 @@ const ThumbnailGenerator: React.FC = () => {
     });
   };
 
-  const getGradientBackground = (settings: AppSettings) => {
+  const getGradientBackground = (settings: SETTINGS_TYPE) => {
     const { canvasColors, backgroundAngle = 180, gradientType } = settings;
 
     if (!canvasColors || canvasColors.length === 0) return 'transparent';
@@ -257,6 +295,64 @@ const ThumbnailGenerator: React.FC = () => {
     }
 
     return 'transparent'; // fallback
+  };
+
+  const snapshotCreator = (element: HTMLElement, quality: SETTINGS_TYPE['quality']): Promise<Blob> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!element) {
+          reject(new Error('Element not found'));
+          return;
+        }
+
+        const scale = quality === '4k' ? 4 : window.devicePixelRatio || 1;
+
+        const width = element.offsetWidth;
+        const height = element.offsetHeight;
+
+        const blob = await toBlob(element, {
+          width: width * scale,
+          height: height * scale,
+          style: {
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+            width: `${width}px`,
+            height: `${height}px`,
+          },
+        });
+
+        if (!blob) {
+          reject(new Error('Failed to create blob'));
+          return;
+        }
+
+        resolve(blob);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  const copyImage = (elementToCopy: HTMLElement, quality: SETTINGS_TYPE['quality']): Promise<string> => {
+    const isFirefox = navigator.userAgent.includes('Firefox');
+
+    if (isFirefox) {
+      return Promise.reject('Firefox does not support this functionality');
+    }
+
+    // Wrap async logic in a Promise
+    return snapshotCreator(elementToCopy, quality)
+      .then((imageBlob) => {
+        const clipboardItem = new ClipboardItem({ 'image/png': imageBlob });
+        return navigator.clipboard.write([clipboardItem]);
+      })
+      .then(() => {
+        return Promise.resolve('Image Copied!');
+      })
+      .catch((err) => {
+        console.error('Clipboard error:', err);
+        return Promise.reject('Error Copying Image!');
+      });
   };
 
   return (
@@ -286,17 +382,21 @@ const ThumbnailGenerator: React.FC = () => {
                   body: '',
                 }}
                 extra={
-                  <Button
-                    onClick={() => {
+                  <Popconfirm
+                    title="Confirm"
+                    description="Are you sure to reset the canvas?"
+                    onConfirm={() => {
                       saveSettings({ base64Image: null });
                       setBlob({ src: null, w: 0, h: 0 });
                     }}
-                    type="text"
-                    danger
+                    okText="Yes"
+                    cancelText="No"
                   >
-                    <span className="size-4">{ResetIcon}</span>
-                    Reset Canvas
-                  </Button>
+                    <Button type="text" danger>
+                      <span className="size-4">{ResetIcon}</span>
+                      Reset Canvas
+                    </Button>
+                  </Popconfirm>
                 }
               >
                 {blob?.src ? (
@@ -410,10 +510,12 @@ const ThumbnailGenerator: React.FC = () => {
                 title="Canvas Options"
                 size="small"
                 extra={
-                  <Button onClick={resetSettings} type="text" danger>
-                    <span className="size-4">{ResetIcon}</span>
-                    Reset Settings
-                  </Button>
+                  <Popconfirm title="Confirm" description="Are you sure to reset the settings?" onConfirm={resetSettings} okText="Yes" cancelText="No">
+                    <Button type="text" danger>
+                      <span className="size-4">{ResetIcon}</span>
+                      Reset Settings
+                    </Button>
+                  </Popconfirm>
                 }
               >
                 <Space orientation="vertical" className="w-full" size="middle">
@@ -748,11 +850,11 @@ const ThumbnailGenerator: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button type="primary" icon={<CopyOutlined />} onClick={copyImage} className="flex-1" title="Use Ctrl/Cmd + C to copy the image">
+                    <Button type="primary" icon={<CopyOutlined />} onClick={handleCopyImage} className="flex-1" title="Use Ctrl/Cmd + C to copy the image">
                       Copy
                     </Button>
 
-                    <Button type="default" icon={<DownloadOutlined />} onClick={saveImage} className="flex-1">
+                    <Button type="default" icon={<DownloadOutlined />} onClick={handleImageSave} className="flex-1">
                       Save
                     </Button>
                   </div>

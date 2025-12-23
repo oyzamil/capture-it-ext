@@ -28,9 +28,10 @@ export const config = {
     shadow: 'shadow-xl',
     noise: false,
     browserBar: 'hidden',
-    quality: '4k',
+    quality: '4k' as '4k' | 'normal',
     fileFormat: 'png',
     scale: 'scale-100',
+    capturePadding: 10,
   },
   ROUTES: {
     HOME: '/',
@@ -44,7 +45,7 @@ export const config = {
 
 export default defineAppConfig(config);
 
-export type AppSettings = typeof config.SETTINGS;
+export type SETTINGS_TYPE = typeof config.SETTINGS;
 
 declare module 'wxt/utils/define-app-config' {
   export interface WxtAppConfig {
