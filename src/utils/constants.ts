@@ -1,4 +1,3 @@
-export const LANGUAGES = ['English'] as const;
 export const gradientPresets = [
   {
     label: 'Default Gradients',

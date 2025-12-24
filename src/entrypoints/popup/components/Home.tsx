@@ -45,7 +45,7 @@ function Home() {
       const isInternalPage: boolean = currentUrl.startsWith('chrome://') || currentUrl.includes('chromewebstore');
 
       if (isInternalPage) {
-        await sendMessage(EXT_MESSAGES.NOTIFY, { message: 'This page can not be captured!' });
+        await sendMessage(EXT_MESSAGES.NOTIFY, { title: 'Internal Page', message: 'This page can not be captured!' });
       } else {
         await sendMessage(CAPTURE_YTPE, undefined, { tabId: activeTab.id });
         window.close();

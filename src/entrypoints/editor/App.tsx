@@ -20,7 +20,6 @@ const ThumbnailGenerator: React.FC = () => {
   const { settings, saveSettings, resetSettings } = useSettings();
   const wrapperRef = useRef<HTMLElement | null>(null);
   const [blob, setBlob] = useState<BlobState>({ src: null, w: 0, h: 0 });
-  const isProcessingRef = useRef(false);
 
   const showToast = ({ type, content, key = 'PRIMARY_TOAST', duration = 0 }: { type: 'loading' | 'success' | 'error' | 'info'; content: string; key?: string; duration?: number }) => {
     message.open({
