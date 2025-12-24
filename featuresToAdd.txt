@@ -1,3 +1,4 @@
 https://www.npmjs.com/package/selecto
 https://github.com/weijun-lab/region-screenshot-js
 https://github.com/merginit/element-snap.extension/blob/main/content.js
+https://www.npmjs.com/package/@webext-core/proxy-service

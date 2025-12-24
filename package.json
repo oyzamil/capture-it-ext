@@ -29,6 +29,7 @@
     "@tailwindcss/postcss": "^4.1.17",
     "@tailwindcss/vite": "^4.1.17",
     "@types/lodash": "^4.17.21",
+    "@webext-core/messaging": "^2.3.0",
     "@wxt-dev/i18n": "^0.2.4",
     "antd": "^6.0.1",
     "arrive": "^2.5.2",
@@ -46,7 +47,6 @@
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
     "vite-plugin-remove-console": "^2.2.0",
-    "webext-bridge": "^6.0.1",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

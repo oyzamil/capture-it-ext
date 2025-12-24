@@ -8,5 +8,6 @@
     "source.fixAll": "always",
     "source.organizeImports": "always"
   },
-  "tailwind-fold.autoFold": true
+  "tailwind-fold.autoFold": true,
+  "compile-hero.disable-compile-files-on-did-save-code": true
 }

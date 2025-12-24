@@ -170,6 +170,7 @@ export const createAndMountUI = async (ctx: any, props: CreateAndMountUI) => {
       name: id,
       position: position,
       anchor: anchor,
+
       onMount: (uiContainer, shadow, shadowHost) => {
         const cssContainer = shadow.querySelector('head')!;
         shadowHost.id = id;

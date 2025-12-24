@@ -14,24 +14,17 @@ export default defineContentScript({
     const { settings } = settingsHook.getState();
     let mountedElem: any = null;
 
-    browser.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-      const { action } = request;
-      console.log({ request });
-      if (action === EXT_MESSAGES.CAPTURE_CUSTOM) {
-        mountedElem = await createAndMountUI(ctx, {
-          anchor: 'body',
-          children: (
-            <>
-              <ScreenshotSelector />
-            </>
-          ),
-        });
-        return true;
-      }
-      if (action === EXT_MESSAGES.UNMOUNT) {
-        if (mountedElem) mountedElem.remove();
-        return true;
-      }
+    onMessage(EXT_MESSAGES.CAPTURE_CUSTOM, async () => {
+      if (mountedElem) return;
+
+      mountedElem = await createAndMountUI(ctx, {
+        anchor: 'body',
+        children: (
+          <>
+            <ScreenshotSelector />
+          </>
+        ),
+      });
     });
 
     document.addEventListener('EXTENSION_MESSAGE', async (e: Event) => {
@@ -40,9 +33,9 @@ export default defineContentScript({
 
       const { action, payload } = event.detail;
 
-      // await sendMessage({ action, ...payload });
       if (action === EXT_MESSAGES.UNMOUNT && mountedElem) {
         mountedElem.remove();
+        mountedElem = null;
       }
     });
 

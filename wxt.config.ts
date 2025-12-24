@@ -31,7 +31,7 @@ export default defineConfig({
       name: '__MSG_appName__',
       description: '__MSG_appDescription__',
       default_locale: 'en',
-      permissions: ['activeTab', 'storage', 'scripting', 'notifications', 'downloads'],
+      permissions: ['activeTab', 'tabs', 'storage', 'notifications', 'downloads'],
       host_permissions: ['<all_urls>'],
       web_accessible_resources: [
         {

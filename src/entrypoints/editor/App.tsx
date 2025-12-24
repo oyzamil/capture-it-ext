@@ -10,7 +10,7 @@ import React, { Activity } from 'react';
 const { Title } = Typography;
 
 type BlobState = {
-  src: string | ArrayBuffer | null;
+  src: string | null;
   w: number;
   h: number;
 };
@@ -20,51 +20,15 @@ const ThumbnailGenerator: React.FC = () => {
   const { settings, saveSettings, resetSettings } = useSettings();
   const wrapperRef = useRef<HTMLElement | null>(null);
   const [blob, setBlob] = useState<BlobState>({ src: null, w: 0, h: 0 });
+  const isProcessingRef = useRef(false);
 
-  useEffect(() => {
-    if (settings.base64Image) {
-      setBlob((prev) => ({
-        ...prev,
-        src: settings.base64Image,
-      }));
-    }
-  }, [settings]);
-
-  useEffect(() => {
-    document.addEventListener('keydown', handleShortcuts);
-
-    return () => {
-      document.removeEventListener('keydown', handleShortcuts);
-    };
-  }, [blob]);
-
-  const imageStyle = useMemo<React.CSSProperties | undefined>(() => {
-    if (!blob?.w) return undefined;
-
-    return {
-      width: `${blob.w / (window.devicePixelRatio || 1)}px`,
-    };
-  }, [blob?.w]);
-
-  const showToast = ({ type, content, key = 'PRIMARY_TOAST', duration }: { type: 'loading' | 'success' | 'error' | 'info'; content: string; key?: string; duration?: number }) => {
+  const showToast = ({ type, content, key = 'PRIMARY_TOAST', duration = 0 }: { type: 'loading' | 'success' | 'error' | 'info'; content: string; key?: string; duration?: number }) => {
     message.open({
       key,
       type,
       content,
       duration,
     });
-  };
-
-  const handleShortcuts = (e: KeyboardEvent) => {
-    if ((e.key === 'c' && e.ctrlKey) || (e.key === 'c' && e.metaKey)) {
-      e.preventDefault();
-      handleCopyImage();
-    }
-
-    if ((e.key === 's' && e.ctrlKey) || (e.key === 's' && e.metaKey)) {
-      e.preventDefault();
-      handleImageSave();
-    }
   };
 
   // const snapshotCreator = (): Promise<Blob> => {
@@ -123,16 +87,7 @@ const ThumbnailGenerator: React.FC = () => {
         height: height,
       });
 
-      await browser.runtime.sendMessage({
-        action: EXT_MESSAGES.DOWNLOAD,
-        filename: validFilename(`export-${settings.quality}`, 'png'),
-        dataUrl,
-      });
-
-      // const link = document.createElement('a');
-      // link.download = `export-${settings.quality}-${Date.now()}.png`;
-      // link.href = dataUrl;
-      // link.click();
+      await sendMessage(EXT_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`export-${settings.quality}`, 'png') });
 
       showToast({
         type: 'success',
@@ -148,59 +103,6 @@ const ThumbnailGenerator: React.FC = () => {
       });
     }
   };
-
-  // const handleCopyImage = async () => {
-  //   showToast({
-  //     type: 'loading',
-  //     content: 'Copying Image...',
-  //   });
-
-  //   if (!wrapperRef.current || !blob?.src) {
-  //     message.error('Nothing to copy, make sure to add a screenshot first!');
-  //     return;
-  //   }
-
-  //   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  //   const isFirefox = navigator.userAgent.includes('Firefox');
-
-  //   if (isFirefox) {
-  //     showToast({
-  //       type: 'error',
-  //       content: 'Firefox does not support this functionality!',
-  //       duration: 2,
-  //     });
-  //     return;
-  //   }
-
-  //   try {
-  //     // ✅ Create blob ONCE
-  //     const imageBlob = await snapshotCreator(wrapperRef.current, settings.quality);
-
-  //     const clipboardItem = new ClipboardItem({
-  //       'image/png': imageBlob,
-  //     });
-
-  //     // Safari requires direct write without permissions API
-  //     if (isSafari) {
-  //       await navigator.clipboard.write([clipboardItem]);
-  //     } else {
-  //       await navigator.clipboard.write([clipboardItem]);
-  //     }
-
-  //     showToast({
-  //       type: 'success',
-  //       content: 'Image Copied!',
-  //       duration: 2,
-  //     });
-  //   } catch (err) {
-  //     console.error('Clipboard error:', err);
-  //     showToast({
-  //       type: 'error',
-  //       content: 'Failed to copy image.',
-  //       duration: 2,
-  //     });
-  //   }
-  // };
 
   const handleCopyImage = async () => {
     showToast({
@@ -233,24 +135,58 @@ const ThumbnailGenerator: React.FC = () => {
         })
       );
   };
+  // const onPaste = (event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>) => {
+  //   let files: File[] = [];
+
+  //   // 📋 Clipboard paste
+  //   if ('clipboardData' in event && event.clipboardData) {
+  //     files = Array.from(event.clipboardData.items)
+  //       .filter((item) => item.kind === 'file')
+  //       .map((item) => item.getAsFile())
+  //       .filter(Boolean) as File[];
+  //   }
+
+  //   // 🖱️ Drag & drop
+  //   else if ('dataTransfer' in event && event.dataTransfer) {
+  //     files = Array.from(event.dataTransfer.files);
+  //   }
+
+  //   // 📁 File input (FIXED)
+  //   else if (event.target instanceof HTMLInputElement && event.target.files) {
+  //     files = Array.from(event.target.files);
+  //   }
+
+  //   if (!files.length) return;
+
+  //   files.forEach((file) => {
+  //     if (!file.type.startsWith('image/')) return;
+
+  //     const reader = new FileReader();
+  //     reader.onload = (e) => {
+  //       const result = e.target?.result;
+  //       if (!result) return;
+
+  //       setBlob((prev) => ({
+  //         ...prev,
+  //         src: result,
+  //       }));
+  //     };
+
+  //     reader.readAsDataURL(file);
+  //   });
+  // };
+
   const onPaste = (event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>) => {
     let files: File[] = [];
 
-    // 📋 Clipboard paste
     if ('clipboardData' in event && event.clipboardData) {
       files = Array.from(event.clipboardData.items)
         .filter((item) => item.kind === 'file')
         .map((item) => item.getAsFile())
         .filter(Boolean) as File[];
-    }
-
-    // 🖱️ Drag & drop
-    else if ('dataTransfer' in event && event.dataTransfer) {
+    } else if ('dataTransfer' in event && event.dataTransfer) {
       files = Array.from(event.dataTransfer.files);
-    }
-
-    // 📁 File input (FIXED)
-    else if (event.target instanceof HTMLInputElement && event.target.files) {
+    } else if (event.target instanceof HTMLInputElement && event.target.files) {
       files = Array.from(event.target.files);
     }
 
@@ -259,18 +195,15 @@ const ThumbnailGenerator: React.FC = () => {
     files.forEach((file) => {
       if (!file.type.startsWith('image/')) return;
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result;
-        if (!result) return;
+      const objectUrl = URL.createObjectURL(file);
 
-        setBlob((prev) => ({
-          ...prev,
-          src: result,
-        }));
-      };
+      setBlob((prev) => {
+        if (typeof prev.src === 'string' && prev.src.startsWith('blob:') && prev.src !== objectUrl) {
+          URL.revokeObjectURL(prev.src);
+        }
 
-      reader.readAsDataURL(file);
+        return { ...prev, src: objectUrl };
+      });
     });
   };
 
@@ -311,15 +244,19 @@ const ThumbnailGenerator: React.FC = () => {
         const height = element.offsetHeight;
 
         const blob = await toBlob(element, {
-          width: width * scale,
-          height: height * scale,
-          style: {
-            transform: `scale(${scale})`,
-            transformOrigin: 'top left',
-            width: `${width}px`,
-            height: `${height}px`,
-          },
+          pixelRatio: scale,
         });
+
+        // const blob = await toBlob(element, {
+        //   width: width * scale,
+        //   height: height * scale,
+        //   style: {
+        //     transform: `scale(${scale})`,
+        //     transformOrigin: 'top left',
+        //     width: `${width}px`,
+        //     height: `${height}px`,
+        //   },
+        // });
 
         if (!blob) {
           reject(new Error('Failed to create blob'));
@@ -336,6 +273,9 @@ const ThumbnailGenerator: React.FC = () => {
   const copyImage = (elementToCopy: HTMLElement, quality: SETTINGS_TYPE['quality']): Promise<string> => {
     const isFirefox = navigator.userAgent.includes('Firefox');
 
+    if (!('ClipboardItem' in window)) {
+      return Promise.reject('Clipboard not supported');
+    }
     if (isFirefox) {
       return Promise.reject('Firefox does not support this functionality');
     }
@@ -354,6 +294,51 @@ const ThumbnailGenerator: React.FC = () => {
         return Promise.reject('Error Copying Image!');
       });
   };
+
+  const handleShortcuts = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'c' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleCopyImage();
+      }
+
+      if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleImageSave();
+      }
+    },
+    [handleCopyImage, handleImageSave]
+  );
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleShortcuts);
+    return () => document.removeEventListener('keydown', handleShortcuts);
+  }, [handleShortcuts]);
+
+  useEffect(() => {
+    if (settings.base64Image) {
+      setBlob((prev) => (prev.src === settings.base64Image ? prev : { ...prev, src: settings.base64Image }));
+    }
+  }, [settings.base64Image]);
+
+  const imageStyle = useMemo<React.CSSProperties | undefined>(() => {
+    if (!blob?.w) return undefined;
+
+    return {
+      width: `${blob.w / (window.devicePixelRatio || 1)}px`,
+    };
+  }, [blob?.w]);
+
+  useEffect(() => {
+    return () => {
+      setBlob((prev) => {
+        if (typeof prev.src === 'string' && prev.src.startsWith('blob:')) {
+          URL.revokeObjectURL(prev.src);
+        }
+        return prev;
+      });
+    };
+  }, [blob.src]);
 
   return (
     <div
@@ -417,7 +402,7 @@ const ThumbnailGenerator: React.FC = () => {
                       <Activity mode={settings.noise ? 'visible' : 'hidden'}>
                         <div
                           style={{ backgroundImage: `url("/noise.svg")` }}
-                          className={`absolute inset-0 w-full h-full bg-repeat opacity-[0.15] ${settings.rounded} ${settings.browserBar !== 'hidden' ? 'rounded-t-none' : ''}`}
+                          className={`absolute inset-0 w-full h-full bg-repeat opacity-80 ${settings.rounded} ${settings.browserBar !== 'hidden' ? 'rounded-t-none' : ''}`}
                         />
                       </Activity>
                       <StackEffect className={settings.rounded} rootClassName={cn('grid', settings.scale)} shade={settings.browserBar === 'dark' ? '#000000' : '#ffffff'}>
@@ -426,7 +411,7 @@ const ThumbnailGenerator: React.FC = () => {
                           <Activity mode={settings.browserBar === 'hidden' ? 'hidden' : 'visible'}>
                             <div
                               className={cn(settings.rounded, 'flex items-center w-full px-4 py-2.5 rounded-b-none z-10', settings.browserBar === 'light' ? 'bg-white' : 'bg-black')}
-                              style={imageStyle}
+                              // style={imageStyle}
                             >
                               <div className="flex items-center space-x-2">
                                 {['bg-red-400', 'bg-yellow-300', 'bg-green-500'].map((color, i) => (
@@ -436,19 +421,32 @@ const ThumbnailGenerator: React.FC = () => {
                             </div>
                           </Activity>
 
-                          <div
+                          <img
+                            src={blob?.src as any}
+                            alt=""
+                            className={cn('relative w-full', settings.rounded, settings.browserBar === 'hidden' ? '' : 'rounded-t-none')}
+                            onLoad={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              setBlob({
+                                ...blob,
+                                w: target.naturalWidth,
+                                h: target.naturalHeight,
+                              });
+                            }}
+                          />
+
+                          {/* <div
                             aria-label="Generated Image"
                             style={{
-                              ...imageStyle,
+                              // ...imageStyle,
                               backgroundImage: `url(${blob?.src})`,
                               backgroundRepeat: 'no-repeat',
                               backgroundPosition: 'center',
                               backgroundSize: 'contain',
-                              aspectRatio: `${blob?.w} / ${blob?.h}`,
+                              // aspectRatio: `${blob?.w} / ${blob?.h}`,
                             }}
-                            className={cn('relative', settings.rounded, settings.browserBar === 'hidden' ? '' : 'rounded-t-none')}
+                            className={cn('relative w-full', settings.rounded, settings.aspectRatio, settings.browserBar === 'hidden' ? '' : 'rounded-t-none')}
                           >
-                            {/* hidden img only for natural size detection */}
                             <img
                               src={blob?.src as any}
                               alt=""
@@ -462,7 +460,7 @@ const ThumbnailGenerator: React.FC = () => {
                                 });
                               }}
                             />
-                          </div>
+                          </div> */}
                         </div>
                         {/* {[0.7, 0.8, 0.9].reverse().map((opacity, i) => (
                           <div

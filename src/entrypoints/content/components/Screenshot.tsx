@@ -201,13 +201,12 @@ export default function ScreenshotSelector() {
         await new Promise((r) => setTimeout(r, 100));
 
         // 🔥 Capture VISIBLE viewport (NOT document)
-        const response: any = await new Promise((resolve, reject) => {
-          browser.runtime.sendMessage({ action: EXT_MESSAGES.CAPTURE_VISIBLE }, (res) => (res?.screenshotUrl ? resolve(res) : reject()));
-        });
+        const { screenshotUrl } = await sendMessage(EXT_MESSAGES.CAPTURE_VISIBLE);
+
         resetSelection();
 
         const image = new Image();
-        image.src = response.screenshotUrl;
+        image.src = screenshotUrl;
         await new Promise<void>((r, rej) => {
           image.onload = () => r();
           image.onerror = () => rej(new Error('Failed to load screenshot image'));
@@ -245,6 +244,8 @@ export default function ScreenshotSelector() {
         // Synchronously get Data URL
         const dataUrl = canvas.toDataURL('image/png');
 
+        if (!canvas) throw new Error('Canvas creation failed');
+
         // Asynchronously get Blob
         canvas.toBlob((blob) => {
           if (blob) resolve({ blob, dataUrl });
@@ -261,7 +262,8 @@ export default function ScreenshotSelector() {
       setIsDownloading(true);
 
       const { dataUrl } = await createCanvas();
-      await sendMessage({ action: EXT_MESSAGES.DOWNLOAD, dataUrl, filename: validFilename(`export-${settings.quality}`, 'png') });
+      await sendMessage(EXT_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`export-${settings.quality}`, 'png') });
+      await sendMessage(EXT_MESSAGES.NOTIFY, { title: 'Image Downloaded!', message: 'Image download completed!' });
     } catch (error: any) {
       throw new Error(`Screenshot download failed: ${error?.message || error}`);
     } finally {
@@ -290,7 +292,7 @@ export default function ScreenshotSelector() {
       const { dataUrl } = await createCanvas();
 
       await saveSettings({ base64Image: dataUrl });
-      await sendMessage({ action: EXT_MESSAGES.SHOW_EDITOR });
+      await sendMessage(EXT_MESSAGES.SHOW_EDITOR);
     } catch (error: any) {
       throw new Error(`Screenshot editing failed: ${error?.message || error}`);
     } finally {
@@ -325,7 +327,6 @@ export default function ScreenshotSelector() {
   }, [isResizing]);
 
   const handleUnmount = async () => {
-    // await sendMessage({ action: EXT_MESSAGES.UNMOUNT });
     await sendMessageToMain(EXT_MESSAGES.UNMOUNT);
   };
   return (

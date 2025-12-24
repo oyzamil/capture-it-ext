@@ -3,6 +3,10 @@ import { useAntd } from '@/providers/ThemeProvider';
 import { Button, Form, Segmented } from 'antd';
 import { debounce } from 'lodash';
 
+type CAPTURE_DIV = (typeof EXT_MESSAGES)['CAPTURE_DIV'];
+type CAPTURE_VISIBLE = (typeof EXT_MESSAGES)['CAPTURE_VISIBLE'];
+type CAPTURE_CUSTOM = (typeof EXT_MESSAGES)['CAPTURE_CUSTOM'];
+
 function Home() {
   const { message } = useAntd();
   const { settings, saveSettings } = useSettings();
@@ -28,8 +32,8 @@ function Home() {
     }
   }
 
-  const handleCapture = (captureType: EXT_MESSAGES_TYPE): void => {
-    browser.tabs.query({ active: true, currentWindow: true }, (tabs: Browser.tabs.Tab[]) => {
+  const handleCapture = async (CAPTURE_YTPE: CAPTURE_DIV | CAPTURE_VISIBLE | CAPTURE_CUSTOM): Promise<void> => {
+    browser.tabs.query({ active: true, currentWindow: true }, async (tabs: Browser.tabs.Tab[]) => {
       const activeTab = tabs[0];
 
       if (!activeTab || !activeTab.url || activeTab.id === undefined) {
@@ -41,13 +45,9 @@ function Home() {
       const isInternalPage: boolean = currentUrl.startsWith('chrome://') || currentUrl.includes('chromewebstore');
 
       if (isInternalPage) {
-        browser.runtime.sendMessage({
-          action: EXT_MESSAGES.INTERNAL_PAGE,
-        });
+        await sendMessage(EXT_MESSAGES.NOTIFY, { message: 'This page can not be captured!' });
       } else {
-        browser.tabs.sendMessage(activeTab.id, {
-          action: captureType,
-        });
+        await sendMessage(CAPTURE_YTPE, undefined, { tabId: activeTab.id });
         window.close();
       }
     });
@@ -90,8 +90,14 @@ function Home() {
 
         <Button
           type="primary"
-          onClick={() => {
-            handleCapture(EXT_MESSAGES.CAPTURE_VISIBLE);
+          onClick={async () => {
+            try {
+              const { screenshotUrl } = await sendMessage(EXT_MESSAGES.CAPTURE_VISIBLE);
+              await saveSettings({ base64Image: screenshotUrl });
+              await sendMessage(EXT_MESSAGES.SHOW_EDITOR);
+            } catch (error) {
+              console.error(error);
+            }
           }}
         >
           Capture Visible
@@ -107,21 +113,6 @@ function Home() {
           Custom Capture
         </Button>
       </div>
-      {/* <div className={cn('flex-center flex-col gap-4')}>
-        <Text className="glass block text-center">
-          This is a starter template for building{' '}
-          <Button
-            type="text"
-            className="underline"
-            onClick={() => {
-              sendMessage('OPEN_BUILDER', {});
-            }}
-          >
-            Chrome extensions
-          </Button>
-          with React, TypeScript, Tailwind CSS, and Ant Design. You can customize it to fit your needs.
-        </Text>
-      </div> */}
     </div>
   );
 }

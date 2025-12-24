@@ -7,66 +7,104 @@ export default defineBackground(() => {
     //   console.log('settings changed', settings);
     // });
 
-    browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      if (request.action === EXT_MESSAGES.CAPTURE_VISIBLE) {
-        browser.tabs
-          .captureVisibleTab(sender.tab!.windowId!, { format: 'png' })
-          .then((screenshotUrl) => {
-            sendResponse({ screenshotUrl });
-          })
-          .catch((err) => {
-            console.error(err);
-            sendResponse({ error: err.message });
-          });
+    onMessage(EXT_MESSAGES.CAPTURE_VISIBLE, ({ sender }) => {
+      return captureVisible(sender.tab?.windowId);
+    });
 
-        return true;
-      }
+    // Open Editor Page
+    onMessage(EXT_MESSAGES.SHOW_EDITOR, openEditorPage);
 
-      if (request.action === EXT_MESSAGES.SHOW_EDITOR) {
-        browser.tabs.create({
-          url: browser.runtime.getURL('/options.html'),
-        });
-      }
+    // Download file
+    onMessage(EXT_MESSAGES.DOWNLOAD, async ({ data }) => {
+      return handleImageDownload(data.dataUrl, data.filename);
+    });
 
-      if (request.action === EXT_MESSAGES.DOWNLOAD) {
-        const { dataUrl, filename } = request;
-        if (!dataUrl) return;
-        handleImageDownload(dataUrl, filename);
-
-        return true;
-      }
-      if (request.action === EXT_MESSAGES.INTERNAL_PAGE) {
-        notify("The extension doesn't work on internal pages.");
-      }
+    // Show Notification
+    onMessage(EXT_MESSAGES.NOTIFY, ({ data }) => {
+      notify(data.title, data.message);
     });
   } catch (error) {
     console.error('Service Worker Error:', error);
   }
 });
 
-function notify(msg: string) {
-  browser.notifications.create({
+function notify(title: string, message: string) {
+  console.log(message);
+  browser.notifications.create('quick-div-capture', {
     type: 'basic',
-    iconUrl: 'icons/128.png',
-    title: 'Quick Div Capture',
-    message: msg,
+    iconUrl: browser.runtime.getURL('/icons/128.png'),
+    title: title,
+    message: message,
   });
 }
 
-const handleImageDownload = (dataUrl: string, filename: string) => {
-  chrome.downloads.download(
-    {
+const captureVisible = (windowId: number | undefined): Promise<{ screenshotUrl: string }> => {
+  return new Promise((resolve, reject) => {
+    const getWindowId = (): Promise<number> => {
+      // Case 1: windowId already exists
+      if (windowId !== undefined) {
+        return Promise.resolve(windowId);
+      }
+
+      // Case 2: fallback to active tab
+      return browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+        const activeTab = tabs[0];
+        if (!activeTab?.windowId) {
+          throw new Error('Unable to determine active window');
+        }
+        return activeTab.windowId;
+      });
+    };
+
+    getWindowId()
+      .then((finalWindowId) => {
+        return browser.tabs.captureVisibleTab(finalWindowId, {
+          format: 'png',
+        });
+      })
+      .then((screenshotUrl) => {
+        resolve({ screenshotUrl });
+      })
+      .catch((err) => {
+        console.error('captureVisible failed:', err);
+        reject(err);
+      });
+  });
+};
+
+const handleImageDownload = async (dataUrl: string, filename: string): Promise<{ downloadId: number | undefined }> => {
+  try {
+    const downloadId = await browser.downloads.download({
       url: dataUrl,
       filename,
-      // saveAs: true,
-    },
-    (downloadId) => {
-      if (chrome.runtime.lastError) {
-        console.error('Download failed:', chrome.runtime.lastError);
-      } else {
-        notify('Downloading Image!');
-        console.log('Download started, id:', downloadId);
-      }
-    }
-  );
+      saveAs: false,
+    });
+
+    return { downloadId };
+  } catch (e) {
+    console.error('Download failed', e);
+    return { downloadId: undefined };
+  }
+};
+
+const openEditorPage = async () => {
+  const editorUrl = browser.runtime.getURL('/editor.html');
+
+  // Get all tabs in all windows
+  const tabs = await browser.tabs.query({});
+
+  // Find a tab that already has our extension editor open
+  const editorTab = tabs.find((tab) => tab.url === editorUrl);
+
+  if (editorTab?.id != null) {
+    // Focus the existing tab and its window
+    await browser.tabs.update(editorTab.id, { active: true });
+    await browser.windows.update(editorTab.windowId, { focused: true });
+  } else {
+    // Open a new tab
+    await browser.tabs.create({
+      url: editorUrl,
+      active: true,
+    });
+  }
 };
