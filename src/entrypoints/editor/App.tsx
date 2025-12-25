@@ -1,4 +1,3 @@
-import { SETTINGS_TYPE } from '@/app.config';
 import { BG_PATTERNS } from '@/components/PatternBox';
 import { useAntd } from '@/providers/ThemeProvider';
 import { CopyOutlined, DownloadOutlined } from '@ant-design/icons';
@@ -6,6 +5,8 @@ import { Button, Card, Col, ColorPicker, Divider, Popconfirm, Row, Select, Space
 import { toBlob, toPng } from 'html-to-image';
 
 import React, { Activity } from 'react';
+import { copyImageToClipboard } from '../content/utils';
+import { getGradientBackground } from './utils';
 
 const { Title } = Typography;
 
@@ -21,7 +22,7 @@ const ThumbnailGenerator: React.FC = () => {
   const wrapperRef = useRef<HTMLElement | null>(null);
   const [blob, setBlob] = useState<BlobState>({ src: null, w: 0, h: 0 });
 
-  const showToast = ({ type, content, key = 'PRIMARY_TOAST', duration = 0 }: { type: 'loading' | 'success' | 'error' | 'info'; content: string; key?: string; duration?: number }) => {
+  const showToast = (type: 'loading' | 'success' | 'error' | 'info', content: string, duration: number = 0, key = 'PRIMARY_TOAST') => {
     message.open({
       key,
       type,
@@ -30,150 +31,57 @@ const ThumbnailGenerator: React.FC = () => {
     });
   };
 
-  // const snapshotCreator = (): Promise<Blob> => {
-  //   return new Promise(async (resolve, reject) => {
-  //     try {
-  //       const element = wrapperRef.current;
-  //       if (!element) {
-  //         reject(new Error('Element not found'));
-  //         return;
-  //       }
-
-  //       const scale = settings.quality === '4k' ? 4 : window.devicePixelRatio || 1;
-
-  //       const width = element.offsetWidth;
-  //       const height = element.offsetHeight;
-
-  //       const blob = await toBlob(element, {
-  //         width: width * scale,
-  //         height: height * scale,
-  //         style: {
-  //           transform: `scale(${scale})`,
-  //           transformOrigin: 'top left',
-  //           width: `${width}px`,
-  //           height: `${height}px`,
-  //         },
-  //       });
-
-  //       if (!blob) {
-  //         reject(new Error('Failed to create blob'));
-  //         return;
-  //       }
-
-  //       resolve(blob);
-  //     } catch (error) {
-  //       reject(error);
-  //     }
-  //   });
-  // };
-
   const handleImageSave = async () => {
-    showToast({
-      type: 'loading',
-      content: 'Exporting Image...',
-    });
-    if (!wrapperRef.current) return;
+    if (!wrapperRef.current || !blob.src) {
+      showToast('error', t('copyMessages.empty'), 2);
+      return;
+    }
 
     try {
-      const scale = settings.quality === '4k' ? 4 : 1;
+      showToast('loading', t('exportMessages.progress'));
+
       const width = wrapperRef.current.offsetWidth;
       const height = wrapperRef.current.offsetHeight;
 
       const dataUrl = await toPng(wrapperRef.current, {
-        quality: 1,
-        pixelRatio: scale,
+        pixelRatio: getResolution(settings.quality),
         width: width,
         height: height,
       });
 
-      await sendMessage(EXT_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`export-${settings.quality}`, 'png') });
+      await sendMessage(EXT_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`${settings.quality}`, 'png') });
 
-      showToast({
-        type: 'success',
-        content: 'Export Completed!',
-        duration: 2,
-      });
+      showToast('success', t('exportMessages.success'), 2);
     } catch (err) {
-      console.error('Error generating PNG:', err);
-      showToast({
-        type: 'error',
-        content: 'Failed to generate PNG. Please try again.',
-        duration: 2,
-      });
+      console.error('Error Exporting Image:', err);
+      showToast('error', t('exportMessages.error'), 2);
     }
   };
 
   const handleCopyImage = async () => {
-    showToast({
-      type: 'loading',
-      content: 'Copying Image...',
-    });
-
-    if (!wrapperRef.current || !blob?.src) {
-      showToast({
-        type: 'error',
-        content: 'Nothing to copy, make sure to add a screenshot first!',
-        duration: 2,
-      });
+    if (!wrapperRef.current || !blob.src) {
+      showToast('error', t('copyMessages.empty'), 2);
       return;
     }
+    try {
+      showToast('loading', t('copyMessages.progress'));
+      const blob = await toBlob(wrapperRef.current, {
+        pixelRatio: getResolution(settings.quality),
+      });
 
-    copyImage(wrapperRef.current, settings.quality)
-      .then((message) =>
-        showToast({
-          type: 'success',
-          content: message,
-          duration: 2,
-        })
-      )
-      .catch((err) =>
-        showToast({
-          type: 'error',
-          content: err,
-          duration: 2,
-        })
-      );
+      if (!blob) {
+        showToast('error', t('unknownError'), 2);
+        console.error('Failed to generate image blob');
+        return;
+      }
+      await copyImageToClipboard(blob);
+
+      showToast('success', t('copyMessages.success'), 2);
+    } catch (error) {
+      console.error('Error copying image:', error);
+      showToast('error', t('copyMessages.error'), 2);
+    }
   };
-  // const onPaste = (event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>) => {
-  //   let files: File[] = [];
-
-  //   // 📋 Clipboard paste
-  //   if ('clipboardData' in event && event.clipboardData) {
-  //     files = Array.from(event.clipboardData.items)
-  //       .filter((item) => item.kind === 'file')
-  //       .map((item) => item.getAsFile())
-  //       .filter(Boolean) as File[];
-  //   }
-
-  //   // 🖱️ Drag & drop
-  //   else if ('dataTransfer' in event && event.dataTransfer) {
-  //     files = Array.from(event.dataTransfer.files);
-  //   }
-
-  //   // 📁 File input (FIXED)
-  //   else if (event.target instanceof HTMLInputElement && event.target.files) {
-  //     files = Array.from(event.target.files);
-  //   }
-
-  //   if (!files.length) return;
-
-  //   files.forEach((file) => {
-  //     if (!file.type.startsWith('image/')) return;
-
-  //     const reader = new FileReader();
-  //     reader.onload = (e) => {
-  //       const result = e.target?.result;
-  //       if (!result) return;
-
-  //       setBlob((prev) => ({
-  //         ...prev,
-  //         src: result,
-  //       }));
-  //     };
-
-  //     reader.readAsDataURL(file);
-  //   });
-  // };
 
   const onPaste = (event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>) => {
     let files: File[] = [];
@@ -206,94 +114,6 @@ const ThumbnailGenerator: React.FC = () => {
     });
   };
 
-  const getGradientBackground = (settings: SETTINGS_TYPE) => {
-    const { canvasColors, backgroundAngle = 180, gradientType } = settings;
-
-    if (!canvasColors || canvasColors.length === 0) return 'transparent';
-
-    if (canvasColors.length === 1) return canvasColors[0]; // single color
-    // multiple colors → build gradient string
-    const colorStops = canvasColors.map((c, i) => {
-      const percent = Math.round((i / (canvasColors.length - 1)) * 100);
-      return `${c} ${percent}%`;
-    });
-
-    if (gradientType === 'linear') {
-      return `linear-gradient(${backgroundAngle}, ${colorStops.join(', ')})`;
-    } else if (gradientType === 'radial') {
-      return `radial-gradient(circle, ${colorStops.join(', ')})`;
-    } else if (gradientType === 'conic') {
-      return `conic-gradient(${colorStops.join(', ')})`;
-    }
-
-    return 'transparent'; // fallback
-  };
-
-  const snapshotCreator = (element: HTMLElement, quality: SETTINGS_TYPE['quality']): Promise<Blob> => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        if (!element) {
-          reject(new Error('Element not found'));
-          return;
-        }
-
-        const scale = quality === '4k' ? 4 : window.devicePixelRatio || 1;
-
-        const width = element.offsetWidth;
-        const height = element.offsetHeight;
-
-        const blob = await toBlob(element, {
-          pixelRatio: scale,
-        });
-
-        // const blob = await toBlob(element, {
-        //   width: width * scale,
-        //   height: height * scale,
-        //   style: {
-        //     transform: `scale(${scale})`,
-        //     transformOrigin: 'top left',
-        //     width: `${width}px`,
-        //     height: `${height}px`,
-        //   },
-        // });
-
-        if (!blob) {
-          reject(new Error('Failed to create blob'));
-          return;
-        }
-
-        resolve(blob);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  };
-
-  const copyImage = (elementToCopy: HTMLElement, quality: SETTINGS_TYPE['quality']): Promise<string> => {
-    const isFirefox = navigator.userAgent.includes('Firefox');
-
-    if (!('ClipboardItem' in window)) {
-      return Promise.reject('Clipboard not supported');
-    }
-    if (isFirefox) {
-      return Promise.reject('Firefox does not support this functionality');
-    }
-
-    // Wrap async logic in a Promise
-    return snapshotCreator(elementToCopy, quality)
-      .then((imageBlob) => {
-        const clipboardItem = new ClipboardItem({ 'image/png': imageBlob });
-        return navigator.clipboard.write([clipboardItem]);
-      })
-      .then(() => {
-        return Promise.resolve('Image Copied!');
-      })
-      .catch((err) => {
-        console.error('Clipboard error:', err);
-        return Promise.reject('Error Copying Image!');
-      });
-  };
-
   const handleShortcuts = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'c' && (e.ctrlKey || e.metaKey)) {
@@ -320,14 +140,6 @@ const ThumbnailGenerator: React.FC = () => {
     }
   }, [settings.base64Image]);
 
-  const imageStyle = useMemo<React.CSSProperties | undefined>(() => {
-    if (!blob?.w) return undefined;
-
-    return {
-      width: `${blob.w / (window.devicePixelRatio || 1)}px`,
-    };
-  }, [blob?.w]);
-
   useEffect(() => {
     return () => {
       setBlob((prev) => {
@@ -353,7 +165,7 @@ const ThumbnailGenerator: React.FC = () => {
     >
       <div className="max-w-8xl mx-auto p-4">
         <Title level={2} className="mb-8 text-center">
-          🎨 Enhanced Thumbnail Generator
+          <Watermark className="text-2xl" />
         </Title>
 
         <Row gutter={[30, 12]} className="justify-center">

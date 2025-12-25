@@ -3,17 +3,20 @@ import { Button, Space } from 'antd';
 interface ActionButtonsProps {
   ref?: React.Ref<HTMLDivElement>;
   selection: { y: number; x: number; width: number; height: number };
-  showEraser: boolean;
+
   onEdit: () => void;
   onCopy: () => void;
   onDownload: () => void;
   onEraser: () => void;
   onCancel: () => void;
-  isDownloading: boolean;
-  isCopying: boolean;
+  options: {
+    downloading: boolean;
+    copying: boolean;
+    eraser: boolean;
+  };
 }
 
-const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, selection, showEraser, onEdit, onCopy, onDownload, onEraser, onCancel, isCopying, isDownloading }) => {
+const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, options, selection, onEdit, onCopy, onDownload, onEraser, onCancel }) => {
   const isCloserToBottom = selection.y + selection.height + 40 > window.innerHeight;
   const isCloserToLeft = selection.x + 220 > window.innerWidth;
 
@@ -34,7 +37,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, selection, showErase
         <Button
           type="primary"
           onClick={onEdit}
-          title="Edit"
+          title={t('edit')}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24">
               <path
@@ -48,13 +51,13 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, selection, showErase
             </svg>
           }
         >
-          Edit
+          {t('edit')}
         </Button>
         <Button
           type="primary"
           onClick={onCopy}
-          loading={isCopying}
-          title="Copy"
+          loading={options.copying}
+          title={t('copy')}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24">
               <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
@@ -64,14 +67,14 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, selection, showErase
             </svg>
           }
         >
-          Copy
+          {t('copy')}
         </Button>
 
         <Button
           type="primary"
           onClick={onDownload}
-          loading={isDownloading}
-          title="Download"
+          loading={options.downloading}
+          title={t('download')}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24">
               <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5">
@@ -86,14 +89,14 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, selection, showErase
             </svg>
           }
         >
-          Download
+          {t('download')}
         </Button>
 
-        {showEraser && (
+        {options.eraser && (
           <Button
             type="primary"
             onClick={onEraser}
-            title="Eraser"
+            title={t('delete')}
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24">
                 <path
@@ -103,14 +106,15 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, selection, showErase
               </svg>
             }
           >
-            Delete
+            {t('delete')}
           </Button>
         )}
 
         <Button
           type="primary"
           onClick={onCancel}
-          title="Cancel"
+          title={t('close')}
+          danger
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 15 15">
               <path
@@ -120,7 +124,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, selection, showErase
             </svg>
           }
         >
-          Close
+          {t('close')}
         </Button>
       </Space.Compact>
     </div>
@@ -128,33 +132,3 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, selection, showErase
 };
 
 export default ActionButtons;
-// import { useAntd } from '@/providers/ThemeProvider';
-// import { Button } from 'antd';
-
-// export default function Main() {
-//   const { settings } = useSettings();
-//   const { message, notification } = useAntd();
-//   useEffect(() => {
-//     if (!settings) return;
-//     console.log('Settings:', settings);
-//     return () => {};
-//   }, [settings]);
-//   return (
-//     <>
-//       <Button
-//         type="primary"
-//         className="fixed right-0 bottom-0 m-4"
-//         onClick={async () => {
-//           message.success('Success!');
-//           notification.success({
-//             title: 'Yes',
-//             description: 'Its a success notification!',
-//           });
-//           // await sendMessage("OPEN_POPUP", {});
-//         }}
-//       >
-//         Open Popup
-//       </Button>
-//     </>
-//   );
-// }

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback } from 'react';
+import { ensureFontsReady } from '../utils';
 import ActionButtons from './ActionButtons';
 
 type Point = {
@@ -6,43 +7,36 @@ type Point = {
   y: number;
 };
 
-type SelectionBox = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
 type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w' | null;
 
-interface CanvasResult {
-  blob: Blob;
-  dataUrl: string;
-}
-
-export default function ScreenshotSelector() {
+export default function CaptureCustom() {
   const { settings, saveSettings } = useSettings();
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selection, setSelection] = useState<SelectionBox | null>(null);
+  const [options, setOptions] = useStateUpdater({
+    overlay: true,
+    isSelecting: false,
+    downloading: false,
+    copying: false,
+    eraser: false,
+  });
+
+  const [selection, setSelection] = useState<Rect | null>(null);
   const [isMoving, setIsMoving] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<ResizeHandle>(null);
   const [moveStart, setMoveStart] = useState<Point | null>(null);
-  const [resizeStart, setResizeStart] = useState<{ box: SelectionBox; mouse: Point } | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isCopying, setIsCopying] = useState(false);
+  const [resizeStart, setResizeStart] = useState<{ box: Rect; mouse: Point } | null>(null);
 
   const actionButtonsRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const selectionRef = useRef<HTMLDivElement>(null);
 
-  const { position, isDragging, dragStart, dragEnd } = useCursorDrag();
+  const { position, isDragging, dragStart, dragEnd } = useCursor();
   useEffect(() => {
     startSelection();
   }, []);
   // Create initial selection
   useEffect(() => {
-    if (isSelecting && dragStart && isDragging) {
+    if (options.isSelecting && dragStart && isDragging) {
       const x = Math.min(dragStart.x, position.x);
       const y = Math.min(dragStart.y, position.y);
       const width = Math.abs(position.x - dragStart.x);
@@ -55,11 +49,11 @@ export default function ScreenshotSelector() {
         return prev; // no change
       });
     }
-  }, [isSelecting, dragStart, position, isDragging]);
+  }, [options.isSelecting, dragStart, position, isDragging]);
 
   // Finalize selection
   useEffect(() => {
-    if (isSelecting && dragEnd && dragStart) {
+    if (options.isSelecting && dragEnd && dragStart) {
       const x = Math.min(dragStart.x, dragEnd.x);
       const y = Math.min(dragStart.y, dragEnd.y);
       const width = Math.abs(dragEnd.x - dragStart.x);
@@ -67,10 +61,10 @@ export default function ScreenshotSelector() {
 
       if (width > 10 && height > 10) {
         setSelection({ x, y, width, height });
-        setIsSelecting(false);
+        setOptions({ isSelecting: false });
       }
     }
-  }, [dragEnd, dragStart, isSelecting]);
+  }, [dragEnd, dragStart, options.isSelecting]);
 
   // Handle moving
   useEffect(() => {
@@ -157,7 +151,7 @@ export default function ScreenshotSelector() {
   }, [position, isResizing, resizeStart, resizeHandle]);
 
   const startSelection = () => {
-    setIsSelecting(true);
+    setOptions({ isSelecting: true });
     setSelection(null);
   };
 
@@ -190,104 +184,112 @@ export default function ScreenshotSelector() {
     setResizeStart(null);
   };
 
-  const createCanvas = async (): Promise<CanvasResult> => {
-    return new Promise<CanvasResult>(async (resolve, reject) => {
-      const capturePadding = settings.capturePadding;
-      try {
-        if (!selection) return reject(new Error('No selection or capturing in progress'));
+  const createCanvas = async (targetResolution: Resolution = 'normal'): Promise<CanvasResult> => {
+    const capturePadding = settings.captureMargin;
 
-        hideSelectionUI();
+    try {
+      if (!selection) throw new Error('No selection or capturing in progress');
+      await ensureFontsReady();
+      hideSelectionUI();
 
-        await new Promise((r) => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 100));
 
-        // 🔥 Capture VISIBLE viewport (NOT document)
-        const { screenshotUrl } = await sendMessage(EXT_MESSAGES.CAPTURE_VISIBLE);
+      // Capture VISIBLE viewport (NOT document)
+      const { screenshotUrl } = await sendMessage(EXT_MESSAGES.CAPTURE_VISIBLE);
 
-        resetSelection();
+      resetSelection();
 
-        const image = new Image();
-        image.src = screenshotUrl;
-        await new Promise<void>((r, rej) => {
-          image.onload = () => r();
-          image.onerror = () => rej(new Error('Failed to load screenshot image'));
-        });
+      const image = new Image();
+      image.src = screenshotUrl;
+      await new Promise<void>((r, rej) => {
+        image.onload = () => r();
+        image.onerror = () => rej(new Error('Failed to load screenshot image'));
+      });
 
-        // ✅ SAME RATIOS AS YOUR WORKING CODE
-        const widthRatio = image.width / window.innerWidth;
-        const heightRatio = image.height / window.innerHeight;
+      // Compute ratios
+      const widthRatio = image.width / window.innerWidth;
+      const heightRatio = image.height / window.innerHeight;
 
-        // Expand selection by margin, clamp to viewport
-        const cropX = Math.max(0, selection.x - capturePadding); // move left
-        const cropY = Math.max(0, selection.y - capturePadding); // move up
-        const cropWidth = Math.min(window.innerWidth - cropX, selection.width + capturePadding * 2); // expand width
-        const cropHeight = Math.min(window.innerHeight - cropY, selection.height + capturePadding * 2); // expand height
+      // Expand selection by margin
+      const cropX = Math.max(0, selection.x - capturePadding);
+      const cropY = Math.max(0, selection.y - capturePadding);
+      const cropWidth = Math.min(window.innerWidth - cropX, selection.width + capturePadding * 2);
+      const cropHeight = Math.min(window.innerHeight - cropY, selection.height + capturePadding * 2);
 
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.floor(cropWidth * widthRatio);
-        canvas.height = Math.floor(cropHeight * heightRatio);
+      // ===== Handle resolution scaling =====
+      let scaleFactor = 1;
+      if (targetResolution === '4k') {
+        scaleFactor = Math.min(3840 / cropWidth, 2160 / cropHeight, 2);
+      } else if (targetResolution === '8k') {
+        scaleFactor = Math.min(7680 / cropWidth, 4320 / cropHeight, 2);
+      }
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.floor(cropWidth * widthRatio * scaleFactor);
+      canvas.height = Math.floor(cropHeight * heightRatio * scaleFactor);
 
-        ctx.drawImage(
-          image,
-          Math.floor(cropX * widthRatio),
-          Math.floor(cropY * heightRatio),
-          Math.floor(cropWidth * widthRatio),
-          Math.floor(cropHeight * heightRatio),
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context creation failed');
 
-        // Synchronously get Data URL
-        const dataUrl = canvas.toDataURL('image/png');
+      ctx.drawImage(
+        image,
+        Math.floor(cropX * widthRatio),
+        Math.floor(cropY * heightRatio),
+        Math.floor(cropWidth * widthRatio),
+        Math.floor(cropHeight * heightRatio),
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
 
-        if (!canvas) throw new Error('Canvas creation failed');
+      const dataUrl = canvas.toDataURL('image/png');
 
-        // Asynchronously get Blob
-        canvas.toBlob((blob) => {
-          if (blob) resolve({ blob, dataUrl });
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (b) resolve(b);
           else reject(new Error('Failed to convert canvas to blob'));
         }, 'image/png');
-      } catch (err) {
-        reject(err);
-      }
-    });
-  };
+      });
 
-  const handleDownload = async () => {
-    try {
-      setIsDownloading(true);
-
-      const { dataUrl } = await createCanvas();
-      await sendMessage(EXT_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`export-${settings.quality}`, 'png') });
-      await sendMessage(EXT_MESSAGES.NOTIFY, { title: 'Image Downloaded!', message: 'Image download completed!' });
-    } catch (error: any) {
-      throw new Error(`Screenshot download failed: ${error?.message || error}`);
-    } finally {
-      setSelection(null);
-      setIsDownloading(false);
-      handleUnmount();
+      return { blob, dataUrl };
+    } catch (error) {
+      throw new Error(`Capture failed: ${(error as Error).message}`);
     }
   };
 
-  const handleCopy = async (): Promise<void> => {
+  const handleDownload = useCallback(async () => {
     try {
-      setIsCopying(true);
+      await setOptions({ downloading: true });
+
+      const { dataUrl } = await createCanvas();
+      await sendMessage(EXT_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`${settings.quality}`, 'png') });
+
+      await sendMessage(EXT_MESSAGES.NOTIFY, { title: 'Image Downloaded!', message: t('exportMessages.success') });
+    } catch (error: any) {
+      throw new Error(`Screenshot download failed: ${error?.message || error}`);
+    } finally {
+      await setOptions({ downloading: false });
+      setSelection(null);
+      handleUnmount();
+    }
+  }, [selection]);
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await setOptions({ copying: true });
       const { blob } = await createCanvas();
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
     } catch (error: any) {
       throw new Error(`Screenshot copy failed: ${error?.message || error}`);
     } finally {
+      await setOptions({ copying: false });
       setSelection(null);
-      setIsCopying(false);
       handleUnmount();
     }
-  };
+  }, [selection]);
 
-  const handleEdit = async (): Promise<void> => {
+  const handleEdit = useCallback(async () => {
     try {
       const { dataUrl } = await createCanvas();
 
@@ -299,7 +301,7 @@ export default function ScreenshotSelector() {
       setSelection(null);
       handleUnmount();
     }
-  };
+  }, [selection]);
 
   const hideSelectionUI = () => {
     if (actionButtonsRef.current) actionButtonsRef.current.style.display = 'none';
@@ -307,10 +309,10 @@ export default function ScreenshotSelector() {
     if (selectionRef.current) selectionRef.current.style.display = 'none';
   };
 
-  const resetSelection = () => {
+  const resetSelection = useCallback(() => {
     setSelection(null);
-    setIsSelecting(false);
-  };
+    setOptions({ isSelecting: false });
+  }, []);
 
   useEffect(() => {
     if (isMoving) {
@@ -326,15 +328,15 @@ export default function ScreenshotSelector() {
     }
   }, [isResizing]);
 
-  const handleUnmount = async () => {
-    await sendMessageToMain(EXT_MESSAGES.UNMOUNT);
-  };
+  const handleUnmount = useCallback(async () => {
+    sendMessageToMain(EXT_MESSAGES.UNMOUNT);
+  }, [sendMessageToMain]);
   return (
     <div className="fixed inset-0 z-50 select-none">
       {/* Toolbar */}
       {/* {!selection && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg px-4 py-2 flex gap-2 items-center z-50">
-          {!selection && !isSelecting && (
+          {!selection && !options.isSelecting && (
             <button onClick={startSelection} className="flex items-center gap-2 px-4 py-2 bg-app-500 text-white rounded hover:bg-app-600 transition">
               Start Selection
             </button>
@@ -343,7 +345,7 @@ export default function ScreenshotSelector() {
       )} */}
 
       {/* Overlay with cutout */}
-      {(isSelecting || selection) && (
+      {(options.isSelecting || selection) && (
         <div ref={overlayRef} className="absolute inset-0 pointer-events-none">
           <svg className="w-full h-full">
             <defs>
@@ -388,11 +390,10 @@ export default function ScreenshotSelector() {
         </div>
       )}
 
-      {!isSelecting && !isResizing && selection && (
+      {!options.isSelecting && !isResizing && selection && (
         <ActionButtons
           ref={actionButtonsRef}
           selection={selection}
-          showEraser={true}
           onDownload={handleDownload}
           onCopy={handleCopy}
           onEdit={handleEdit}
@@ -401,8 +402,7 @@ export default function ScreenshotSelector() {
             resetSelection();
             handleUnmount();
           }}
-          isDownloading={isDownloading}
-          isCopying={isCopying}
+          options={options}
         />
       )}
     </div>

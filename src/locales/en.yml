@@ -1,5 +1,23 @@
 appName: Capture It!
 appDescription: Capture & Edit Screenshots on the go!
+copyMessages:
+  empty: 'Nothnig to copy'
+  progress: 'Copying...'
+  success: 'Image successfuly copied to clipboard'
+  error: 'Error occured while copying image'
+exportMessages:
+  empty: 'Nothnig to export'
+  progress: 'Exporting...'
+  success: 'Image successfuly saved'
+  error: 'Error occured while exporting image'
+unknownError: 'An unknown error occured, See logs for more information!'
+edit: 'Edit'
+copy: 'Copy'
+download: 'Download'
+delete: 'Delete'
+close: 'Close'
+undo: 'Undo'
+restoreAll: 'Restore All'
 items:
   0: No items # i18n.t('items', 0, ['Zero']) - "No items"
   1: 1 item # i18n.t('items', 1, ['One']); - "One item"

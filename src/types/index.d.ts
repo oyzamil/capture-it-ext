@@ -18,3 +18,16 @@ interface CreateAndMountUI {
 type DeepPartial<T> =
   | Partial<T> // ✅ allow shallow Partial
   | (T extends Function | Date | RegExp ? T : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T);
+
+interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface CanvasResult {
+  blob: Blob;
+  dataUrl: string;
+}
+type Resolution = 'normal' | '2k' | '4k' | '8k';

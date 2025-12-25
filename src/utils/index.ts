@@ -2,7 +2,6 @@ import pkg from '@/../package.json';
 import { StoreApi } from 'zustand';
 import { StateStorage } from 'zustand/middleware';
 
-// Custom browser.storage.local wrapper
 export const browserStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
     return new Promise((resolve) => {
@@ -22,8 +21,6 @@ export const browserStorage: StateStorage = {
     });
   },
 };
-
-// Utility: sync a Zustand store with browser.storage.local
 export function syncStoreWithBrowserStorage<T extends object>(store: StoreApi<T>, storageKey: string) {
   // Listen for external changes in browser.storage.local
   browser.storage.onChanged.addListener((changes, areaName) => {
@@ -35,17 +32,13 @@ export function syncStoreWithBrowserStorage<T extends object>(store: StoreApi<T>
     }
   });
 }
-
 export type PackageJson = typeof pkg;
-
 export function readPackageJson(): PackageJson {
   return pkg; // ✔ Browser-safe
 }
-
 export function getPackageProp<K extends keyof PackageJson>(prop: K): PackageJson[K] {
   return pkg[prop];
 }
-
 export function hexToRgba(hex: string, opacity?: number, inHex?: boolean): string {
   // Remove '#' if present
   const cleanHex = hex.replace('#', '');
@@ -148,4 +141,23 @@ export const validFilename = (name: string, extension = 'png') => {
   }
 
   return `${t('appName')}_${Date.now()}_${filename}`;
+};
+export const getResolution = (resolution: Resolution) => {
+  let scale = 1;
+
+  switch (resolution) {
+    case '2k':
+      scale = 2;
+      break;
+    case '4k':
+      scale = 4;
+      break;
+    case '8k':
+      scale = 8;
+      break;
+    default:
+      scale = 1;
+  }
+
+  return scale;
 };

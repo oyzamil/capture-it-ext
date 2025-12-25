@@ -8,7 +8,6 @@ type Props = {
   scaleStep?: number;
   offset?: number;
   direction?: StackDirection;
-  blur?: number;
   shade?: string;
   minTranslate?: number;
   maxTranslate?: number;
@@ -51,9 +50,8 @@ const StackEffect: React.FC<Props> = ({
   children,
   layers = 3,
   scaleStep = 0.1,
-  offset = 20,
+  offset = 10,
   direction = 'top',
-  blur = 0,
   shade = '#ffffff',
   minTranslate = -50,
   maxTranslate = 50,
@@ -61,18 +59,17 @@ const StackEffect: React.FC<Props> = ({
   rootClassName,
 }) => {
   const layerStyles = useMemo(() => {
-    const clampedLayers = Math.max(1, Math.min(layers, 10)); // limit to 10 for performance
+    const clampedLayers = Math.max(1, Math.min(layers, 10));
     return Array.from({ length: clampedLayers - 1 }).map((_, index) => {
       const scaleValue = 1 - (index + 1) * scaleStep;
       const opacityValue = 1 - (index + 1) / clampedLayers;
       return {
         transform: getTransform(index + 1, scaleValue, offset, direction, minTranslate, maxTranslate),
-        filter: blur > 0 ? `blur(${blur}px)` : 'none',
         zIndex: -(index + 1),
         opacity: opacityValue,
       };
     });
-  }, [layers, scaleStep, offset, direction, blur, minTranslate, maxTranslate]);
+  }, [layers, scaleStep, offset, direction, minTranslate, maxTranslate]);
 
   return (
     <div className={cn('relative inline-block', rootClassName)}>

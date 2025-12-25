@@ -1,6 +1,6 @@
 import { SETTINGS_TYPE } from '@/app.config';
 import { useAntd } from '@/providers/ThemeProvider';
-import { Button, Form, Segmented } from 'antd';
+import { Button, Form, Segmented, Slider } from 'antd';
 import { debounce } from 'lodash';
 
 type CAPTURE_DIV = (typeof EXT_MESSAGES)['CAPTURE_DIV'];
@@ -53,6 +53,7 @@ function Home() {
     });
   };
 
+  const labelColumn = { flex: '80px' };
   return (
     <div className="p-3!">
       <Form
@@ -62,57 +63,72 @@ function Home() {
           debouncedSubmit(allValues);
         }}
         layout="inline"
-        labelCol={{ flex: '125px' }}
       >
-        <Form.Item label="Theme" name="theme">
+        <Form.Item label="Theme" name="theme" className="w-full" labelCol={labelColumn}>
           <Segmented
-            onChange={(value) => {
-              form.setFieldValue('theme', value);
+            onChange={(theme) => {
+              form.setFieldValue('theme', theme);
             }}
             options={[
               { label: 'Light', value: 'light' },
               { label: 'Dark', value: 'dark' },
               { label: 'System', value: 'system' },
             ]}
+            block
           />
         </Form.Item>
+        <Form.Item label="Margin" name="captureMargin" className="w-full" tooltip={'Only effects in element select mode.'} labelCol={labelColumn}>
+          <Slider
+            min={0}
+            max={50}
+            onChangeComplete={(captureMargin) => {
+              form.setFieldValue('captureMargin', captureMargin);
+            }}
+            className="w-full"
+          />
+        </Form.Item>
+
+        <Form.Item name="buttons" layout="vertical" className="w-full">
+          <div className="flex flex-col gap-2">
+            <Button
+              type="primary"
+              onClick={() => {
+                handleCapture(EXT_MESSAGES.CAPTURE_DIV);
+              }}
+              block
+            >
+              Capture Element
+            </Button>
+
+            <Button
+              type="primary"
+              block
+              onClick={async () => {
+                try {
+                  const { screenshotUrl } = await sendMessage(EXT_MESSAGES.CAPTURE_VISIBLE);
+                  await saveSettings({ base64Image: screenshotUrl });
+                  await sendMessage(EXT_MESSAGES.SHOW_EDITOR);
+                } catch (error) {
+                  console.error(error);
+                }
+              }}
+            >
+              Capture Visible
+            </Button>
+
+            {/* Custom Capture */}
+            <Button
+              type="primary"
+              block
+              onClick={() => {
+                handleCapture(EXT_MESSAGES.CAPTURE_CUSTOM);
+              }}
+            >
+              Custom Capture
+            </Button>
+          </div>
+        </Form.Item>
       </Form>
-      <div className="flex flex-col gap-2">
-        {/* Capture Div */}
-        <Button
-          type="primary"
-          onClick={() => {
-            handleCapture(EXT_MESSAGES.CAPTURE_DIV);
-          }}
-        >
-          Capture Element
-        </Button>
-
-        <Button
-          type="primary"
-          onClick={async () => {
-            try {
-              const { screenshotUrl } = await sendMessage(EXT_MESSAGES.CAPTURE_VISIBLE);
-              await saveSettings({ base64Image: screenshotUrl });
-              await sendMessage(EXT_MESSAGES.SHOW_EDITOR);
-            } catch (error) {
-              console.error(error);
-            }
-          }}
-        >
-          Capture Visible
-        </Button>
-
-        {/* Custom Capture */}
-        <Button
-          type="primary"
-          onClick={() => {
-            handleCapture(EXT_MESSAGES.CAPTURE_CUSTOM);
-          }}
-        >
-          Custom Capture
-        </Button>
-      </div>
     </div>
   );
 }

@@ -38,7 +38,7 @@ function notify(title: string, message: string) {
   });
 }
 
-const captureVisible = (windowId: number | undefined): Promise<{ screenshotUrl: string }> => {
+const captureVisible = (windowId?: number): Promise<{ screenshotUrl: string }> => {
   return new Promise((resolve, reject) => {
     const getWindowId = (): Promise<number> => {
       // Case 1: windowId already exists
@@ -49,7 +49,7 @@ const captureVisible = (windowId: number | undefined): Promise<{ screenshotUrl: 
       // Case 2: fallback to active tab
       return browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
         const activeTab = tabs[0];
-        if (!activeTab?.windowId) {
+        if (activeTab?.windowId === undefined) {
           throw new Error('Unable to determine active window');
         }
         return activeTab.windowId;
@@ -58,13 +58,9 @@ const captureVisible = (windowId: number | undefined): Promise<{ screenshotUrl: 
 
     getWindowId()
       .then((finalWindowId) => {
-        return browser.tabs.captureVisibleTab(finalWindowId, {
-          format: 'png',
-        });
+        return browser.tabs.captureVisibleTab(finalWindowId, { format: 'png' });
       })
-      .then((screenshotUrl) => {
-        resolve({ screenshotUrl });
-      })
+      .then((screenshotUrl) => resolve({ screenshotUrl }))
       .catch((err) => {
         console.error('captureVisible failed:', err);
         reject(err);

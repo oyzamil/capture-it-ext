@@ -28,10 +28,10 @@ export const config = {
     shadow: 'shadow-xl',
     noise: false,
     browserBar: 'hidden',
-    quality: '4k' as '4k' | 'normal',
+    quality: '4k' as Resolution,
     fileFormat: 'png',
     scale: 'scale-100',
-    capturePadding: 10,
+    captureMargin: 10,
   },
   ROUTES: {
     HOME: '/',

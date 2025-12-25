@@ -1,15 +1,7 @@
-export function updateState<T extends object>(setState: React.Dispatch<React.SetStateAction<T>>, updates: Partial<T>): Promise<T> {
-  return new Promise((resolve) => {
-    setState((prev) => {
-      const merged = deepMerge(prev, updates);
-      resolve(merged);
-      return merged;
-    });
-  });
-}
+export function useStateUpdater<T extends object>(initialState: T) {
+  const [state, setState] = useState(initialState);
 
-export function createStateUpdater<T extends object>(setState: React.Dispatch<React.SetStateAction<T>>) {
-  return (updates: Partial<T>): Promise<T> => {
+  const updateState = useCallback((updates: Partial<T>): Promise<T> => {
     return new Promise((resolve) => {
       setState((prev) => {
         const merged = deepMerge(prev, updates);
@@ -17,7 +9,9 @@ export function createStateUpdater<T extends object>(setState: React.Dispatch<Re
         return merged;
       });
     });
-  };
+  }, []);
+
+  return [state, updateState] as const;
 }
 
 // Deep merge helper
@@ -41,3 +35,7 @@ function deepMerge<T extends object>(target: T, source: Partial<T>): T {
 function isPlainObject(value: any): value is object {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
+
+// const [state, updateState] = useStateUpdater(initialState);
+
+// await updateState({ key: 'value' });
