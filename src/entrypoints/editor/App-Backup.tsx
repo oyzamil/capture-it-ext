@@ -209,19 +209,19 @@ const ThumbnailGenerator: React.FC = () => {
                         boxSizing: 'border-box',
                       }}
                     >
-                      <PatternBox className="w-full h-full absolute mix-blend-soft-light inset-0" patternName={cn(settings.bgPattern)} />
+                      <PatternBox className="w-full h-full absolute mix-blend-soft-light inset-0" name={cn(settings.bgPattern)} />
                       <Activity mode={settings.noise ? 'visible' : 'hidden'}>
                         <div
                           style={{ backgroundImage: `url("/noise.svg")` }}
-                          className={`absolute inset-0 w-full h-full bg-repeat opacity-80 ${settings.rounded} ${settings.browserBar !== 'hidden' ? 'rounded-t-none' : ''}`}
+                          className={`absolute inset-0 w-full h-full bg-repeat opacity-80 ${settings.rounded} ${settings.windowBar !== 'none' ? 'rounded-t-none' : ''}`}
                         />
                       </Activity>
-                      <StackEffect className={settings.rounded} rootClassName={cn('grid', settings.scale)} shade={settings.browserBar === 'dark' ? '#000000' : '#ffffff'}>
+                      <StackEffect className={settings.rounded} rootClassName={cn('grid', settings.scale)} shade={settings.windowBar === 'sinmple-dark' ? '#000000' : '#ffffff'}>
                         <div className={cn('relative overflow-hidden', settings.rounded, settings.shadow)}>
                           {/* Browser Bar  */}
-                          <Activity mode={settings.browserBar === 'hidden' ? 'hidden' : 'visible'}>
+                          <Activity mode={settings.windowBar === 'none' ? 'hidden' : 'visible'}>
                             <div
-                              className={cn(settings.rounded, 'flex items-center w-full px-4 py-2.5 rounded-b-none z-10', settings.browserBar === 'light' ? 'bg-white' : 'bg-black')}
+                              className={cn(settings.rounded, 'flex items-center w-full px-4 py-2.5 rounded-b-none z-10', settings.windowBar === 'simple-light' ? 'bg-white' : 'bg-black')}
                               // style={imageStyle}
                             >
                               <div className="flex items-center space-x-2">
@@ -235,7 +235,7 @@ const ThumbnailGenerator: React.FC = () => {
                           <img
                             src={blob?.src as any}
                             alt=""
-                            className={cn('relative w-full', settings.rounded, settings.browserBar === 'hidden' ? '' : 'rounded-t-none')}
+                            className={cn('relative w-full', settings.rounded, settings.windowBar === 'none' ? '' : 'rounded-t-none')}
                             onLoad={(e) => {
                               const target = e.target as HTMLImageElement;
                               setBlob({
@@ -256,7 +256,7 @@ const ThumbnailGenerator: React.FC = () => {
                               backgroundSize: 'contain',
                               // aspectRatio: `${blob?.w} / ${blob?.h}`,
                             }}
-                            className={cn('relative w-full', settings.rounded, settings.aspectRatio, settings.browserBar === 'hidden' ? '' : 'rounded-t-none')}
+                            className={cn('relative w-full', settings.rounded, settings.aspectRatio, settings.windowBar === 'hidden' ? '' : 'rounded-t-none')}
                           >
                             <img
                               src={blob?.src as any}
@@ -278,7 +278,7 @@ const ThumbnailGenerator: React.FC = () => {
                             key={i}
                             className={cn(settings.rounded, 'stack-item ')}
                             style={{
-                              backgroundColor: settings.browserBar === 'dark' ? hexToRgba('#000000', opacity) : hexToRgba('#ffffff', opacity),
+                              backgroundColor: settings.windowBar === 'dark' ? hexToRgba('#000000', opacity) : hexToRgba('#ffffff', opacity),
                             }}
                           ></div>
                         ))} */}
@@ -496,15 +496,15 @@ const ThumbnailGenerator: React.FC = () => {
                     <label>Browser Bar</label>
                     <Select
                       className="w-full"
-                      value={settings.browserBar}
+                      value={settings.windowBar}
                       placeholder="Browser Bar"
                       options={[
                         { value: 'hidden', label: 'None' },
                         { value: 'light', label: 'Light' },
                         { value: 'dark', label: 'Dark' },
                       ]}
-                      onChange={(browserBar) => {
-                        saveSettings({ browserBar });
+                      onChange={(windowBar) => {
+                        saveSettings({ windowBar });
                       }}
                     />
                   </div>

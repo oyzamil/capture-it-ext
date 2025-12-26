@@ -100,6 +100,19 @@
   .resize-handle {
     @apply absolute w-3 h-3 bg-white border-2 border-app-500 rounded-full;
   }
+  .add-border {
+    @apply border border-gray-200 rounded-md p-2;
+  }
+  .lined-border {
+    background: 
+    /* Top edge - vertical dashes */
+      repeating-linear-gradient(to right, transparent 0px, transparent 5px, #6b7280 5px, #6b7280 6px, transparent 6px, transparent 15px) top / 100% 5px no-repeat,
+      /* Bottom edge - vertical dashes */ repeating-linear-gradient(to right, transparent 0px, transparent 5px, #9ca3af 5px, #9ca3af 6px, transparent 6px, transparent 15px) bottom / 100% 5px no-repeat,
+      /* Left edge - horizontal dashes */ repeating-linear-gradient(to bottom, transparent 0px, transparent 5px, #9ca3af 5px, #9ca3af 6px, transparent 6px, transparent 15px) left / 5px 100% no-repeat,
+      /* Right edge - horizontal dashes */ repeating-linear-gradient(to bottom, transparent 0px, transparent 5px, #9ca3af 5px, #9ca3af 6px, transparent 6px, transparent 15px) right / 5px 100%
+        no-repeat,
+      /* Main background */ #e5e7eb;
+  }
 }
 
 @layer utilities {

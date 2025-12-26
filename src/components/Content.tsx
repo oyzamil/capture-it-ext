@@ -1,4 +1,4 @@
-import logo from '@/assets/icon.png';
+import logo from '@/assets/icon.svg';
 import { useAntd } from '@/providers/ThemeProvider';
 import { ArrowLeftIcon, Bars3Icon, ChatBubbleLeftIcon, KeyIcon, StarIcon } from '@heroicons/react/24/outline';
 import { Avatar, Button, Dropdown, Typography } from 'antd';

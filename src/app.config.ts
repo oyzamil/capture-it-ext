@@ -27,7 +27,7 @@ export const config = {
     roundedWrapper: 'rounded-xl',
     shadow: 'shadow-xl',
     noise: false,
-    browserBar: 'hidden',
+    windowBar: 'simple-light',
     quality: '4k' as Resolution,
     fileFormat: 'png',
     scale: 'scale-100',

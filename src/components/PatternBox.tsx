@@ -556,21 +556,22 @@ ${selector} {
 };
 
 type PatternBoxProps = {
-  patternName: string;
+  name: string;
+  noise?: boolean;
   className?: string;
   children?: ReactNode;
 };
 
-const PatternBox = ({ patternName, className = '', children }: PatternBoxProps) => {
+const PatternBox = ({ name, className = '', children }: PatternBoxProps) => {
   useEffect(() => {
     injectPatternCSS();
   }, []);
 
-  if (!patternName || !patternMap.has(patternName)) {
+  if (!name || !patternMap.has(name)) {
     return <>{children}</>;
   }
 
-  return <div className={`pattern-${patternName} ${className}`}>{children}</div>;
+  return <div className={`pattern-${name} ${className}`}>{children}</div>;
 };
 
 export default PatternBox;

@@ -10,7 +10,7 @@ const Watermark = ({ className = '' }) => {
       </div>{' '}
       by{' '}
       <a href="https://instagram.com/oyzamil" target="_blank" className="text-app-500">
-        M. Muzammil
+        Muzammil
       </a>
     </div>
   );
