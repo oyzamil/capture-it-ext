@@ -130,12 +130,7 @@ export const validFilename = (name: string, extension = 'png') => {
   // 3. Replace multiple underscores with single underscore
   filename = filename.replace(/_+/g, '_');
 
-  // 4. Ensure it's not empty
-  if (!filename) {
-    filename = `download_${Date.now()}`;
-  }
-
-  // 5. Append extension if not already present
+  // 4. Append extension if not already present
   if (!filename.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
     filename += `.${extension}`;
   }

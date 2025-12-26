@@ -185,7 +185,7 @@ export default function CaptureCustom() {
   };
 
   const createCanvas = async (targetResolution: Resolution = 'normal'): Promise<CanvasResult> => {
-    const capturePadding = settings.captureMargin;
+    const capturePadding = 0; // settings.captureMargin;
 
     try {
       if (!selection) throw new Error('No selection or capturing in progress');
@@ -332,7 +332,7 @@ export default function CaptureCustom() {
     sendMessageToMain(EXT_MESSAGES.UNMOUNT);
   }, [sendMessageToMain]);
   return (
-    <div className="fixed inset-0 z-50 select-none">
+    <div className="fixed inset-0 z-99999999! select-none">
       {/* Toolbar */}
       {/* {!selection && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg px-4 py-2 flex gap-2 items-center z-50">

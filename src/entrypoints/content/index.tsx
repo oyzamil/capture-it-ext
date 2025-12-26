@@ -6,8 +6,9 @@ const example = ['*://*.example.com/*'];
 const production_match = ['<all_urls>'];
 
 export default defineContentScript({
-  matches: production_match,
+  matches: example,
   cssInjectionMode: 'ui',
+  allFrames: true,
 
   async main(ctx) {
     let mountedElem: any = null;
@@ -25,6 +26,7 @@ export default defineContentScript({
 
       mountedElem = await createAndMountUI(ctx, {
         anchor: 'body',
+        position: 'overlay',
         children: (
           <>
             <CaptureElem />
@@ -38,6 +40,7 @@ export default defineContentScript({
 
       mountedElem = await createAndMountUI(ctx, {
         anchor: 'body',
+        position: 'overlay',
         children: (
           <>
             <CaptureCustom />

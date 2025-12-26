@@ -11,7 +11,7 @@ export default defineConfig({
   modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons', '@wxt-dev/i18n/module'],
   srcDir: 'src',
   autoIcons: {
-    baseIconPath: 'assets/icon.png',
+    baseIconPath: 'assets/icon.svg',
   },
   vite: (configEnv: { mode: string }) => ({
     plugins: configEnv.mode === 'production' ? [removeConsole({ includes: ['log'] }), tailwindcss()] : [toUtf8(), tailwindcss()],

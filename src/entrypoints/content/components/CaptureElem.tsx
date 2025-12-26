@@ -216,7 +216,7 @@ export default function ElementSnapExtension() {
   const maskRoundRadius = 0;
 
   return (
-    <div className="z-50 select-none">
+    <div className="z-99999999! select-none">
       {options.overlay && displayRect && (
         <div ref={overlayRef} className="fixed inset-0 pointer-events-none">
           <svg className="w-full h-full" viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`} preserveAspectRatio="none">
