@@ -374,7 +374,7 @@ export default function CaptureCustom() {
           onMouseDown={startMove}
         >
           {/* Move handle */}
-          <div className={cn('absolute bottom-2 right-2 cursor-move text-xs font-medium', 'bg-white/50 px-2 py-1 text-black rounded')}>
+          <div className={cn('absolute bottom-2 right-2 cursor-move text-xs font-medium', 'text-black dark:text-white bg-white/50 dark:bg-neutral-900/50 px-2 py-1 rounded')}>
             {Math.round(selection.width)} × {Math.round(selection.height)}
           </div>
 

@@ -1,37 +1,12 @@
-import { WINDOW_BARS } from '@/components/WindowBar';
-import { Button, Card, ColorPicker, Divider, Popconfirm, Select, Space, Switch } from 'antd';
+import { WINDOW_BARS } from '@/components/WindowBox';
+import { ResetIcon } from '@/icons';
+import { Button, Card, ColorPicker, Popconfirm, Select, Space, Switch } from 'antd';
 
 interface Sidebar {
   className?: string;
   onReset: () => void;
 }
 
-const gridPosition = [
-  { value: 'place-items-start', label: 'Top left' },
-  { value: 'place-items-start justify-items-center', label: 'Top center' },
-  { value: 'place-items-start justify-items-end', label: 'Top right' },
-
-  { value: 'place-items-center justify-items-start', label: 'Center left' },
-  { value: 'place-items-center', label: 'Center' },
-  { value: 'place-items-center justify-items-end', label: 'Center right' },
-
-  { value: 'place-items-end justify-items-start', label: 'Bottom left' },
-  { value: 'place-items-end justify-items-center', label: 'Bottom center' },
-  { value: 'place-items-end', label: 'Bottom right' },
-];
-const absolutePosition = [
-  { value: 'top-0 left-0', label: 'Top left' },
-  { value: 'top-0 left-1/2 -translate-x-1/2', label: 'Top center' },
-  { value: 'top-0 right-0', label: 'Top right' },
-
-  { value: 'top-1/2 left-0 -translate-y-1/2', label: 'Center left' },
-  { value: 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2', label: 'Center' },
-  { value: 'top-1/2 right-0 -translate-y-1/2', label: 'Center right' },
-
-  { value: 'bottom-0 left-0', label: 'Bottom left' },
-  { value: 'bottom-0 left-1/2 -translate-x-1/2', label: 'Bottom center' },
-  { value: 'bottom-0 right-0', label: 'Bottom right' },
-];
 export const ASPECT_CONFIG = {
   'aspect-auto': {
     label: 'Auto',
@@ -95,7 +70,9 @@ export default function Sidebar({ className, onReset }: Sidebar) {
         extra={
           <Popconfirm title="Confirm" description="Are you sure to reset the settings?" onConfirm={onReset} okText="Yes" cancelText="No">
             <Button type="text" danger>
-              <span className="size-4">{ResetIcon}</span>
+              <span className="size-4">
+                <ResetIcon />
+              </span>
               Reset Settings
             </Button>
           </Popconfirm>
@@ -131,9 +108,8 @@ export default function Sidebar({ className, onReset }: Sidebar) {
             />
           </FieldSet>
 
-          <div className="flex w-full border border-gray-300 rounded-md p-2">
-            <div className="w-full flex items-center gap-2 pr-3 justify-between">
-              <label className="block">Background</label>
+          <div className="flex-center gap-4 w-full">
+            <FieldSet label="Background" orientation="horizontal" className="p-0 flex-1">
               <ColorPicker
                 size="large"
                 className="hover-scale flex"
@@ -157,11 +133,9 @@ export default function Sidebar({ className, onReset }: Sidebar) {
                   saveSettings({ canvasColors: canvasColorsHex });
                 }}
               />
-            </div>
-            <Divider orientation="vertical" className="h-auto" />
-            <div className="w-full flex items-center gap-2 justify-between">
-              <label>Angle</label>
-              <div className="hover-scale">
+            </FieldSet>
+            <FieldSet label="Angle" orientation="horizontal" className="p-0 flex-1 gap-5">
+              <div className="hover-scale ">
                 {[
                   { direction: 'To top left', angle: 315 },
                   { direction: 'To top', angle: 0 },
@@ -203,7 +177,7 @@ export default function Sidebar({ className, onReset }: Sidebar) {
                   );
                 })}
               </div>
-            </div>
+            </FieldSet>
           </div>
 
           <FieldSet label="Gradient Type">
@@ -338,16 +312,30 @@ export default function Sidebar({ className, onReset }: Sidebar) {
               }}
             />
           </FieldSet>
-          <div className="flex w-full border border-gray-300 rounded-md p-2">
-            <div className="w-full flex items-center gap-2 pr-3 justify-between">
-              <label>Position</label>
+          <div className="flex-center gap-4 w-full">
+            <FieldSet label="Position" orientation="horizontal" className="p-0 flex-1 gap-6">
               <div className="hover-scale">
-                {gridPosition.map((item, i) => {
+                {[
+                  { value: 'place-items-start', label: 'Top left' },
+                  { value: 'place-items-start justify-items-center', label: 'Top center' },
+                  { value: 'place-items-start justify-items-end', label: 'Top right' },
+
+                  { value: 'place-items-center justify-items-start', label: 'Center left' },
+                  { value: 'place-items-center', label: 'Center' },
+                  { value: 'place-items-center justify-items-end', label: 'Center right' },
+
+                  { value: 'place-items-end justify-items-start', label: 'Bottom left' },
+                  { value: 'place-items-end justify-items-center', label: 'Bottom center' },
+                  { value: 'place-items-end', label: 'Bottom right' },
+                ].map((item, i) => {
                   return (
                     <span
                       key={i}
                       title={item.label}
-                      className={cn('w-2 h-2 rounded-full cursor-pointer bg-gray-300', settings.position === item.value ? 'bg-black' : 'hover:bg-gray-500')}
+                      className={cn(
+                        'w-2 h-2 rounded-full cursor-pointer bg-gray-300 dark:bg-neutral-900',
+                        settings.position === item.value ? 'bg-black dark:bg-white/60' : 'hover:bg-neutral-500 dark:hover:bg-neutral-800 '
+                      )}
                       onClick={() => {
                         saveSettings({ position: item.value });
                       }}
@@ -355,17 +343,15 @@ export default function Sidebar({ className, onReset }: Sidebar) {
                   );
                 })}
               </div>
-            </div>
-            <Divider orientation="vertical" className="h-auto" />
-            <div className="w-full flex items-center gap-2 pl-3 justify-between">
-              <label>Noise</label>
+            </FieldSet>
+            <FieldSet label="Noise" orientation="horizontal" className="p-0 h-12.5 flex-1 gap-5">
               <Switch
                 checked={settings.noise}
                 onChange={(noise) => {
                   saveSettings({ noise });
                 }}
               />
-            </div>
+            </FieldSet>
           </div>
         </Space>
       </Card>

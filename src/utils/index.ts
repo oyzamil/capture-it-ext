@@ -39,6 +39,28 @@ export function readPackageJson(): PackageJson {
 export function getPackageProp<K extends keyof PackageJson>(prop: K): PackageJson[K] {
   return pkg[prop];
 }
+export function isDateNotPassed(dateStr: string) {
+  if (!/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+    throw new Error('Invalid date format. Use DD-MM-YYYY');
+  }
+
+  const [day, month, year] = dateStr.split('-').map(Number);
+
+  // JS months are 0-based
+  const inputDate = new Date(year, month - 1, day);
+  inputDate.setHours(0, 0, 0, 0);
+
+  // Validate real calendar date
+  if (inputDate.getFullYear() !== year || inputDate.getMonth() !== month - 1 || inputDate.getDate() !== day) {
+    throw new Error('Invalid calendar date');
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Return true if date NOT passed yet
+  return inputDate >= today;
+}
 export function hexToRgba(hex: string, opacity?: number, inHex?: boolean): string {
   // Remove '#' if present
   const cleanHex = hex.replace('#', '');

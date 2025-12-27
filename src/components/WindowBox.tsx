@@ -1,6 +1,6 @@
 import { ReactElement, ReactNode } from 'react';
 
-type WindowBarProps = {
+type WindowBoxProps = {
   name: string;
   rounded: string;
   className?: string;
@@ -76,7 +76,7 @@ const Bars: BarConfig[] = [
 // Create a Map for quick lookup
 const barsMap = new Map<string, (props: { children: ReactNode; rounded: string }) => ReactElement>(Bars.map((p) => [p.name, p.code]));
 
-const WindowBar = ({ name, className = '', children, rounded }: WindowBarProps) => {
+const WindowBox = ({ name, className = '', children, rounded }: WindowBoxProps) => {
   const barComponent = barsMap.get(name);
 
   if (!name || !barComponent) {
@@ -86,7 +86,7 @@ const WindowBar = ({ name, className = '', children, rounded }: WindowBarProps) 
   return <div className={cn(`bar-${name}`, className)}>{barComponent({ children, rounded })}</div>;
 };
 
-export default WindowBar;
+export default WindowBox;
 
 export const WINDOW_BARS = [
   { value: 'none', label: 'None' },

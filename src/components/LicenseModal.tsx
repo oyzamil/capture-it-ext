@@ -1,9 +1,8 @@
-import { useSettings } from "@/hooks/useSettings";
-import { useAntd } from "@/providers/ThemeProvider";
-import { Button, Form, Input } from "antd";
-import axios from "axios";
+import { useAntd } from '@/providers/ThemeProvider';
+import { Button, Form, Input } from 'antd';
+import axios from 'axios';
 
-const GUMROAD_API = "https://api.gumroad.com/v2/licenses/verify";
+const GUMROAD_API = 'https://api.gumroad.com/v2/licenses/verify';
 const { GUMROAD } = useAppConfig();
 
 export const LicenseModal: React.FC = () => {
@@ -26,20 +25,18 @@ export const LicenseModal: React.FC = () => {
       const data = response.data;
 
       if (!data.success) {
-        message.error("Invalid license key.");
+        message.error('Invalid license key.');
         return;
       }
 
-      const isSubscribed =
-        data.purchase?.subscription_status === "active" ||
-        data.purchase?.subscription_id;
+      const isSubscribed = data.purchase?.subscription_status === 'active' || data.purchase?.subscription_id;
 
       if (!isSubscribed) {
-        message.error("Subscription is not active. Please renew your plan.");
+        message.error('Subscription is not active. Please renew your plan.');
         return;
       }
 
-      message.success("Subscription verified successfully.");
+      message.success('Subscription verified successfully.');
       const licenseData = {
         licenseModalVisible: false,
         isLicensed: true,
@@ -54,10 +51,8 @@ export const LicenseModal: React.FC = () => {
 
       saveSettings(licenseData);
     } catch (error: any) {
-      console.error("Subscription verification failed:", error);
-      message.error(
-        error?.response?.data?.message || "License verification failed.",
-      );
+      console.error('Subscription verification failed:', error);
+      message.error(error?.response?.data?.message || 'License verification failed.');
     } finally {
       updateState(setStates, { loading: false });
     }
@@ -66,9 +61,7 @@ export const LicenseModal: React.FC = () => {
   async function refreshLicense() {
     if (!settings?.licenseInfo?.licenseKey) return;
 
-    const result = await checkSubscriptionStatus(
-      settings.licenseInfo.licenseKey,
-    );
+    const result = await checkSubscriptionStatus(settings.licenseInfo.licenseKey);
 
     if (result.success) {
       saveSettings({
@@ -79,11 +72,11 @@ export const LicenseModal: React.FC = () => {
         } as any,
       });
     } else {
-      console.warn("License recheck failed:", result.error);
+      console.warn('License recheck failed:', result.error);
       saveSettings({
         isLicensed: false,
         licenseInfo: {
-          status: "expired",
+          status: 'expired',
         },
       });
     }
@@ -104,13 +97,13 @@ export const LicenseModal: React.FC = () => {
       className="min-w-auto"
     >
       <p className="text-[13px]">
-        Don't have a subscription?{" "}
+        Don't have a subscription?{' '}
         <Button
           className="px-0 underline text-app-500"
           type="link"
           onClick={() => {
             browser.runtime.sendMessage({
-              action: "OPEN_LINK",
+              action: 'OPEN_LINK',
               url: GUMROAD.GUMROAD_URL,
             });
           }}
@@ -123,29 +116,19 @@ export const LicenseModal: React.FC = () => {
           label="Email"
           name="email"
           rules={[
-            { required: true, message: "Email is required." },
-            { type: "email", message: "Enter a valid email." },
+            { required: true, message: 'Email is required.' },
+            { type: 'email', message: 'Enter a valid email.' },
           ]}
           className="mb-2"
         >
           <Input placeholder="you@example.com" />
         </Form.Item>
 
-        <Form.Item
-          label="Gumroad License Key"
-          name="licenseKey"
-          rules={[{ required: true, message: "License key is required." }]}
-          className="mb-4"
-        >
+        <Form.Item label="Gumroad License Key" name="licenseKey" rules={[{ required: true, message: 'License key is required.' }]} className="mb-4">
           <Input placeholder="XXXX-XXXX-XXXX-XXXX" />
         </Form.Item>
 
-        <Button
-          type="primary"
-          block
-          loading={states.loading}
-          onClick={handleVerify}
-        >
+        <Button type="primary" block loading={states.loading} onClick={handleVerify}>
           Verify Subscription
         </Button>
       </Form>
@@ -173,13 +156,12 @@ export async function checkSubscriptionStatus(licenseKey: string): Promise<{
       return {
         success: false,
         isLicensed: false,
-        error: "Invalid license key",
+        error: 'Invalid license key',
       };
     }
 
     const status = data.purchase?.subscription_status;
-    const isLicensed =
-      status === "active" || Boolean(data.purchase?.subscription_id);
+    const isLicensed = status === 'active' || Boolean(data.purchase?.subscription_id);
 
     return {
       success: true,
@@ -191,7 +173,7 @@ export async function checkSubscriptionStatus(licenseKey: string): Promise<{
     return {
       success: false,
       isLicensed: false,
-      error: error?.response?.data?.message || "Subscription check failed",
+      error: error?.response?.data?.message || 'Subscription check failed',
     };
   }
 }

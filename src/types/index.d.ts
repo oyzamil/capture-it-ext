@@ -19,6 +19,9 @@ type DeepPartial<T> =
   | Partial<T> // ✅ allow shallow Partial
   | (T extends Function | Date | RegExp ? T : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T);
 
+type IconType = {
+  className?: string;
+};
 interface Rect {
   x: number;
   y: number;

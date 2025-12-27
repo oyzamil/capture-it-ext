@@ -1,8 +1,7 @@
-import { Modal as AntdModal, ModalProps as AntdModalProps } from "antd";
-import React, { ReactNode } from "react";
+import { Modal as AntdModal, ModalProps as AntdModalProps } from 'antd';
+import React, { ReactNode } from 'react';
 
-interface ModalProps
-  extends Omit<AntdModalProps, "title" | "open" | "onCancel"> {
+interface ModalProps extends Omit<AntdModalProps, 'title' | 'open' | 'onCancel'> {
   isOpen?: boolean;
   onClose?: () => void;
   noTitle?: boolean;
@@ -11,16 +10,7 @@ interface ModalProps
   children?: ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({
-  isOpen,
-  onClose,
-  noTitle = false,
-  title,
-  icon,
-  children,
-  className,
-  ...rest
-}) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, noTitle = false, title, icon, children, className, ...rest }) => {
   return (
     <AntdModal
       open={isOpen}
@@ -33,7 +23,7 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         )
       }
-      className={cn("min-w-[700px] w-[80%]", className)}
+      className={cn('min-w-[700px] w-[80%]', className)}
       {...rest}
     >
       {children}

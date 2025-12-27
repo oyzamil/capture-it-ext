@@ -57,6 +57,11 @@ const StaticComponents = ({ children, shadowContainer, popupContainer, theme, cs
               withDescriptionPadding: '12px',
               withDescriptionIconSize: 18,
             },
+            Slider: {
+              handleColor: useAppConfig().APP.color,
+              trackBg: useAppConfig().APP.color,
+              trackHoverBg: useAppConfig().APP.color,
+            },
           },
         }}
         getPopupContainer={() => popupContainer || document.body}

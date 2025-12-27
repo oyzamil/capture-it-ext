@@ -1,6 +1,6 @@
+import { ArrowIcon, BarsIcon, ChatIcon, KeyIcon, StarIcon } from '@/icons';
 import { useAntd } from '@/providers/ThemeProvider';
-import { ArrowLeftIcon, Bars3Icon, ChatBubbleLeftIcon, KeyIcon, StarIcon } from '@heroicons/react/24/outline';
-import { Button, Dropdown, Typography } from 'antd';
+import { Button, Dropdown, Space, Typography } from 'antd';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -23,13 +23,12 @@ export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const showBackButton = ![ROUTES.LOGIN, ROUTES.HOME].includes(location.pathname);
-  const { Title, Text } = Typography;
 
   const items = [
     {
       key: 'activation',
       label: settings?.isLicensed ? 'Activated' : 'Activate',
-      icon: settings?.isLicensed ? <StarIcon className="size-4" /> : <KeyIcon className="size-4" />,
+      icon: settings?.isLicensed ? <StarIcon className="size-4 mr-2" /> : <KeyIcon className="size-4  mr-2" />,
       onClick: async () => {
         saveSettings({
           licenseModalVisible: true,
@@ -42,19 +41,27 @@ export function Header() {
       onClick: () => {
         message.success('Mail Sent!');
       },
-      icon: <ChatBubbleLeftIcon className="size-4" />,
+      icon: <ChatIcon className="size-4 mr-2" />,
     },
   ];
 
   return (
     <>
-      <header className={'bg-app-300 z-51 -mt-0.5 flex w-full items-center border-b border-app-300 dark:border-black/90 px-2 py-3 dark:bg-zinc-900'}>
+      <header className={'bg-app-300 z-51 flex w-full items-center dark:border-black/90 px-2 py-3 dark:bg-zinc-900'}>
         <Watermark className="text-2xl w-full" />
         <div className="flex items-center justify-center gap-1">
-          {showBackButton && <Button type="primary" onClick={() => navigate(-1)} icon={<ArrowLeftIcon className="size-4" />} />}
-          <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
-            <Button icon={<Bars3Icon className="size-5 text-white" />} type="text" />
-          </Dropdown>
+          <Space.Compact block>
+            {showBackButton && (
+              <Button title="Back" type="text" onClick={() => navigate(-1)} className="px-1">
+                <ArrowIcon className="size-6 text-white rotate-270" />
+              </Button>
+            )}
+            <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
+              <Button type="text" className="px-1">
+                <IconLabel icon={<BarsIcon className=" text-white size-5" />} />
+              </Button>
+            </Dropdown>
+          </Space.Compact>
         </div>
       </header>
     </>

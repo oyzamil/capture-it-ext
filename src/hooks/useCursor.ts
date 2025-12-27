@@ -14,14 +14,24 @@ export function useCursor(throttleMs = 16) {
   const isMouseDown = useRef(false);
 
   useEffect(() => {
-    const handleMouseMove = useThrottleRAF((e: MouseEvent) => {
+    const throttle = (fn: Function, wait: number) => {
+      let lastTime = 0;
+      return (...args: any[]) => {
+        const now = Date.now();
+        if (now - lastTime >= wait) {
+          lastTime = now;
+          fn(...args);
+        }
+      };
+    };
+    const handleMouseMove = throttle((e: MouseEvent) => {
       const point = { x: e.clientX, y: e.clientY };
       setPosition(point);
 
       if (isMouseDown.current) {
         setIsDragging(true);
       }
-    });
+    }, throttleMs);
 
     const handleMouseDown = (e: MouseEvent) => {
       isMouseDown.current = true;

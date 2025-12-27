@@ -1,6 +1,6 @@
 import { SETTINGS_TYPE } from '@/app.config';
 import { useAntd } from '@/providers/ThemeProvider';
-import { Button, Form, Segmented, Slider, Space } from 'antd';
+import { Button, Divider, Form, Segmented, Slider, Space } from 'antd';
 
 type CAPTURE_DIV = (typeof EXT_MESSAGES)['CAPTURE_DIV'];
 type CAPTURE_VISIBLE = (typeof EXT_MESSAGES)['CAPTURE_VISIBLE'];
@@ -87,8 +87,9 @@ function Home() {
           />
         </Form.Item>
 
-        <Form.Item label="Capture">
-          <Space.Compact block>
+        <Form.Item layout="vertical" className="bg-white dark:bg-black dark:border-black w-full border border-gray-200 border-t-0 rounded-md mt-2">
+          <Divider children={<span className="px-2 text-app-500 font-semibold dark:text-white">Capture</span>} className="-mt-3 mb-2" />
+          <Space.Compact block className="p-2">
             <Button
               type="primary"
               onClick={() => {

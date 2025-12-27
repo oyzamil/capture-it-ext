@@ -1,4 +1,3 @@
-import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import { ReactNode, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { ensureFontsReady, sketchImage } from '../utils';
@@ -273,11 +272,11 @@ export default function ElementSnapExtension() {
           <Card
             size="small"
             title={<Watermark className="mr-3" />}
-            extra={
-              <Button type="text" size="small" shape="circle" onClick={async () => await setOptions({ overlay: !options.overlay })}>
-                {options.overlay ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-              </Button>
-            }
+            // extra={
+            //   <Button type="text" size="small" shape="circle" onClick={async () => await setOptions({ overlay: !options.overlay })}>
+            //     {options.overlay ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+            //   </Button>
+            // }
           >
             {/* {selection && (
               <Alert
