@@ -265,7 +265,7 @@ export default function CaptureCustom() {
       const { dataUrl } = await createCanvas();
       await sendMessage(EXT_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`${settings.quality}`, 'png') });
 
-      await sendMessage(EXT_MESSAGES.NOTIFY, { title: 'Image Downloaded!', message: t('exportMessages.success') });
+      await sendMessage(EXT_MESSAGES.NOTIFY, { title: 'Image Downloaded!', message: i18n.t('exportMessages.success') });
     } catch (error: any) {
       throw new Error(`Screenshot download failed: ${error?.message || error}`);
     } finally {

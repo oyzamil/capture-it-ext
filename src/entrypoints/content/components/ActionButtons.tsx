@@ -37,7 +37,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, options, selection, 
         <Button
           type="primary"
           onClick={onEdit}
-          title={t('edit')}
+          title={i18n.t('edit')}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24">
               <path
@@ -51,13 +51,13 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, options, selection, 
             </svg>
           }
         >
-          {t('edit')}
+          {i18n.t('edit')}
         </Button>
         <Button
           type="primary"
           onClick={onCopy}
           loading={options.copying}
-          title={t('copy')}
+          title={i18n.t('copy')}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24">
               <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
@@ -67,14 +67,14 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, options, selection, 
             </svg>
           }
         >
-          {t('copy')}
+          {i18n.t('copy')}
         </Button>
 
         <Button
           type="primary"
           onClick={onDownload}
           loading={options.downloading}
-          title={t('download')}
+          title={i18n.t('download')}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24">
               <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5">
@@ -89,14 +89,14 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, options, selection, 
             </svg>
           }
         >
-          {t('download')}
+          {i18n.t('download')}
         </Button>
 
         {options.eraser && (
           <Button
             type="primary"
             onClick={onEraser}
-            title={t('delete')}
+            title={i18n.t('delete')}
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24">
                 <path
@@ -106,14 +106,14 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, options, selection, 
               </svg>
             }
           >
-            {t('delete')}
+            {i18n.t('delete')}
           </Button>
         )}
 
         <Button
           type="primary"
           onClick={onCancel}
-          title={t('close')}
+          title={i18n.t('close')}
           danger
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 15 15">
@@ -124,7 +124,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ref, options, selection, 
             </svg>
           }
         >
-          {t('close')}
+          {i18n.t('close')}
         </Button>
       </Space.Compact>
     </div>

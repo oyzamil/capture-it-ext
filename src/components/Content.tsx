@@ -1,7 +1,6 @@
-import logo from '@/assets/icon.svg';
 import { useAntd } from '@/providers/ThemeProvider';
 import { ArrowLeftIcon, Bars3Icon, ChatBubbleLeftIcon, KeyIcon, StarIcon } from '@heroicons/react/24/outline';
-import { Avatar, Button, Dropdown, Typography } from 'antd';
+import { Button, Dropdown, Typography } from 'antd';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -50,10 +49,7 @@ export function Header() {
   return (
     <>
       <header className={'bg-app-300 z-51 -mt-0.5 flex w-full items-center border-b border-app-300 dark:border-black/90 px-2 py-3 dark:bg-zinc-900'}>
-        <Avatar src={logo} shape="square" className="mx-0.5 mr-2 h-8 w-10" alt="logo" />
-        <Title level={5} className="mb-0 text-white w-full">
-          {t('appName')}
-        </Title>
+        <Watermark className="text-2xl w-full" />
         <div className="flex items-center justify-center gap-1">
           {showBackButton && <Button type="primary" onClick={() => navigate(-1)} icon={<ArrowLeftIcon className="size-4" />} />}
           <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>

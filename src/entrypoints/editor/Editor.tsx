@@ -1,21 +1,28 @@
 import { useAntd } from '@/providers/ThemeProvider';
 import { Button, Divider, Layout, Popconfirm, Select, Switch, Typography } from 'antd';
+import DisableDevtool from 'disable-devtool';
 import { toBlob, toPng } from 'html-to-image';
 
 import WindowBar from '@/components/WindowBar';
 import { CopyOutlined, DownloadOutlined } from '@ant-design/icons';
 import { Activity } from 'react';
 import { copyImageToClipboard } from '../content/utils';
-import Sidebar from './components/Sidebar';
+import Sidebar, { ASPECT_CONFIG } from './components/Sidebar';
 import { getGradientBackground } from './utils';
 
-const { Title, Text } = Typography;
-const { Sider, Header, Content, Footer } = Layout;
+const { Text } = Typography;
+const { Sider, Content, Footer } = Layout;
 
 type BlobState = {
   src: string | null;
   w: number;
   h: number;
+};
+type ToastType = {
+  type: 'loading' | 'success' | 'error' | 'info';
+  content: string;
+  duration?: number;
+  key?: string;
 };
 
 const Editor: React.FC = () => {
@@ -23,9 +30,30 @@ const Editor: React.FC = () => {
   const { settings, saveSettings, resetSettings } = useSettings();
   const wrapperRef = useRef<HTMLElement | null>(null);
   const [blob, setBlob] = useState<BlobState>({ src: null, w: 0, h: 0 });
-  const [options, setOptions] = useStateUpdater({});
 
-  const showToast = (type: 'loading' | 'success' | 'error' | 'info', content: string, duration: number = 0, key = 'PRIMARY_TOAST') => {
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') {
+      DisableDevtool({
+        ondevtoolopen(type, next) {
+          sendMessage(EXT_MESSAGES.OPEN_TAB, { url: 'https://softwebtuts.com', options: { current: true } });
+        },
+      });
+      const disableReactDevTools = (): void => {
+        const noop = (): void => undefined;
+        const DEV_TOOLS = (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__;
+
+        if (typeof DEV_TOOLS === 'object') {
+          // eslint-disable-next-line no-restricted-syntax
+          for (const [key, value] of Object.entries(DEV_TOOLS)) {
+            DEV_TOOLS[key] = typeof value === 'function' ? noop : null;
+          }
+        }
+      };
+      disableReactDevTools();
+    }
+  }, []);
+
+  const showToast = ({ key = 'PRIMARY_KEY', type, content, duration = 0 }: ToastType) => {
     message.open({
       key,
       type,
@@ -36,12 +64,16 @@ const Editor: React.FC = () => {
 
   const handleImageSave = async () => {
     if (!wrapperRef.current || !blob.src) {
-      showToast('error', t('copyMessages.empty'), 2);
+      showToast({
+        type: 'error',
+        content: i18n.t('copyMessages.empty'),
+        duration: 2,
+      });
       return;
     }
 
     try {
-      showToast('loading', t('exportMessages.progress'));
+      showToast({ type: 'loading', content: i18n.t('exportMessages.progress') });
 
       const width = wrapperRef.current.offsetWidth;
       const height = wrapperRef.current.offsetHeight;
@@ -54,35 +86,35 @@ const Editor: React.FC = () => {
 
       await sendMessage(EXT_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`${settings.quality}`, 'png') });
 
-      showToast('success', t('exportMessages.success'), 2);
+      showToast({ type: 'success', content: i18n.t('exportMessages.success'), duration: 2 });
     } catch (err) {
       console.error('Error Exporting Image:', err);
-      showToast('error', t('exportMessages.error'), 2);
+      showToast({ type: 'error', content: i18n.t('exportMessages.error'), duration: 2 });
     }
   };
 
   const handleCopyImage = async () => {
     if (!wrapperRef.current || !blob.src) {
-      showToast('error', t('copyMessages.empty'), 2);
+      showToast({ type: 'error', content: i18n.t('copyMessages.empty'), duration: 2 });
       return;
     }
     try {
-      showToast('loading', t('copyMessages.progress'));
+      showToast({ type: 'loading', content: i18n.t('copyMessages.progress') });
       const blob = await toBlob(wrapperRef.current, {
         pixelRatio: getResolution(settings.quality),
       });
 
       if (!blob) {
-        showToast('error', t('unknownError'), 2);
+        showToast({ type: 'error', content: i18n.t('unknownError'), duration: 2 });
         console.error('Failed to generate image blob');
         return;
       }
       await copyImageToClipboard(blob);
 
-      showToast('success', t('copyMessages.success'), 2);
+      showToast({ type: 'success', content: i18n.t('copyMessages.success'), duration: 2 });
     } catch (error) {
       console.error('Error copying image:', error);
-      showToast('error', t('copyMessages.error'), 2);
+      showToast({ type: 'error', content: i18n.t('copyMessages.error'), duration: 2 });
     }
   };
 
@@ -117,20 +149,11 @@ const Editor: React.FC = () => {
     });
   };
 
-  const handleShortcuts = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'c' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        handleCopyImage();
-      }
-
-      if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        handleImageSave();
-      }
-    },
-    [handleCopyImage, handleImageSave]
-  );
+  const handleShortcuts = useCallback((e: KeyboardEvent) => {
+    if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+    }
+  }, []);
 
   useEffect(() => {
     document.addEventListener('keydown', handleShortcuts);
@@ -155,22 +178,22 @@ const Editor: React.FC = () => {
   }, [blob.src]);
 
   return (
-    <Layout className="flex gap-4">
-      <Sider trigger={null} width={350} className="bg-white overflow-auto h-screen sticky top-0 scrollbar:hidden">
-        <Watermark className="text-2xl p-2 flex-center gap-2 sticky top-0 z-50 bg-white" />
+    <Layout className="flex flex-row-reverse gap-4">
+      <Sider trigger={null} width={350} className="shadow bg-white overflow-auto h-screen sticky top-0 scrollbar:hidden">
+        <Watermark className="scale-150 text-2xl pt-6 pb-2 mb-4 flex-center gap-2 sticky top-0 z-50 bg-white" />
         <Sidebar className="p-3" onReset={resetSettings} />
       </Sider>
-      <Layout className="flex gap-4 mt-4 mr-4 max-h-screen">
-        <Content className="preview-area bg-white p-4 rounded-md flex justify-center">
+      <Layout className="flex gap-4 mt-4 ml-4 max-h-screen">
+        <Content className="preview-area shadow bg-white p-4 rounded-md flex justify-center">
           {blob?.src ? (
             <div
               ref={(el) => {
                 wrapperRef.current = el;
               }}
-              className="relative overflow-hidden flex justify-center"
+              className={cn('relative overflow-hidden flex justify-center items-center', settings.roundedWrapper)}
             >
               <div
-                className={cn('overflow-hidden relative grid', settings.roundedWrapper, settings.padding, settings.position, settings.aspectRatio)}
+                className={cn('overflow-hidden relative grid', settings.roundedWrapper, settings.padding, settings.position, settings.aspectRatio, ASPECT_CONFIG[settings.aspectRatio].className)}
                 style={{
                   background: getGradientBackground(settings),
                   boxSizing: 'border-box',
@@ -201,7 +224,7 @@ const Editor: React.FC = () => {
                   />
                 </WindowBar>
                 <div className="absolute bottom-0 w-full flex justify-center items-center">
-                  <Watermark className="pl-1 pr-2 py-2 mb-2 rounded bg-white" />
+                  <Watermark className="pl-1 pr-2 py-2 mb-2" glass />
                 </div>
               </div>
             </div>
@@ -227,59 +250,54 @@ const Editor: React.FC = () => {
             </div>
           )}
         </Content>
-        <Footer className="sticky bottom-0 w-full bg-white p-4 rounded-md mb-4 mr-4">
-          <div className="flex-center gap-3 mb-3">
-            <FieldSet label="Format" orientation="horizontal" className="h-[50px]">
-              <Select
-                value={settings.fileFormat}
-                placeholder="Shadow"
-                options={[
-                  { value: 'png', label: 'PNG' },
-                  { value: 'jpeg', label: 'JPEG' },
-                ]}
-                onChange={(fileFormat) => {
-                  saveSettings({ fileFormat });
-                }}
-              />
-            </FieldSet>
-            <FieldSet label="4K" orientation="horizontal" className="h-[50px]">
-              <Switch
-                checked={settings.quality === '4k'}
-                onChange={(checked) => {
-                  saveSettings({ quality: checked ? '4k' : 'normal' });
-                }}
-              />
-            </FieldSet>
-            <Divider vertical />
-            <Button type="primary" size="large" icon={<CopyOutlined />} onClick={handleCopyImage}>
-              Copy Image
-            </Button>
-
-            <Button type="default" size="large" icon={<DownloadOutlined />} onClick={handleImageSave}>
-              Save Image
-            </Button>
-
-            <Divider vertical />
-
-            <Popconfirm
-              title="Confirm"
-              description="Are you sure to reset the canvas?"
-              onConfirm={() => {
-                saveSettings({ base64Image: null });
-                setBlob({ src: null, w: 0, h: 0 });
+        <Footer className="shadow sticky bottom-0 w-full bg-white p-2 rounded-md mr-4 flex-center gap-3 mb-4">
+          <FieldSet label="Format" orientation="horizontal" className="h-10 pr-1">
+            <Select
+              value={settings.fileFormat}
+              placeholder="Shadow"
+              options={[
+                { value: 'png', label: 'PNG' },
+                { value: 'jpeg', label: 'JPEG' },
+              ]}
+              onChange={(fileFormat) => {
+                saveSettings({ fileFormat });
               }}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Button type="text" size="large" danger>
-                <span className="size-4">{ResetIcon}</span>
-                Reset
-              </Button>
-            </Popconfirm>
-          </div>
-          <Text className="block opacity-50 text-center">
-            Use <Text keyboard>⌘/Ctrl+C</Text> to copy or <Text keyboard>⌘/Ctrl+S</Text> to save image
-          </Text>
+            />
+          </FieldSet>
+          <FieldSet label="4K" orientation="horizontal" className="h-10">
+            <Switch
+              checked={settings.quality === '4k'}
+              onChange={(checked) => {
+                saveSettings({ quality: checked ? '4k' : 'normal' });
+              }}
+            />
+          </FieldSet>
+          <Divider vertical />
+          <Button type="primary" icon={<CopyOutlined />} onClick={handleCopyImage}>
+            Copy Image
+          </Button>
+
+          <Button type="default" icon={<DownloadOutlined />} onClick={handleImageSave}>
+            Save Image
+          </Button>
+
+          <Divider vertical />
+
+          <Popconfirm
+            title="Confirm"
+            description="Are you sure to reset the canvas?"
+            onConfirm={() => {
+              saveSettings({ base64Image: null });
+              setBlob({ src: null, w: 0, h: 0 });
+            }}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="text" size="large" danger>
+              <span className="size-4">{ResetIcon}</span>
+              Reset
+            </Button>
+          </Popconfirm>
         </Footer>
       </Layout>
     </Layout>

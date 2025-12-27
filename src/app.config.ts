@@ -1,4 +1,5 @@
 import { defineAppConfig } from 'wxt/utils/define-app-config';
+import { AspectRatioKey } from './entrypoints/editor/components/Sidebar';
 
 export const config = {
   APP: {
@@ -16,7 +17,7 @@ export const config = {
       status: 'inactive',
     },
     base64Image: null as string | null,
-    aspectRatio: 'aspect-auto',
+    aspectRatio: 'aspect-auto' as AspectRatioKey,
     bgPattern: 'jigsaw',
     canvasColors: ['#ff40ff', '#fec700'],
     backgroundAngle: '45deg',

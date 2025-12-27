@@ -306,7 +306,7 @@ export default function ElementSnapExtension() {
                         {item.label}
                       </span>
                       <Button size="small" onClick={() => handleRestoreElement(idx)} className="text-xs">
-                        {t('undo')}
+                        {i18n.t('undo')}
                       </Button>
                     </div>
                   ))}
@@ -315,7 +315,7 @@ export default function ElementSnapExtension() {
 
               {hiddenElements.length > 0 && (
                 <Button size="small" onClick={handleRestoreAll} className="text-xs" block>
-                  {t('restoreAll')}
+                  {i18n.t('restoreAll')}
                 </Button>
               )}
             </div>

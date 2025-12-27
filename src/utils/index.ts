@@ -135,7 +135,7 @@ export const validFilename = (name: string, extension = 'png') => {
     filename += `.${extension}`;
   }
 
-  return `${t('appName')}_${Date.now()}_${filename}`;
+  return `${i18n.t('appName')}_${Date.now()}_${filename}`;
 };
 export const getResolution = (resolution: Resolution) => {
   let scale = 1;

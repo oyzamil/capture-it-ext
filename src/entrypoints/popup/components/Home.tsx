@@ -1,7 +1,6 @@
 import { SETTINGS_TYPE } from '@/app.config';
 import { useAntd } from '@/providers/ThemeProvider';
-import { Button, Form, Segmented, Slider } from 'antd';
-import { debounce } from 'lodash';
+import { Button, Form, Segmented, Slider, Space } from 'antd';
 
 type CAPTURE_DIV = (typeof EXT_MESSAGES)['CAPTURE_DIV'];
 type CAPTURE_VISIBLE = (typeof EXT_MESSAGES)['CAPTURE_VISIBLE'];
@@ -12,7 +11,7 @@ function Home() {
   const { settings, saveSettings } = useSettings();
   const [form] = Form.useForm<SETTINGS_TYPE>();
 
-  const debouncedSubmit = useRef(debounce(onSubmit, 500)).current;
+  const debouncedSubmit = useDebounce(onSubmit, 500);
 
   async function onSubmit(settings: SETTINGS_TYPE) {
     message.open({
@@ -88,8 +87,8 @@ function Home() {
           />
         </Form.Item>
 
-        <Form.Item name="buttons" layout="vertical" className="w-full">
-          <div className="flex flex-col gap-2">
+        <Form.Item label="Capture">
+          <Space.Compact block>
             <Button
               type="primary"
               onClick={() => {
@@ -97,7 +96,18 @@ function Home() {
               }}
               block
             >
-              Capture Element
+              Element
+            </Button>
+
+            {/* Custom Capture */}
+            <Button
+              type="primary"
+              block
+              onClick={() => {
+                handleCapture(EXT_MESSAGES.CAPTURE_CUSTOM);
+              }}
+            >
+              Custom
             </Button>
 
             <Button
@@ -113,20 +123,9 @@ function Home() {
                 }
               }}
             >
-              Capture Visible
+              Visible
             </Button>
-
-            {/* Custom Capture */}
-            <Button
-              type="primary"
-              block
-              onClick={() => {
-                handleCapture(EXT_MESSAGES.CAPTURE_CUSTOM);
-              }}
-            >
-              Custom Capture
-            </Button>
-          </div>
+          </Space.Compact>
         </Form.Item>
       </Form>
     </div>

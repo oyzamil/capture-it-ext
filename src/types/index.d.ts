@@ -31,3 +31,14 @@ interface CanvasResult {
   dataUrl: string;
 }
 type Resolution = 'normal' | '2k' | '4k' | '8k';
+
+type OpenPageOptions = {
+  /** Replace the current active tab */
+  current?: boolean;
+
+  /** Focus the tab after opening */
+  active?: boolean;
+
+  /** Open in a new window (optional future use) */
+  newWindow?: boolean;
+};

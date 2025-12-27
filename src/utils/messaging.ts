@@ -9,6 +9,7 @@ export const EXT_MESSAGES = {
   DOWNLOAD: 'DOWNLOAD',
   UNMOUNT: 'UNMOUNT',
   NOTIFY: 'NOTIFY',
+  OPEN_TAB: 'OPEN_TAB',
 } as const;
 
 // Extract literal types of EXT_MESSAGES values
@@ -34,6 +35,7 @@ interface ProtocolMap {
   [EXT_MESSAGES.DOWNLOAD](payload: { dataUrl: string; filename: string }): Promise<{ downloadId: number | undefined }>;
   [EXT_MESSAGES.UNMOUNT](): void;
   [EXT_MESSAGES.NOTIFY](payload: { title: string; message: string }): void;
+  [EXT_MESSAGES.OPEN_TAB](payload: { url: string; options?: OpenPageOptions }): { success: boolean; message: string };
 }
 
 export const { sendMessage, onMessage } = defineExtensionMessaging<ProtocolMap>();

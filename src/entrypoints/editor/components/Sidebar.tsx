@@ -32,6 +32,59 @@ const absolutePosition = [
   { value: 'bottom-0 left-1/2 -translate-x-1/2', label: 'Bottom center' },
   { value: 'bottom-0 right-0', label: 'Bottom right' },
 ];
+export const ASPECT_CONFIG = {
+  'aspect-auto': {
+    label: 'Auto',
+    className: 'max-w-full max-h-auto',
+  },
+  'aspect-square': {
+    label: '1:1 — Square',
+    className: 'max-w-[640px] max-h-[640px]',
+  },
+  'aspect-video': {
+    label: '16:9 — Video',
+    className: 'max-w-[1138px] max-h-[640px]',
+  },
+  'aspect-[9/16]': {
+    label: '9:16 — Mobile / Story',
+    className: 'max-w-[360px] max-h-[640px]',
+  },
+  'aspect-[1280/800]': {
+    label: 'Extension Thumbnail',
+    className: 'max-w-[1024px] max-h-[640px]',
+  },
+  'aspect-[440/280]': {
+    label: 'Chrome Promo Tile',
+    className: 'max-w-[1006px] max-h-[640px]',
+  },
+  'aspect-[4/5]': {
+    label: '4:5 — Instagram Portrait',
+    className: 'max-w-[512px] max-h-[640px]',
+  },
+  'aspect-[4/3]': {
+    label: '4:3 — Classic',
+    className: 'max-w-[853px] max-h-[640px]',
+  },
+  'aspect-[3/2]': {
+    label: '3:2 — Photography',
+    className: 'max-w-[960px] max-h-[640px]',
+  },
+  'aspect-[21/9]': {
+    label: '21:9 — Ultrawide',
+    className: 'max-w-[1493px] max-h-[640px]',
+  },
+} as const;
+
+export type AspectRatioKey = keyof typeof ASPECT_CONFIG;
+
+export const aspectRatios = [
+  // { value: 'aspect-none', label: 'None' },
+  ...(Object.entries(ASPECT_CONFIG) as [AspectRatioKey, (typeof ASPECT_CONFIG)[AspectRatioKey]][]).map(([key, config]) => ({
+    value: key,
+    label: config.label,
+  })),
+];
+
 export default function Sidebar({ className, onReset }: Sidebar) {
   const { settings, saveSettings } = useSettings();
   return (
@@ -54,18 +107,7 @@ export default function Sidebar({ className, onReset }: Sidebar) {
               className="w-full"
               value={settings.aspectRatio}
               placeholder="Aspect Ratio"
-              options={[
-                { value: 'aspect-auto', label: 'Auto' },
-                { value: 'aspect-square', label: '1:1 — Square' },
-                { value: 'aspect-video', label: '16:9 — Video' },
-                { value: 'aspect-[9/16]', label: '9:16 — Mobile / Story' },
-                { value: 'aspect-[1280/800]', label: 'Extension Thumbnail' },
-                { value: 'aspect-[440/280]', label: 'Chrome Promo Tile' },
-                { value: 'aspect-[4/5]', label: '4:5 — Instagram Portrait' },
-                { value: 'aspect-[4/3]', label: '4:3 — Classic' },
-                { value: 'aspect-[3/2]', label: '3:2 — Photography' },
-                { value: 'aspect-[21/9]', label: '21:9 — Ultrawide' },
-              ]}
+              options={aspectRatios}
               onChange={(aspectRatio) => {
                 saveSettings({ aspectRatio });
               }}
@@ -272,6 +314,7 @@ export default function Sidebar({ className, onReset }: Sidebar) {
                 { value: 'rounded-lg', label: 'Small' },
                 { value: 'rounded-xl', label: 'Medium' },
                 { value: 'rounded-3xl', label: 'Large' },
+                { value: 'rounded-full', label: 'Circle' },
               ]}
               onChange={(rounded) => {
                 saveSettings({ rounded });

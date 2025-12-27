@@ -12,7 +12,13 @@ export default defineBackground(() => {
     });
 
     // Open Editor Page
-    onMessage(EXT_MESSAGES.SHOW_EDITOR, openEditorPage);
+    onMessage(EXT_MESSAGES.SHOW_EDITOR, async () => {
+      const editorUrl = browser.runtime.getURL('/editor.html');
+      openPage(editorUrl);
+    });
+    onMessage(EXT_MESSAGES.OPEN_TAB, async ({ data }) => {
+      return openPage(data.url, data.options);
+    });
 
     // Download file
     onMessage(EXT_MESSAGES.DOWNLOAD, async ({ data }) => {
@@ -83,24 +89,48 @@ const handleImageDownload = async (dataUrl: string, filename: string): Promise<{
   }
 };
 
-const openEditorPage = async () => {
-  const editorUrl = browser.runtime.getURL('/editor.html');
+const openPage = async (url: string, options: OpenPageOptions = {}) => {
+  if (!url) {
+    return { success: false, message: 'URL not valid!' };
+  }
 
-  // Get all tabs in all windows
-  const tabs = await browser.tabs.query({});
+  const { current = false, active = true, newWindow = false } = options;
 
-  // Find a tab that already has our extension editor open
-  const editorTab = tabs.find((tab) => tab.url === editorUrl);
-
-  if (editorTab?.id != null) {
-    // Focus the existing tab and its window
-    await browser.tabs.update(editorTab.id, { active: true });
-    await browser.windows.update(editorTab.windowId, { focused: true });
-  } else {
-    // Open a new tab
-    await browser.tabs.create({
-      url: editorUrl,
+  // 👉 Replace current tab
+  if (current) {
+    const [activeTab] = await browser.tabs.query({
       active: true,
+      currentWindow: true,
+    });
+
+    if (activeTab?.id != null) {
+      await browser.tabs.update(activeTab.id, { url, active });
+      return { success: true, message: 'Current tab updated!' };
+    }
+  }
+
+  // 👉 Open in new window (optional)
+  if (newWindow) {
+    await browser.windows.create({
+      url,
+      focused: active,
+    });
+    return { success: true, message: 'Opened in new window!' };
+  }
+
+  // 👉 Reuse existing tab
+  const tabs = await browser.tabs.query({});
+  const existingTab = tabs.find((tab) => tab.url === url);
+
+  if (existingTab?.id != null) {
+    await browser.tabs.update(existingTab.id, { active });
+    await browser.windows.update(existingTab.windowId, { focused: active });
+  } else {
+    await browser.tabs.create({
+      url,
+      active,
     });
   }
+
+  return { success: true, message: 'Tab opened!' };
 };
