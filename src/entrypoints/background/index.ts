@@ -1,6 +1,8 @@
+import { settingsHook } from '@/hooks/useSettings';
+
 export default defineBackground(() => {
   try {
-    // const { settings } = settingsHook.getState();
+    const { settings } = settingsHook.getState();
     // console.log(settings);
 
     // settingsHook.subscribe(({ settings }) => {

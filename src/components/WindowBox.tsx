@@ -71,6 +71,14 @@ const Bars: BarConfig[] = [
       </div>
     ),
   },
+  {
+    name: 'lined-border-dark',
+    code: ({ children, rounded }) => (
+      <div className={cn('lined-border-dark p-2', rounded)}>
+        <div className={cn('relative overflow-hidden', rounded)}>{children}</div>
+      </div>
+    ),
+  },
 ];
 
 // Create a Map for quick lookup

@@ -117,7 +117,15 @@ const Editor: React.FC = () => {
     }
   };
 
-  const onPaste = (event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>) => {
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const onPaste = async (event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>) => {
     let files: File[] = [];
 
     if ('clipboardData' in event && event.clipboardData) {
@@ -133,19 +141,17 @@ const Editor: React.FC = () => {
 
     if (!files.length) return;
 
-    files.forEach((file) => {
-      if (!file.type.startsWith('image/')) return;
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
 
-      const objectUrl = URL.createObjectURL(file);
+      const base64 = await fileToBase64(file);
 
-      setBlob((prev) => {
-        if (typeof prev.src === 'string' && prev.src.startsWith('blob:') && prev.src !== objectUrl) {
-          URL.revokeObjectURL(prev.src);
-        }
-
-        return { ...prev, src: objectUrl };
-      });
-    });
+      setBlob((prev) => ({
+        ...prev,
+        src: base64, // <-- base64 data URL
+      }));
+      await saveSettings({ base64Image: base64 });
+    }
   };
 
   const handleShortcuts = useCallback((e: KeyboardEvent) => {

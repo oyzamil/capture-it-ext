@@ -114,12 +114,22 @@
   .lined-border {
     background: 
     /* Top edge - vertical dashes */
-      repeating-linear-gradient(to right, transparent 0px, transparent 5px, #6b7280 5px, #6b7280 6px, transparent 6px, transparent 15px) top / 100% 5px no-repeat,
-      /* Bottom edge - vertical dashes */ repeating-linear-gradient(to right, transparent 0px, transparent 5px, #9ca3af 5px, #9ca3af 6px, transparent 6px, transparent 15px) bottom / 100% 5px no-repeat,
-      /* Left edge - horizontal dashes */ repeating-linear-gradient(to bottom, transparent 0px, transparent 5px, #9ca3af 5px, #9ca3af 6px, transparent 6px, transparent 15px) left / 5px 100% no-repeat,
-      /* Right edge - horizontal dashes */ repeating-linear-gradient(to bottom, transparent 0px, transparent 5px, #9ca3af 5px, #9ca3af 6px, transparent 6px, transparent 15px) right / 5px 100%
+      repeating-linear-gradient(to right, transparent 0px, transparent 5px, #000000 5px, #000000 6px, transparent 6px, transparent 15px) top / 100% 5px no-repeat,
+      /* Bottom edge - vertical dashes */ repeating-linear-gradient(to right, transparent 0px, transparent 5px, #000000 5px, #000000 6px, transparent 6px, transparent 15px) bottom / 100% 5px no-repeat,
+      /* Left edge - horizontal dashes */ repeating-linear-gradient(to bottom, transparent 0px, transparent 5px, #000000 5px, #000000 6px, transparent 6px, transparent 15px) left / 5px 100% no-repeat,
+      /* Right edge - horizontal dashes */ repeating-linear-gradient(to bottom, transparent 0px, transparent 5px, #000000 5px, #000000 6px, transparent 6px, transparent 15px) right / 5px 100%
         no-repeat,
       /* Main background */ #e5e7eb;
+  }
+  .lined-border-dark {
+    background: 
+    /* Top edge - vertical dashes */
+      repeating-linear-gradient(to right, transparent 0px, transparent 5px, #e5e7eb 5px, #e5e7eb 6px, transparent 6px, transparent 15px) top / 100% 5px no-repeat,
+      /* Bottom edge - vertical dashes */ repeating-linear-gradient(to right, transparent 0px, transparent 5px, #e5e7eb 5px, #e5e7eb 6px, transparent 6px, transparent 15px) bottom / 100% 5px no-repeat,
+      /* Left edge - horizontal dashes */ repeating-linear-gradient(to bottom, transparent 0px, transparent 5px, #e5e7eb 5px, #e5e7eb 6px, transparent 6px, transparent 15px) left / 5px 100% no-repeat,
+      /* Right edge - horizontal dashes */ repeating-linear-gradient(to bottom, transparent 0px, transparent 5px, #e5e7eb 5px, #e5e7eb 6px, transparent 6px, transparent 15px) right / 5px 100%
+        no-repeat,
+      /* Main background */ #000000;
   }
 }
 
