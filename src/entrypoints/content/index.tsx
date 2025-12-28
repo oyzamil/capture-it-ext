@@ -2,13 +2,13 @@ import { createAndMountUI } from '@/providers/ThemeProvider';
 import CaptureCustom from './components/CaptureCustom';
 import CaptureElem from './components/CaptureElem';
 
-const example = ['*://*.example.com/*'];
-const production_match = ['<all_urls>'];
+//  ['*://*.example.com/*'];
+// ['<all_urls>'];
 
 export default defineContentScript({
-  matches: example,
+  matches: ['<all_urls>'],
   cssInjectionMode: 'ui',
-  allFrames: true,
+  // allFrames: true,
 
   async main(ctx) {
     let mountedElem: any = null;

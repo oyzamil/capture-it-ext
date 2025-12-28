@@ -28,7 +28,7 @@ export default defineConfig({
   }),
   manifest: ({ browser, manifestVersion, mode, command }) => {
     const manifestBase: any = {
-      name: '__MSG_appName__',
+      name: '__MSG_appFullName__',
       description: '__MSG_appDescription__',
       default_locale: 'en',
       permissions: ['activeTab', 'tabs', 'storage', 'notifications', 'downloads'],

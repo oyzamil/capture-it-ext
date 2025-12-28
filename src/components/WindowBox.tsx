@@ -20,7 +20,7 @@ const Bars: BarConfig[] = [
     code: ({ children, rounded }) => <div className={cn(rounded, 'overflow-hidden')}>{children}</div>,
   },
   {
-    name: 'mac-window',
+    name: 'mac',
     code: ({ children, rounded, theme }) => {
       const light = theme === 'light';
       return (
@@ -38,7 +38,7 @@ const Bars: BarConfig[] = [
     },
   },
   {
-    name: 'stack-light',
+    name: 'stack',
     code: ({ children, rounded, theme }) => {
       const light = theme === 'light';
       return (
@@ -62,7 +62,7 @@ const Bars: BarConfig[] = [
     },
   },
   {
-    name: 'window-frame',
+    name: 'window',
     code: ({ children, rounded, theme }) => {
       const light = theme === 'light';
       return (

@@ -1,37 +1,5 @@
 import pkg from '@/../package.json';
-import { StoreApi } from 'zustand';
-import { StateStorage } from 'zustand/middleware';
 
-export const browserStorage: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    return new Promise((resolve) => {
-      browser.storage.local.get([name], (result) => {
-        resolve(result[name] ? JSON.stringify(result[name]) : null);
-      });
-    });
-  },
-  setItem: async (name: string, value: string): Promise<void> => {
-    return new Promise((resolve) => {
-      browser.storage.local.set({ [name]: JSON.parse(value) }, () => resolve());
-    });
-  },
-  removeItem: async (name: string): Promise<void> => {
-    return new Promise((resolve) => {
-      browser.storage.local.remove([name], () => resolve());
-    });
-  },
-};
-export function syncStoreWithBrowserStorage<T extends object>(store: StoreApi<T>, storageKey: string) {
-  // Listen for external changes in browser.storage.local
-  browser.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes[storageKey]) {
-      const newValue = changes[storageKey].newValue;
-      if (newValue?.state) {
-        store.setState(newValue.state);
-      }
-    }
-  });
-}
 export type PackageJson = typeof pkg;
 export function readPackageJson(): PackageJson {
   return pkg; // ✔ Browser-safe
@@ -39,27 +7,21 @@ export function readPackageJson(): PackageJson {
 export function getPackageProp<K extends keyof PackageJson>(prop: K): PackageJson[K] {
   return pkg[prop];
 }
-export function isDateNotPassed(dateStr: string) {
-  if (!/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
-    throw new Error('Invalid date format. Use DD-MM-YYYY');
-  }
+export function isDatePassed(dateString: string): boolean {
+  // Split the date string
+  const [day, month, year] = dateString.split('-').map(Number);
 
-  const [day, month, year] = dateStr.split('-').map(Number);
-
-  // JS months are 0-based
+  // Create a date object from the input (month is 0-indexed in JS)
   const inputDate = new Date(year, month - 1, day);
-  inputDate.setHours(0, 0, 0, 0);
 
-  // Validate real calendar date
-  if (inputDate.getFullYear() !== year || inputDate.getMonth() !== month - 1 || inputDate.getDate() !== day) {
-    throw new Error('Invalid calendar date');
-  }
+  // Set time to end of day for the input date
+  inputDate.setHours(23, 59, 59, 999);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Get current date and time
+  const currentDate = new Date();
 
-  // Return true if date NOT passed yet
-  return inputDate >= today;
+  // Compare the dates
+  return inputDate < currentDate;
 }
 export function hexToRgba(hex: string, opacity?: number, inHex?: boolean): string {
   // Remove '#' if present

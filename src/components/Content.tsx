@@ -39,7 +39,7 @@ export function Header() {
       key: 'support',
       label: 'Support',
       onClick: () => {
-        message.success('Mail Sent!');
+        sendMessage(EXT_MESSAGES.OPEN_TAB, { url: 'https://wa.me/923038088869' });
       },
       icon: <ChatIcon className="size-4 mr-2" />,
     },

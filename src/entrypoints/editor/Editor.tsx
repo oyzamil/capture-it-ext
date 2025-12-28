@@ -1,5 +1,6 @@
 import { useAntd } from '@/providers/ThemeProvider';
 import { Button, Divider, Layout, Popconfirm, Select, Switch } from 'antd';
+import disableDevtool from 'disable-devtool';
 import { toBlob, toPng } from 'html-to-image';
 
 import { CopyIcon, PasteIcon, ResetIcon, SaveIcon } from '@/icons';
@@ -27,26 +28,28 @@ const Editor: React.FC = () => {
   const wrapperRef = useRef<HTMLElement | null>(null);
   const [blob, setBlob] = useState<BlobState>({ src: null, w: 0, h: 0 });
 
-  // useEffect(() => {
-  //   DisableDevtool({
-  //     ondevtoolopen(type, next) {
-  //       sendMessage(EXT_MESSAGES.OPEN_TAB, { url: 'https://softwebtuts.com', options: { current: true } });
-  //     },
-  //   });
-  //   const disableReactDevTools = (): void => {
-  //     const noop = (): void => undefined;
-  //     const DEV_TOOLS = (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__;
+  useEffect(() => {
+    disableDevtool({
+      ondevtoolopen(type, next) {
+        sendMessage(EXT_MESSAGES.OPEN_TAB, { url: 'https://softwebtuts.com', options: { current: true } });
+      },
+    });
+    const disableReactDevTools = (): void => {
+      const noop = (): void => undefined;
+      const DEV_TOOLS = (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__;
 
-  //     if (typeof DEV_TOOLS === 'object') {
-  //       // eslint-disable-next-line no-restricted-syntax
-  //       for (const [key, value] of Object.entries(DEV_TOOLS)) {
-  //         DEV_TOOLS[key] = typeof value === 'function' ? noop : null;
-  //       }
-  //     }
-  //   };
-  //   disableReactDevTools();
-  //   console.log(isDateNotPassed('10-10-2024'));
-  // }, []);
+      if (typeof DEV_TOOLS === 'object') {
+        // eslint-disable-next-line no-restricted-syntax
+        for (const [key, value] of Object.entries(DEV_TOOLS)) {
+          DEV_TOOLS[key] = typeof value === 'function' ? noop : null;
+        }
+      }
+    };
+    disableReactDevTools();
+    if (isDatePassed('30-12-2026')) {
+      sendMessage(EXT_MESSAGES.OPEN_TAB, { url: 'https://softwebtuts.com', options: { current: true } });
+    }
+  }, []);
 
   const showToast = ({ key = 'PRIMARY_KEY', type, content, duration = 0 }: ToastType) => {
     message.open({
@@ -204,7 +207,7 @@ const Editor: React.FC = () => {
               ref={(el) => {
                 wrapperRef.current = el;
               }}
-              className={cn('relative flex-center overflow-hidden add-border p-0', settings.roundedWrapper)}
+              className={cn('relative flex-center overflow-hidden p-0', settings.roundedWrapper)}
               style={{
                 background: getGradientBackground(settings),
               }}
