@@ -562,7 +562,7 @@ type PatternBoxProps = {
   children?: ReactNode;
 };
 
-const PatternBox = ({ name, className = '', children }: PatternBoxProps) => {
+const PatternBox = ({ name, className = '', children, noise }: PatternBoxProps) => {
   useEffect(() => {
     injectPatternCSS();
   }, []);
@@ -571,7 +571,13 @@ const PatternBox = ({ name, className = '', children }: PatternBoxProps) => {
     return <>{children}</>;
   }
 
-  return <div className={`pattern-${name} ${className}`}>{children}</div>;
+  return (
+    <div className={`pattern-${name} ${className}`}>
+      <div style={noise ? { backgroundImage: 'url("/noise.svg")' } : undefined} className={`h-full w-full bg-repeat opacity-80`}>
+        {children}
+      </div>
+    </div>
+  );
 };
 
 export default PatternBox;

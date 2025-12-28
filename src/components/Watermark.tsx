@@ -7,7 +7,7 @@ const Watermark = ({ className = '', glass }: { className: string; glass?: boole
         <div className={cn('border-e border-t [grid-area:1/3/2/4] animate-spark-fast', borderColor)}></div>
         <div className={cn('border-s border-b [grid-area:3/1/4/2] animate-spark-fast', borderColor)}></div>
         <div className={cn('border-e border-b [grid-area:3/3/4/4] animate-spark', borderColor)}></div>
-        <div className={cn('m-0.5 px-1 tracking-wide text-white [grid-area:1/1/4/4] flex-center gap-1 rounded-md', glass ? 'glass p-1 from-transparent' : '')}>
+        <div className={cn('m-0.5 px-1 tracking-wide text-white [grid-area:1/1/4/4] flex-center gap-1 rounded-md', glass ? 'glass p-1' : '')}>
           {glass ? (
             <div className="flex-center gap-1 text-xs">
               <span>Designed by</span>

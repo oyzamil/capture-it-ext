@@ -1,4 +1,4 @@
-export default ({ className = 'size-4' }: IconType) => {
+export default ({ className = 'size-4', stroke = '2' }: IconType) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className={className} viewBox="0 0 24 24">
       <path fill="none" d="M0 0h24v24H0z" />

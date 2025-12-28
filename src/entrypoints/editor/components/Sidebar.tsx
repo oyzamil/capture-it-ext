@@ -10,43 +10,43 @@ interface Sidebar {
 export const ASPECT_CONFIG = {
   'aspect-auto': {
     label: 'Auto',
-    className: 'max-w-full max-h-auto',
+    className: 'w-full h-auto',
   },
   'aspect-square': {
     label: '1:1 — Square',
-    className: 'max-w-[640px] max-h-[640px]',
+    className: 'w-[640px] h-[640px]',
   },
   'aspect-video': {
     label: '16:9 — Video',
-    className: 'max-w-[1138px] max-h-[640px]',
+    className: 'w-[1138px] h-[640px]',
   },
   'aspect-[9/16]': {
     label: '9:16 — Mobile / Story',
-    className: 'max-w-[360px] max-h-[640px]',
+    className: 'w-[360px] h-[640px]',
   },
   'aspect-[1280/800]': {
     label: 'Extension Thumbnail',
-    className: 'max-w-[1024px] max-h-[640px]',
+    className: 'w-[1024px] h-[640px]',
   },
   'aspect-[440/280]': {
     label: 'Chrome Promo Tile',
-    className: 'max-w-[1006px] max-h-[640px]',
+    className: 'w-[1006px] h-[640px]',
   },
   'aspect-[4/5]': {
     label: '4:5 — Instagram Portrait',
-    className: 'max-w-[512px] max-h-[640px]',
+    className: 'w-[512px] h-[640px]',
   },
   'aspect-[4/3]': {
     label: '4:3 — Classic',
-    className: 'max-w-[853px] max-h-[640px]',
+    className: 'w-[853px] h-[640px]',
   },
   'aspect-[3/2]': {
     label: '3:2 — Photography',
-    className: 'max-w-[960px] max-h-[640px]',
+    className: 'w-[960px] h-[640px]',
   },
   'aspect-[21/9]': {
     label: '21:9 — Ultrawide',
-    className: 'max-w-[1493px] max-h-[640px]',
+    className: 'w-[1493px] h-[640px]',
   },
 } as const;
 
@@ -226,17 +226,33 @@ export default function Sidebar({ className, onReset }: Sidebar) {
 
       <Card title="Screenshot Options" size="small">
         <Space orientation="vertical" className="w-full" size="middle">
-          <FieldSet label="Browser Bar">
+          <FieldSet label="Window Bar">
             <Select
               className="w-full"
               value={settings.windowBar}
-              placeholder="Browser Bar"
+              placeholder="Window Bar"
               options={WINDOW_BARS}
               onChange={(windowBar) => {
                 saveSettings({ windowBar });
               }}
             />
           </FieldSet>
+
+          <FieldSet label="Window Theme">
+            <Select
+              className="w-full"
+              value={settings.windowTheme}
+              placeholder="Window Theme"
+              options={[
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+              ]}
+              onChange={(windowTheme) => {
+                saveSettings({ windowTheme });
+              }}
+            />
+          </FieldSet>
+
           <FieldSet label="Scale">
             <Select
               className="w-full"

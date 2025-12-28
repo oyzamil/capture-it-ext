@@ -21,6 +21,7 @@ type DeepPartial<T> =
 
 type IconType = {
   className?: string;
+  stroke?: string;
 };
 interface Rect {
   x: number;

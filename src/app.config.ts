@@ -29,6 +29,7 @@ export const config = {
     shadow: 'shadow-xl',
     noise: false,
     windowBar: 'simple-light',
+    windowTheme: 'light' as 'light' | 'dark',
     quality: '4k' as Resolution,
     fileFormat: 'png',
     scale: 'scale-100',
