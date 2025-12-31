@@ -7,6 +7,7 @@ function Home() {
   const { message } = useAntd();
   const { settings, saveSettings } = useSettings();
   const [form] = Form.useForm<SETTINGS_TYPE>();
+  const [notAllowed, setNotAllowed] = useState(true);
 
   const debouncedSubmit = useDebounce(onSubmit, 500);
 
@@ -28,26 +29,53 @@ function Home() {
     }
   }
 
-  const handleCapture = async (CAPTURE_YTPE: CAPTURE_TYPE): Promise<void> => {
-    browser.tabs.query({ active: true, currentWindow: true }, async (tabs: Browser.tabs.Tab[]) => {
-      const activeTab = tabs[0];
+  const handleCapture = async (CAPTURE_TYPE: CAPTURE_TYPE): Promise<void> => {
+    try {
+      const [activeTab] = await browser.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
 
-      if (!activeTab || !activeTab.url || activeTab.id === undefined) {
+      // Send message FIRST
+      await sendMessage(CAPTURE_TYPE, undefined, {
+        tabId: activeTab.id!,
+      });
+
+      // Close popup AFTER async finishes
+      setTimeout(() => window.close(), 100);
+    } catch (error) {
+      console.error('Capture failed:', error);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      const [activeTab] = await browser.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+
+      if (!activeTab.url || !activeTab.id) {
+        console.warn('Invalid active tab');
         return;
       }
 
-      const currentUrl: string = activeTab.url;
+      const currentUrl = activeTab.url;
 
-      const isInternalPage: boolean = currentUrl.startsWith('chrome://') || currentUrl.includes('chromewebstore');
+      const isInternalPage =
+        currentUrl.startsWith('chrome://') || currentUrl.startsWith('chrome-extension://') || currentUrl.startsWith('edge://') || currentUrl.includes('chromewebstore') || currentUrl === 'about:blank';
 
       if (isInternalPage) {
-        await sendMessage(GENERAL_MESSAGES.NOTIFY, { title: 'Internal Page', message: 'This page can not be captured!' });
+        await sendMessage(GENERAL_MESSAGES.NOTIFY, {
+          title: 'Internal Page',
+          message: 'This page cannot be captured!',
+        });
+        return;
       } else {
-        await sendMessage(CAPTURE_YTPE, undefined, { tabId: activeTab.id });
-        window.close();
+        setNotAllowed(false);
       }
-    });
-  };
+    })();
+  }, []);
 
   const labelColumn = { flex: '80px' };
   return (
@@ -90,16 +118,17 @@ function Home() {
           />
         </Form.Item>
 
-        <Form.Item layout="vertical" className="bg-white dark:bg-black dark:border-black w-full border border-gray-200 border-t-0 rounded-md mt-2">
+        <Form.Item layout="vertical" className="bg-white dark:bg-black dark:border-black w-full border border-gray-200 border-t-0 rounded-md mt-2 -mb-3">
           <Divider children={<span className="px-2 text-app-500 font-semibold dark:text-white">Capture</span>} className="-mt-3 mb-2" />
           <div className="p-2 space-y-2">
             <Space.Compact block>
               <Button
                 type="primary"
+                block
                 onClick={() => {
                   handleCapture(CAPTURE_MESSAGES.CAPTURE_DIV);
                 }}
-                block
+                disabled={notAllowed}
               >
                 Element
               </Button>
@@ -111,10 +140,27 @@ function Home() {
                 onClick={() => {
                   handleCapture(CAPTURE_MESSAGES.CAPTURE_CUSTOM);
                 }}
+                disabled={notAllowed}
               >
                 Custom
               </Button>
-
+              <Button
+                type="primary"
+                block
+                onClick={async () => {
+                  try {
+                    window.close();
+                    await sendMessage(GENERAL_MESSAGES.CREATE_OFFSCREEN);
+                  } catch (error) {
+                    message.error('Unable to capture current tab!');
+                    console.error(error);
+                  }
+                }}
+              >
+                Full Screen
+              </Button>
+            </Space.Compact>
+            <Space.Compact block>
               <Button
                 type="primary"
                 block
@@ -129,24 +175,24 @@ function Home() {
                   }
                 }}
               >
-                Visible
+                Visible Page
+              </Button>
+              <Button
+                type="primary"
+                block
+                onClick={async () => {
+                  const [activeTab] = await browser.tabs.query({
+                    active: true,
+                    currentWindow: true,
+                  });
+                  await sendMessage(CAPTURE_MESSAGES.CAPTURE_FULL_TAB, { format: 'png', scaleFactor: window.devicePixelRatio, tabId: activeTab.id });
+                  window.close();
+                }}
+                disabled={notAllowed}
+              >
+                Full Page
               </Button>
             </Space.Compact>
-            <Button
-              type="primary"
-              block
-              onClick={async () => {
-                try {
-                  window.close();
-                  await sendMessage(GENERAL_MESSAGES.CREATE_OFFSCREEN);
-                } catch (error) {
-                  message.error('Unable to capture current tab!');
-                  console.error(error);
-                }
-              }}
-            >
-              Screen
-            </Button>
           </div>
         </Form.Item>
       </Form>

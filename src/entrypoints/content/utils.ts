@@ -54,21 +54,6 @@ export const getComputedPadding = (el: HTMLElement) => {
   };
 };
 
-/**
- * Creates a canvas capture of an element with optional padding and styling
- * @param {HTMLElement} element - The element to capture
- * @param {Object} options - Capture options
- * @param {number} options.captureMargin - Margin around element in pixels (default: 0)
- * @param {Object} options.padding - Padding: {top, right, bottom, left} in pixels
- * @param {string} options.paddingColor - Color for padding (default: "#ffffff")
- * @param {boolean} options.transparentPadding - Use transparent padding (default: false)
- * @param {number} options.roundedRadius - Corner radius in pixels (default: 0)
- * @param {boolean} options.squircleRounding - Use squircle (smooth) corners (default: false)
- * @param {number} options.cornerSmoothing - Smoothing factor 0-1 for squircle (default: 0.6)
- * @param {string} options.format - Output format: "png", "jpg", "webp", "svg" (default: "png")
- * @param {number} options.quality - Quality 0-100 for jpg/webp (default: 90)
- * @returns {Promise<{dataUrl: string, blob: Blob}>}
- */
 interface Padding {
   top: number;
   right: number;
@@ -237,6 +222,20 @@ function calculateTiles(
 
   return { tiles, cols, rows, captureRect };
 }
+let lastCaptureTime = 0;
+const MIN_CAPTURE_INTERVAL = 600;
+
+async function throttledCapture(): Promise<{ dataUrl: string }> {
+  const now = Date.now();
+  const wait = Math.max(0, MIN_CAPTURE_INTERVAL - (now - lastCaptureTime));
+
+  if (wait > 0) {
+    await new Promise((r) => setTimeout(r, wait));
+  }
+
+  lastCaptureTime = Date.now();
+  return sendMessage(CAPTURE_MESSAGES.CAPTURE_TAB);
+}
 
 /**
  * Capture element using multiple screenshots stitched together
@@ -252,7 +251,6 @@ async function captureStitched(
 ): Promise<HTMLCanvasElement> {
   const margin = Math.floor(captureMargin * dpr);
   const { tiles, captureRect } = calculateTiles(elementRect, viewportSize, captureMargin);
-
   const savedScrollX = window.scrollX;
   const savedScrollY = window.scrollY;
   const tileImages: Array<{
@@ -278,7 +276,7 @@ async function captureStitched(
       await waitFrames(2);
       await new Promise((r) => setTimeout(r, 30));
 
-      const { dataUrl } = await sendMessage(CAPTURE_MESSAGES.CAPTURE_TAB);
+      const { dataUrl } = await throttledCapture();
       const image = await createImageFromData(dataUrl);
 
       const cropX = 0;

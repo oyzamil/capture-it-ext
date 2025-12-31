@@ -1,3 +1,4 @@
+import { CaptureScreenshotOptions } from '@/entrypoints/background';
 import { defineExtensionMessaging } from '@webext-core/messaging';
 
 // -----------------------------
@@ -8,7 +9,7 @@ const makeMessages = <T extends string>(keys: readonly T[]) => Object.fromEntrie
 // -----------------------------
 // Capture messages
 // -----------------------------
-export const CAPTURE_MESSAGES = makeMessages(['CAPTURE_DIV', 'CAPTURE_CUSTOM', 'CAPTURE_TAB', 'CAPTURE_SCREEN'] as const);
+export const CAPTURE_MESSAGES = makeMessages(['CAPTURE_DIV', 'CAPTURE_CUSTOM', 'CAPTURE_TAB', 'CAPTURE_SCREEN', 'CAPTURE_FULL_TAB'] as const);
 
 // General messages
 export const GENERAL_MESSAGES = makeMessages(['SHOW_EDITOR', 'INTERNAL_PAGE', 'DOWNLOAD', 'UNMOUNT', 'NOTIFY', 'OPEN_TAB', 'CREATE_OFFSCREEN', 'CLOSE_OFFSCREEN'] as const);
@@ -45,6 +46,7 @@ interface ProtocolMap {
   'CAPTURE_DIV'(): void;
   'CAPTURE_CUSTOM'(): void;
   'CAPTURE_TAB'(): { dataUrl: string };
+  'CAPTURE_FULL_TAB'(payload: Partial<CaptureScreenshotOptions>): void;
   'CAPTURE_SCREEN'(): void;
   'SHOW_EDITOR'(): void;
   'INTERNAL_PAGE'(): void;

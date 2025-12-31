@@ -1,5 +1,6 @@
 import { settingsHook } from '@/hooks/useSettings';
 export const OFFSCREEN_DOCUMENT_PATH = '/offscreen.html';
+const EDITOR_PAGE_URL = browser.runtime.getURL('/editor.html');
 
 export default defineBackground(() => {
   try {
@@ -10,14 +11,22 @@ export default defineBackground(() => {
     //   console.log('settings changed', settings);
     // });
 
-    onMessage(CAPTURE_MESSAGES.CAPTURE_TAB, ({ sender }) => {
-      return captureVisible(sender.tab?.windowId);
+    onMessage(CAPTURE_MESSAGES.CAPTURE_TAB, () => {
+      return captureVisible();
+    });
+    onMessage(CAPTURE_MESSAGES.CAPTURE_FULL_TAB, async ({ data }) => {
+      const dataUrl = await captureTabScreenshot({
+        tabId: data.tabId,
+        format: data.format,
+        scaleFactor: data.scaleFactor,
+      });
+      await settingsHook.saveSettings({ base64Image: dataUrl });
+      openPage(EDITOR_PAGE_URL);
     });
 
     // Open Editor Page
     onMessage(GENERAL_MESSAGES.SHOW_EDITOR, async () => {
-      const editorUrl = browser.runtime.getURL('/editor.html');
-      openPage(editorUrl);
+      openPage(EDITOR_PAGE_URL);
     });
 
     onMessage(GENERAL_MESSAGES.OPEN_TAB, async ({ data }) => {
@@ -181,4 +190,69 @@ async function hasOffscreenDocument(): Promise<boolean> {
     const matchedClients = await (self as any).clients.matchAll();
     return matchedClients.some((client: any) => client.url.includes(browser.runtime.id));
   }
+}
+export type ScreenshotFormat = 'png' | 'jpeg' | 'webp';
+
+export interface CaptureScreenshotOptions {
+  tabId?: number;
+  format?: ScreenshotFormat;
+  quality?: number;
+  scaleFactor?: number;
+  delayMs?: number;
+}
+async function captureTabScreenshot(options: CaptureScreenshotOptions): Promise<string> {
+  const { tabId, format = 'png', quality = 90, scaleFactor = 1, delayMs = 300 } = options;
+
+  const [activeTab] = await browser.tabs.query({
+    active: true,
+    currentWindow: true,
+  });
+
+  const debuggerTarget = { tabId: tabId || activeTab.id };
+
+  // --- attach debugger
+  await browser.debugger.attach(debuggerTarget, '1.3');
+
+  try {
+    // --- enable page
+    await browser.debugger.sendCommand(debuggerTarget, 'Page.enable');
+
+    // --- transparent background
+    await browser.debugger.sendCommand(debuggerTarget, 'Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+
+    // --- get layout size
+    const metrics = (await browser.debugger.sendCommand(debuggerTarget, 'Page.getLayoutMetrics')) as {
+      contentSize: { width: number; height: number };
+    };
+
+    const { width, height } = metrics.contentSize;
+
+    // --- override device metrics
+    await browser.debugger.sendCommand(debuggerTarget, 'Emulation.setDeviceMetricsOverride', {
+      width,
+      height,
+      deviceScaleFactor: scaleFactor,
+      mobile: false,
+    });
+
+    // --- allow layout settle
+    await sleep(delayMs);
+
+    // --- capture screenshot
+    const result = (await browser.debugger.sendCommand(debuggerTarget, 'Page.captureScreenshot', {
+      format,
+      fromSurface: true,
+      ...(format === 'jpeg' ? { quality } : {}),
+    })) as { data: string };
+
+    return `data:image/${format};base64,${result.data}`;
+  } finally {
+    // --- cleanup ALWAYS
+    await browser.debugger.sendCommand(debuggerTarget, 'Emulation.clearDeviceMetricsOverride');
+
+    await browser.debugger.detach(debuggerTarget);
+  }
+}
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
 }

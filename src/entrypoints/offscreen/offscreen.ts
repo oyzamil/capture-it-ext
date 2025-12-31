@@ -10,7 +10,7 @@ async function captureScreen(): Promise<{ dataUrl: string }> {
   video.playsInline = true;
 
   await video.play();
-  await new Promise((r) => setTimeout(r, 300)); // allow frame to render
+  await new Promise((r) => setTimeout(r, 300));
 
   const canvas = document.createElement('canvas');
   canvas.width = video.videoWidth;

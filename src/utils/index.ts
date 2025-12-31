@@ -176,3 +176,12 @@ export function getScaleFactor(targetResolution: Resolution, cropWidth: number, 
 
   return scale;
 }
+
+export async function getCurrentTab(): Promise<Browser.tabs.Tab | null> {
+  const tabs = await browser.tabs.query({
+    active: true,
+    currentWindow: true,
+  });
+
+  return tabs[0] ?? null;
+}
