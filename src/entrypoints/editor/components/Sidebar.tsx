@@ -1,9 +1,8 @@
 import { WINDOW_BARS } from '@/components/WindowBox';
-import { ResetIcon } from '@/icons';
-import { Button, Card, ColorPicker, Popconfirm, Select, Space, Switch } from 'antd';
+import { ResetIcon, TriangleIcon } from '@/icons';
+import { Button, Collapse, CollapseProps, ColorPicker, Popconfirm, Slider, Switch } from 'antd';
 
 interface Sidebar {
-  className?: string;
   onReset: () => void;
 }
 
@@ -60,27 +59,17 @@ export const aspectRatios = [
   })),
 ];
 
-export default function Sidebar({ className, onReset }: Sidebar) {
+export default function Sidebar({ onReset }: Sidebar) {
   const { settings, saveSettings } = useSettings();
-  return (
-    <div className={cn('space-y-6', className)}>
-      <Card
-        title="Canvas Options"
-        size="small"
-        extra={
-          <Popconfirm title="Confirm" description="Are you sure to reset the settings?" onConfirm={onReset} okText="Yes" cancelText="No">
-            <Button type="text" danger>
-              <span className="size-4">
-                <ResetIcon />
-              </span>
-              Reset Settings
-            </Button>
-          </Popconfirm>
-        }
-      >
-        <Space orientation="vertical" className="w-full" size="middle">
+
+  const items: CollapseProps['items'] = [
+    {
+      key: '1',
+      label: <Title title="Canvas Options" />,
+      children: (
+        <div className="space-y-2">
           <FieldSet label="Aspect Ratio">
-            <Select
+            <MySelect
               className="w-full"
               value={settings.aspectRatio}
               placeholder="Aspect Ratio"
@@ -92,7 +81,7 @@ export default function Sidebar({ className, onReset }: Sidebar) {
           </FieldSet>
 
           <FieldSet label="Rounded Corners">
-            <Select
+            <MySelect
               className="w-full"
               value={settings.roundedWrapper}
               placeholder="Rounded Corners"
@@ -158,21 +147,13 @@ export default function Sidebar({ className, onReset }: Sidebar) {
                       className={cn('p-0 rounded-lg size-3', settings.backgroundAngle === `${angle}deg` ? 'bg-black text-white border-black' : '', disabled ? 'opacity-0 cursor-auto' : '')}
                       disabled={disabled}
                     >
-                      <svg
+                      <div
                         style={{
                           transform: `rotate(${angle - 90}deg)`,
-                          fontSize: '10px',
                         }}
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className=""
                       >
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M9 6c0 -.852 .986 -1.297 1.623 -.783l.084 .076l6 6a1 1 0 0 1 .083 1.32l-.083 .094l-6 6l-.094 .083l-.077 .054l-.096 .054l-.036 .017l-.067 .027l-.108 .032l-.053 .01l-.06 .01l-.057 .004l-.059 .002l-.059 -.002l-.058 -.005l-.06 -.009l-.052 -.01l-.108 -.032l-.067 -.027l-.132 -.07l-.09 -.065l-.081 -.073l-.083 -.094l-.054 -.077l-.054 -.096l-.017 -.036l-.027 -.067l-.032 -.108l-.01 -.053l-.01 -.06l-.004 -.057l-.002 -12.059z" />
-                      </svg>
+                        <TriangleIcon className="size-3" />
+                      </div>
                     </Button>
                   );
                 })}
@@ -181,7 +162,7 @@ export default function Sidebar({ className, onReset }: Sidebar) {
           </div>
 
           <FieldSet label="Gradient Type">
-            <Select
+            <MySelect
               className="w-full"
               value={settings.gradientType}
               placeholder="Gradient Type"
@@ -197,37 +178,33 @@ export default function Sidebar({ className, onReset }: Sidebar) {
           </FieldSet>
 
           <FieldSet label="Background Pattern">
-            <Select
+            <MySelect
               className="w-full"
               value={settings.bgPattern}
               placeholder="Pattern"
               options={BG_PATTERNS}
-              // showSearch={true}
-              onInputKeyDown={(e) => {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                  e.preventDefault();
-
-                  const currentIndex = BG_PATTERNS.findIndex((o) => o.value === settings.bgPattern);
-
-                  const nextIndex = e.key === 'ArrowDown' ? Math.min(currentIndex + 1, BG_PATTERNS.length - 1) : Math.max(currentIndex - 1, 0);
-
-                  saveSettings({
-                    bgPattern: BG_PATTERNS[nextIndex].value,
-                  });
-                }
-              }}
               onChange={(bgPattern) => {
                 saveSettings({ bgPattern });
               }}
             />
           </FieldSet>
-        </Space>
-      </Card>
-
-      <Card title="Screenshot Options" size="small">
-        <Space orientation="vertical" className="w-full" size="middle">
+        </div>
+      ),
+      extra: (
+        <Popconfirm title="Confirm" description="Are you sure to reset the settings?" onConfirm={onReset} okText="Yes" cancelText="No">
+          <Button type="text" icon={<ResetIcon className="size-4" />} size="small" danger>
+            Reset Settings
+          </Button>
+        </Popconfirm>
+      ),
+    },
+    {
+      key: '2',
+      label: <Title title="Screenshot Options" />,
+      children: (
+        <div className="space-y-2">
           <FieldSet label="Window Bar">
-            <Select
+            <MySelect
               className="w-full"
               value={settings.windowBar}
               placeholder="Window Bar"
@@ -239,7 +216,7 @@ export default function Sidebar({ className, onReset }: Sidebar) {
           </FieldSet>
 
           <FieldSet label="Window Theme">
-            <Select
+            <MySelect
               className="w-full"
               value={settings.windowTheme}
               placeholder="Window Theme"
@@ -254,31 +231,20 @@ export default function Sidebar({ className, onReset }: Sidebar) {
           </FieldSet>
 
           <FieldSet label="Scale">
-            <Select
-              className="w-full"
-              value={settings.scale}
-              placeholder="Scale"
-              options={[
-                { value: 'scale-0', label: '0' },
-                { value: 'scale-50', label: '0.5' },
-                { value: 'scale-75', label: '0.75' },
-                { value: 'scale-90', label: '0.9' },
-                { value: 'scale-95', label: '0.95' },
-                { value: 'scale-100', label: '1' },
-                { value: 'scale-105', label: '1.05' },
-                { value: 'scale-110', label: '1.1' },
-                { value: 'scale-125', label: '1.25' },
-                { value: 'scale-150', label: '1.5' },
-                { value: 'scale-200', label: '2' },
-              ]}
-              onChange={(scale) => {
+            <Slider
+              min={0}
+              max={2}
+              step={0.05}
+              defaultValue={settings.scale}
+              keyboard
+              onChangeComplete={(scale) => {
                 saveSettings({ scale });
               }}
             />
           </FieldSet>
 
           <FieldSet label="Spacing">
-            <Select
+            <MySelect
               className="w-full"
               value={settings.padding}
               placeholder="Spacing"
@@ -295,7 +261,7 @@ export default function Sidebar({ className, onReset }: Sidebar) {
           </FieldSet>
 
           <FieldSet label="Rounded">
-            <Select
+            <MySelect
               className="w-full"
               value={settings.rounded}
               placeholder="Rounded"
@@ -313,7 +279,7 @@ export default function Sidebar({ className, onReset }: Sidebar) {
           </FieldSet>
 
           <FieldSet label="Shadow">
-            <Select
+            <MySelect
               className="w-full"
               value={settings.shadow}
               placeholder="Shadow"
@@ -369,8 +335,29 @@ export default function Sidebar({ className, onReset }: Sidebar) {
               />
             </FieldSet>
           </div>
-        </Space>
-      </Card>
-    </div>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <Collapse
+      items={items}
+      expandIcon={({ isActive }) => (
+        <div
+          style={{
+            transform: `rotate(${isActive ? 90 : 0}deg)`,
+          }}
+        >
+          <TriangleIcon />
+        </div>
+      )}
+      defaultActiveKey={['1', '2']}
+      className={cn('rounded-none')}
+    />
   );
 }
+
+const Title = ({ title, className }: { title: string; className?: string }) => {
+  return <div className={cn('font-semibold', className)}>{title}</div>;
+};

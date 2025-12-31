@@ -1,8 +1,8 @@
 import { useAntd } from '@/providers/ThemeProvider';
 import { Button, Divider, Layout, Popconfirm, Select, Switch } from 'antd';
-import disableDevtool from 'disable-devtool';
 import { toBlob, toPng } from 'html-to-image';
 
+import { SETTINGS_TYPE } from '@/app.config';
 import { CopyIcon, PasteIcon, ResetIcon, SaveIcon } from '@/icons';
 import { copyImageToClipboard } from '../content/utils';
 import Sidebar, { ASPECT_CONFIG } from './components/Sidebar';
@@ -28,28 +28,28 @@ const Editor: React.FC = () => {
   const wrapperRef = useRef<HTMLElement | null>(null);
   const [blob, setBlob] = useState<BlobState>({ src: null, w: 0, h: 0 });
 
-  useEffect(() => {
-    disableDevtool({
-      ondevtoolopen(type, next) {
-        sendMessage(EXT_MESSAGES.OPEN_TAB, { url: 'https://softwebtuts.com', options: { current: true } });
-      },
-    });
-    const disableReactDevTools = (): void => {
-      const noop = (): void => undefined;
-      const DEV_TOOLS = (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__;
+  // useEffect(() => {
+  //   disableDevtool({
+  //     ondevtoolopen(type, next) {
+  //       sendMessage(GENERAL_MESSAGES.OPEN_TAB, { url: 'https://softwebtuts.com', options: { current: true } });
+  //     },
+  //   });
+  //   const disableReactDevTools = (): void => {
+  //     const noop = (): void => undefined;
+  //     const DEV_TOOLS = (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__;
 
-      if (typeof DEV_TOOLS === 'object') {
-        // eslint-disable-next-line no-restricted-syntax
-        for (const [key, value] of Object.entries(DEV_TOOLS)) {
-          DEV_TOOLS[key] = typeof value === 'function' ? noop : null;
-        }
-      }
-    };
-    disableReactDevTools();
-    if (isDatePassed('30-12-2026')) {
-      sendMessage(EXT_MESSAGES.OPEN_TAB, { url: 'https://softwebtuts.com', options: { current: true } });
-    }
-  }, []);
+  //     if (typeof DEV_TOOLS === 'object') {
+  //       // eslint-disable-next-line no-restricted-syntax
+  //       for (const [key, value] of Object.entries(DEV_TOOLS)) {
+  //         DEV_TOOLS[key] = typeof value === 'function' ? noop : null;
+  //       }
+  //     }
+  //   };
+  //   disableReactDevTools();
+  //   if (isDatePassed('30-12-2026')) {
+  //     sendMessage(GENERAL_MESSAGES.OPEN_TAB, { url: 'https://softwebtuts.com', options: { current: true } });
+  //   }
+  // }, []);
 
   const showToast = ({ key = 'PRIMARY_KEY', type, content, duration = 0 }: ToastType) => {
     message.open({
@@ -77,12 +77,12 @@ const Editor: React.FC = () => {
       const height = wrapperRef.current.offsetHeight;
 
       const dataUrl = await toPng(wrapperRef.current, {
-        pixelRatio: getResolution(settings.quality),
+        pixelRatio: getResolution(settings.resolution),
         width: width,
         height: height,
       });
 
-      await sendMessage(EXT_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`${settings.quality}`, 'png') });
+      await sendMessage(GENERAL_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`${settings.resolution}`, 'png') });
 
       showToast({ type: 'success', content: i18n.t('exportMessages.success'), duration: 2 });
     } catch (err) {
@@ -99,7 +99,7 @@ const Editor: React.FC = () => {
     try {
       showToast({ type: 'loading', content: i18n.t('copyMessages.progress') });
       const blob = await toBlob(wrapperRef.current, {
-        pixelRatio: getResolution(settings.quality),
+        pixelRatio: getResolution(settings.resolution),
       });
 
       if (!blob) {
@@ -196,7 +196,7 @@ const Editor: React.FC = () => {
       {/* Sidebar  */}
       <Sider trigger={null} width={350} className="shadow bg-white overflow-auto h-screen sticky top-0 scrollbar:hidden dark:bg-neutral-900">
         <Watermark className="scale-150 text-2xl pt-6 pb-2 mb-4 flex-center gap-2 sticky top-0 z-50 bg-white dark:bg-neutral-900" />
-        <Sidebar className="p-3" onReset={resetSettings} />
+        <Sidebar onReset={resetSettings} />
       </Sider>
       {/* Sidebar End  */}
 
@@ -224,7 +224,15 @@ const Editor: React.FC = () => {
                 )}
               >
                 {/* Browser Bar  */}
-                <WindowBox name={settings.windowBar} theme={settings.windowTheme} rounded={settings.rounded} className={cn(settings.shadow, settings.scale, '')}>
+                <WindowBox
+                  name={settings.windowBar}
+                  theme={settings.windowTheme}
+                  rounded={settings.rounded}
+                  className={cn(settings.shadow)}
+                  style={{
+                    scale: settings.scale,
+                  }}
+                >
                   <img
                     src={blob?.src as any}
                     alt=""
@@ -293,7 +301,7 @@ const FooterContent = ({
   handleImageSave,
   resetCanvas,
 }: {
-  settings: any;
+  settings: SETTINGS_TYPE;
   saveSettings: any;
   handleCopyImage: any;
   handleImageSave: any;
@@ -305,7 +313,7 @@ const FooterContent = ({
         <FieldSet label="Format" orientation="horizontal" className="h-10 pr-1">
           <Select
             value={settings.fileFormat}
-            placeholder="Shadow"
+            placeholder="Format"
             options={[{ value: 'png', label: 'PNG' }]}
             onChange={(fileFormat) => {
               saveSettings({ fileFormat });
@@ -314,7 +322,7 @@ const FooterContent = ({
         </FieldSet>
         <FieldSet label="4K" orientation="horizontal" className="h-10">
           <Switch
-            checked={settings.quality === '4k'}
+            checked={settings.resolution === '4k'}
             onChange={(checked) => {
               saveSettings({ quality: checked ? '4k' : 'normal' });
             }}

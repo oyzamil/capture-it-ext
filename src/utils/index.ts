@@ -140,3 +140,39 @@ export const getResolution = (resolution: Resolution) => {
 
   return scale;
 };
+
+export function getScaleFactor(targetResolution: Resolution, cropWidth: number, cropHeight: number): number {
+  let targetWidth: number;
+  let targetHeight: number;
+
+  switch (targetResolution) {
+    case '1k':
+      targetWidth = 1024;
+      targetHeight = 768;
+      break;
+    case '2k':
+      targetWidth = 2048;
+      targetHeight = 1536;
+      break;
+    case '4k':
+      targetWidth = 3840;
+      targetHeight = 2160;
+      break;
+    case '8k':
+      targetWidth = 7680;
+      targetHeight = 4320;
+      break;
+    // case '10k':
+    //   targetWidth = 10240;
+    //   targetHeight = 5760;
+    //   break;
+    case 'normal':
+    default:
+      return 1;
+  }
+
+  // Calculate scale factor but cap at 2x to avoid huge memory usage
+  const scale = Math.min(targetWidth / cropWidth, targetHeight / cropHeight, 2);
+
+  return scale;
+}

@@ -1,48 +1,35 @@
-type StyleObject = Partial<CSSStyleDeclaration>;
-
-interface ApplyStyles {
-  root?: string;
-  anchor?: StyleObject;
-  anchorParent?: StyleObject;
-  shadowHost?: StyleObject;
-  uiContainer?: StyleObject;
-}
-interface CreateAndMountUI {
-  anchor: string;
-  position?: 'inline' | 'overlay' | 'modal';
-  children: ReactNode;
-  id?: string;
-  style?: ApplyStyles;
-}
-
-type DeepPartial<T> =
-  | Partial<T> // ✅ allow shallow Partial
-  | (T extends Function | Date | RegExp ? T : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T);
+type DeepPartial<T> = Partial<T> | (T extends Function | Date | RegExp ? T : T extends Array<infer U> ? Array<DeepPartial<U>> : T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T);
 
 type IconType = {
   className?: string;
   stroke?: string;
+  style?: React.CSSProperties;
 };
-interface Rect {
+interface Point {
   x: number;
   y: number;
+}
+
+interface Rect extends Point {
   width: number;
   height: number;
+}
+
+interface ElementSelection {
+  rect: Rect;
+  element: HTMLElement | null;
 }
 
 interface CanvasResult {
   blob: Blob;
   dataUrl: string;
 }
-type Resolution = 'normal' | '2k' | '4k' | '8k';
+
+type Resolution = 'normal' | '1k' | '2k' | '4k' | '8k';
+type ExportFormats = 'png' | 'jpg' | 'svg' | 'webp';
 
 type OpenPageOptions = {
-  /** Replace the current active tab */
   current?: boolean;
-
-  /** Focus the tab after opening */
   active?: boolean;
-
-  /** Open in a new window (optional future use) */
   newWindow?: boolean;
 };

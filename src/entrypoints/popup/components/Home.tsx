@@ -1,10 +1,7 @@
 import { SETTINGS_TYPE } from '@/app.config';
 import { useAntd } from '@/providers/ThemeProvider';
+import { CAPTURE_TYPE } from '@/utils/messaging';
 import { Button, Divider, Form, Segmented, Slider, Space } from 'antd';
-
-type CAPTURE_DIV = (typeof EXT_MESSAGES)['CAPTURE_DIV'];
-type CAPTURE_VISIBLE = (typeof EXT_MESSAGES)['CAPTURE_VISIBLE'];
-type CAPTURE_CUSTOM = (typeof EXT_MESSAGES)['CAPTURE_CUSTOM'];
 
 function Home() {
   const { message } = useAntd();
@@ -31,7 +28,7 @@ function Home() {
     }
   }
 
-  const handleCapture = async (CAPTURE_YTPE: CAPTURE_DIV | CAPTURE_VISIBLE | CAPTURE_CUSTOM): Promise<void> => {
+  const handleCapture = async (CAPTURE_YTPE: CAPTURE_TYPE): Promise<void> => {
     browser.tabs.query({ active: true, currentWindow: true }, async (tabs: Browser.tabs.Tab[]) => {
       const activeTab = tabs[0];
 
@@ -44,7 +41,7 @@ function Home() {
       const isInternalPage: boolean = currentUrl.startsWith('chrome://') || currentUrl.includes('chromewebstore');
 
       if (isInternalPage) {
-        await sendMessage(EXT_MESSAGES.NOTIFY, { title: 'Internal Page', message: 'This page can not be captured!' });
+        await sendMessage(GENERAL_MESSAGES.NOTIFY, { title: 'Internal Page', message: 'This page can not be captured!' });
       } else {
         await sendMessage(CAPTURE_YTPE, undefined, { tabId: activeTab.id });
         window.close();
@@ -76,7 +73,13 @@ function Home() {
             block
           />
         </Form.Item>
-        <Form.Item label="Margin" name="captureMargin" className="w-full" tooltip={'Only effects in element select mode.'} labelCol={labelColumn}>
+        <Form.Item
+          label="Margin"
+          name="captureMargin"
+          className="w-full"
+          tooltip={'The spaceing that will be added to the selected element. Only effects in element select mode.'}
+          labelCol={labelColumn}
+        >
           <Slider
             min={0}
             max={50}
@@ -89,44 +92,62 @@ function Home() {
 
         <Form.Item layout="vertical" className="bg-white dark:bg-black dark:border-black w-full border border-gray-200 border-t-0 rounded-md mt-2">
           <Divider children={<span className="px-2 text-app-500 font-semibold dark:text-white">Capture</span>} className="-mt-3 mb-2" />
-          <Space.Compact block className="p-2">
-            <Button
-              type="primary"
-              onClick={() => {
-                handleCapture(EXT_MESSAGES.CAPTURE_DIV);
-              }}
-              block
-            >
-              Element
-            </Button>
+          <div className="p-2 space-y-2">
+            <Space.Compact block>
+              <Button
+                type="primary"
+                onClick={() => {
+                  handleCapture(CAPTURE_MESSAGES.CAPTURE_DIV);
+                }}
+                block
+              >
+                Element
+              </Button>
 
-            {/* Custom Capture */}
-            <Button
-              type="primary"
-              block
-              onClick={() => {
-                handleCapture(EXT_MESSAGES.CAPTURE_CUSTOM);
-              }}
-            >
-              Custom
-            </Button>
+              {/* Custom Capture */}
+              <Button
+                type="primary"
+                block
+                onClick={() => {
+                  handleCapture(CAPTURE_MESSAGES.CAPTURE_CUSTOM);
+                }}
+              >
+                Custom
+              </Button>
 
+              <Button
+                type="primary"
+                block
+                onClick={async () => {
+                  try {
+                    const { dataUrl } = await sendMessage(CAPTURE_MESSAGES.CAPTURE_TAB);
+                    await saveSettings({ base64Image: dataUrl });
+                    await sendMessage(GENERAL_MESSAGES.SHOW_EDITOR);
+                  } catch (error) {
+                    message.error('Unable to capture current tab!');
+                    console.error(error);
+                  }
+                }}
+              >
+                Visible
+              </Button>
+            </Space.Compact>
             <Button
               type="primary"
               block
               onClick={async () => {
                 try {
-                  const { screenshotUrl } = await sendMessage(EXT_MESSAGES.CAPTURE_VISIBLE);
-                  await saveSettings({ base64Image: screenshotUrl });
-                  await sendMessage(EXT_MESSAGES.SHOW_EDITOR);
+                  window.close();
+                  await sendMessage(GENERAL_MESSAGES.CREATE_OFFSCREEN);
                 } catch (error) {
+                  message.error('Unable to capture current tab!');
                   console.error(error);
                 }
               }}
             >
-              Visible
+              Screen
             </Button>
-          </Space.Compact>
+          </div>
         </Form.Item>
       </Form>
     </div>

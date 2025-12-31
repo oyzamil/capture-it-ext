@@ -12,5 +12,6 @@ import ResetIcon from './ResetIcon';
 import SaveIcon from './SaveIcon';
 import StarIcon from './StarIcon';
 import SubtractIcon from './SubtractIcon';
+import TriangleIcon from './TriangleIcon';
 
-export { ArrowIcon, BarsIcon, BinIcon, ChatIcon, CopyIcon, CrossIcon, EditIcon, KeyIcon, MaximizeIcon, PasteIcon, ResetIcon, SaveIcon, StarIcon, SubtractIcon };
+export { ArrowIcon, BarsIcon, BinIcon, ChatIcon, CopyIcon, CrossIcon, EditIcon, KeyIcon, MaximizeIcon, PasteIcon, ResetIcon, SaveIcon, StarIcon, SubtractIcon, TriangleIcon };

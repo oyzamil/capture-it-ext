@@ -30,9 +30,9 @@ export const config = {
     noise: false,
     windowBar: 'none',
     windowTheme: 'light' as 'light' | 'dark',
-    quality: '4k' as Resolution,
-    fileFormat: 'png',
-    scale: 'scale-100',
+    resolution: '4k' as Resolution,
+    fileFormat: 'png' as ExportFormats,
+    scale: 1,
     captureMargin: 10,
   },
   ROUTES: {

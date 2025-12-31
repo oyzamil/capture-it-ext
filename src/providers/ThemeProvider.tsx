@@ -1,7 +1,6 @@
 import '@/assets/tailwind.css';
 import '@fontsource/poppins';
 
-import tailwindCSS from '@/assets/tailwind.css?inline';
 import { StyleProvider } from '@ant-design/cssinjs';
 import { theme as AntdTheme, App, ConfigProvider } from 'antd';
 import type { MessageInstance } from 'antd/es/message/interface';
@@ -28,6 +27,23 @@ interface AntdContextProps {
   modal: Omit<ModalStaticFunctions, 'warn'>;
   theme?: ThemeType;
   token: GlobalToken;
+}
+
+type StyleObject = Partial<CSSStyleDeclaration>;
+
+interface ApplyStyles {
+  root?: string;
+  anchor?: StyleObject;
+  anchorParent?: StyleObject;
+  shadowHost?: StyleObject;
+  uiContainer?: StyleObject;
+}
+interface CreateAndMountUI {
+  anchor: string;
+  position?: 'inline' | 'overlay' | 'modal';
+  children: ReactNode;
+  id?: string;
+  style?: ApplyStyles;
 }
 
 let AntdContext: React.Context<AntdContextProps | null>;
@@ -179,38 +195,37 @@ export const createAndMountUI = async (ctx: any, props: CreateAndMountUI) => {
       onMount: (uiContainer, shadow, shadowHost) => {
         const cssContainer = shadow.querySelector('head')!;
         shadowHost.id = id;
+        uiContainer.id = 'content-ui';
 
-        function buildFontFaces() {
-          return `
-@font-face {
-  font-family: 'Poppins';
-  font-weight: 400;
-  src: url('${browser.runtime.getURL('/fonts/poppins/Poppins-Regular.ttf')}');
-}
+        //         function buildFontFaces() {
+        //           return `
+        // @font-face {
+        //   font-family: 'Poppins';
+        //   font-weight: 400;
+        //   src: url('${browser.runtime.getURL('/fonts/poppins/Poppins-Regular.ttf')}');
+        // }
 
-@font-face {
-  font-family: 'Poppins';
-  font-weight: 600;
-  src: url('${browser.runtime.getURL('/fonts/poppins/Poppins-SemiBold.ttf')}');
-}
+        // @font-face {
+        //   font-family: 'Poppins';
+        //   font-weight: 600;
+        //   src: url('${browser.runtime.getURL('/fonts/poppins/Poppins-SemiBold.ttf')}');
+        // }
 
-@font-face {
-  font-family: 'Poppins';
-  font-weight: 700;
-  src: url('${browser.runtime.getURL('/fonts/poppins/Poppins-Bold.ttf')}');
-}
-`;
-        }
+        // @font-face {
+        //   font-family: 'Poppins';
+        //   font-weight: 700;
+        //   src: url('${browser.runtime.getURL('/fonts/poppins/Poppins-Bold.ttf')}');
+        // }
+        // `;
+        //         }
 
-        const styleFonts = document.createElement('style');
-        styleFonts.textContent = buildFontFaces();
-        shadowHost.appendChild(styleFonts);
+        //         const styleFonts = document.createElement('style');
+        //         styleFonts.textContent = buildFontFaces();
+        //         shadow.appendChild(styleFonts);
 
-        const tailwindStyle = document.createElement('style');
-        tailwindStyle.textContent = tailwindCSS;
-        cssContainer.appendChild(tailwindStyle);
-
-        if (style) applyStyles(style, anchor, shadowHost, shadowHost);
+        // const tailwindStyle = document.createElement('style');
+        // tailwindStyle.textContent = tailwindCSS;
+        // cssContainer.appendChild(tailwindStyle);
 
         const root = createRoot(uiContainer);
         root.render(

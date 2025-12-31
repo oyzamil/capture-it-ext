@@ -7,6 +7,7 @@ type WindowBoxProps = {
   theme: 'light' | 'dark';
   className?: string;
   children?: ReactNode;
+  style?: React.CSSProperties;
 };
 
 interface BarConfig {
@@ -68,7 +69,7 @@ const Bars: BarConfig[] = [
       return (
         <div className="grid">
           <div className={cn(rounded, 'flex items-center justify-between -mb-px w-full px-4 py-2 rounded-b-none', light ? 'bg-gray-100 text-gray-900' : 'text-gray-100 bg-gray-900')}>
-            <div className={cn('text-xs font-medium')}>
+            <div className={cn('text-xs font-medium truncate max-w-[50%]')}>
               Designed by <span className="underline">{i18n.t('appName')}</span> Browser Extension!
             </div>
             <div className="flex items-center gap-5 text-center">
@@ -93,14 +94,22 @@ const Bars: BarConfig[] = [
 // Create a Map for quick lookup
 const barsMap = new Map<string, (props: { children: ReactNode; rounded: string; theme: 'light' | 'dark' }) => ReactElement>(Bars.map((p) => [p.name, p.code]));
 
-const WindowBox = ({ name, className = '', children, rounded, theme }: WindowBoxProps) => {
+const WindowBox = ({ name, className = '', children, rounded, theme, style }: WindowBoxProps) => {
   const barComponent = barsMap.get(name);
 
   if (!name || !barComponent) {
-    return <div className={cn(`bar-${name}`, className)}>{children}</div>;
+    return (
+      <div className={cn(`bar-${name}`, className)} style={style}>
+        {children}
+      </div>
+    );
   }
 
-  return <div className={cn(`bar-${name} flex justify-center`, className)}>{barComponent({ children, rounded, theme })}</div>;
+  return (
+    <div className={cn(`bar-${name} flex justify-center`, className)} style={style}>
+      {barComponent({ children, rounded, theme })}
+    </div>
+  );
 };
 
 export default WindowBox;

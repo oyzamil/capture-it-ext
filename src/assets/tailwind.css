@@ -30,7 +30,7 @@
     font-style: normal;
   }
 
-  body {
+  body:not(#content-ui) {
     @apply relative font-['Poppins']! before:after:content-[''] bg-white dark:bg-black/90;
     /* Before */
     @apply before:absolute before:inset-0 before:-z-90 before:[clip-path:circle(30%_at_right_70%)];

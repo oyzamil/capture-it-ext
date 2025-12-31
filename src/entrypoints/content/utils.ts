@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Copy an image Blob to the clipboard.
  * @param imageBlob - The image Blob to copy (must be PNG, JPEG, etc.)
@@ -28,7 +27,7 @@ export const ensureFontsReady = async (timeoutMs = 1000) => {
   } catch {}
 };
 
-export const getEffectiveBackground = (el: HTMLElement): string => {
+export const getEffectiveBackground = (el: HTMLElement, defaultColor: string): string => {
   let current: HTMLElement | null = el;
 
   while (current) {
@@ -41,7 +40,7 @@ export const getEffectiveBackground = (el: HTMLElement): string => {
     current = current.parentElement;
   }
 
-  return '#ffffff';
+  return defaultColor;
 };
 
 export const getComputedPadding = (el: HTMLElement) => {
@@ -85,16 +84,34 @@ interface SketchOptions {
   roundedRadius?: number;
   squircleRounding?: boolean;
   cornerSmoothing?: number;
-  format?: 'png' | 'jpeg' | 'webp';
-  quality?: number; // 0-100
+  format?: ExportFormats;
+  resolution?: Resolution;
 }
 
-interface SketchResult {
-  dataUrl: string;
-  blob: Blob;
+interface ViewportSize {
+  width: number;
+  height: number;
 }
 
-export async function sketchImage(element: HTMLElement, options: SketchOptions = {}): Promise<SketchResult> {
+interface Tile {
+  docX: number;
+  docY: number;
+  width: number;
+  height: number;
+  col: number;
+  row: number;
+}
+
+interface CaptureStyle {
+  format: ExportFormats;
+  roundedRadius: number;
+  squircleRounding: boolean;
+  cornerSmoothing: number;
+  paddingColor: string;
+  transparentPadding: boolean;
+}
+
+export async function sketchImage(selection: ElementSelection, options: SketchOptions = {}): Promise<CanvasResult> {
   const {
     captureMargin = 0,
     padding = { top: 0, right: 0, bottom: 0, left: 0 },
@@ -104,21 +121,26 @@ export async function sketchImage(element: HTMLElement, options: SketchOptions =
     squircleRounding = false,
     cornerSmoothing = 0.6,
     format = 'png',
-    quality = 90,
+    resolution = 'normal',
   } = options;
 
   const dpr = window.devicePixelRatio || 1;
 
   // Convert padding to device pixels
   const pad = {
-    l: Math.floor(padding.left * dpr),
-    r: Math.floor(padding.right * dpr),
-    t: Math.floor(padding.top * dpr),
-    b: Math.floor(padding.bottom * dpr),
+    left: Math.floor(padding.left * dpr),
+    right: Math.floor(padding.right * dpr),
+    top: Math.floor(padding.top * dpr),
+    bottom: Math.floor(padding.bottom * dpr),
   };
 
   // Get element rect in document coordinates
-  const elementDocRect = getElementDocumentRect(element);
+  let elementDocRect: Rect;
+  if (selection.element) {
+    elementDocRect = getElementDocumentRect(selection.element);
+  } else {
+    elementDocRect = { ...selection.rect };
+  }
   const viewportSize = { width: window.innerWidth, height: window.innerHeight };
 
   // Check if element needs stitching (exceeds viewport)
@@ -129,7 +151,7 @@ export async function sketchImage(element: HTMLElement, options: SketchOptions =
   let canvas: HTMLCanvasElement;
 
   if (needsStitching) {
-    canvas = await captureStitched(element, elementDocRect, viewportSize, dpr, captureMargin, pad, {
+    canvas = await captureStitched(selection, elementDocRect, viewportSize, dpr, captureMargin, pad, {
       paddingColor,
       transparentPadding,
       roundedRadius,
@@ -138,7 +160,7 @@ export async function sketchImage(element: HTMLElement, options: SketchOptions =
       format,
     });
   } else {
-    canvas = await captureSingle(element, dpr, captureMargin, pad, {
+    canvas = await captureSingle(selection, dpr, captureMargin, pad, {
       paddingColor,
       transparentPadding,
       roundedRadius,
@@ -149,15 +171,14 @@ export async function sketchImage(element: HTMLElement, options: SketchOptions =
   }
 
   // Convert canvas to output format
-  const { dataUrl, blob } = await canvasToOutput(canvas, format, quality);
-
+  const { dataUrl, blob } = await canvasToOutput(canvas, format, resolution);
   return { dataUrl, blob };
 }
 
 /**
  * Get element's bounding rect relative to the document
  */
-function getElementDocumentRect(element) {
+function getElementDocumentRect(element: Element): Rect {
   const rect = element.getBoundingClientRect();
   return {
     x: rect.left + window.scrollX,
@@ -170,10 +191,19 @@ function getElementDocumentRect(element) {
 /**
  * Calculate tiles for stitched capture
  */
-function calculateTiles(elementRect, viewportSize, captureMargin) {
-  const tiles = [];
+function calculateTiles(
+  elementRect: Rect,
+  viewportSize: ViewportSize,
+  captureMargin: number
+): {
+  tiles: Tile[];
+  cols: number;
+  rows: number;
+  captureRect: Rect;
+} {
+  const tiles: Tile[] = [];
 
-  const captureRect = {
+  const captureRect: Rect = {
     x: elementRect.x - captureMargin,
     y: elementRect.y - captureMargin,
     width: elementRect.width + captureMargin * 2,
@@ -211,13 +241,30 @@ function calculateTiles(elementRect, viewportSize, captureMargin) {
 /**
  * Capture element using multiple screenshots stitched together
  */
-async function captureStitched(element, elementRect, viewportSize, dpr, captureMargin, pad, style) {
+async function captureStitched(
+  selection: ElementSelection,
+  elementRect: Rect,
+  viewportSize: ViewportSize,
+  dpr: number,
+  captureMargin: number,
+  pad: Padding,
+  style: CaptureStyle
+): Promise<HTMLCanvasElement> {
   const margin = Math.floor(captureMargin * dpr);
   const { tiles, captureRect } = calculateTiles(elementRect, viewportSize, captureMargin);
 
   const savedScrollX = window.scrollX;
   const savedScrollY = window.scrollY;
-  const tileImages = [];
+  const tileImages: Array<{
+    image: HTMLImageElement;
+    tile: Tile;
+    cropX: number;
+    cropY: number;
+    cropWidth: number;
+    cropHeight: number;
+    destX: number;
+    destY: number;
+  }> = [];
 
   try {
     for (const tile of tiles) {
@@ -231,8 +278,8 @@ async function captureStitched(element, elementRect, viewportSize, dpr, captureM
       await waitFrames(2);
       await new Promise((r) => setTimeout(r, 30));
 
-      const { screenshotUrl } = await sendMessage(EXT_MESSAGES.CAPTURE_VISIBLE);
-      const image = await createImageFromDataURL(screenshotUrl);
+      const { dataUrl } = await sendMessage(CAPTURE_MESSAGES.CAPTURE_TAB);
+      const image = await createImageFromData(dataUrl);
 
       const cropX = 0;
       const cropY = 0;
@@ -263,10 +310,12 @@ async function captureStitched(element, elementRect, viewportSize, dpr, captureM
   const stitchedHeight = Math.ceil(captureRect.height * dpr);
 
   const canvas = document.createElement('canvas');
-  canvas.width = stitchedWidth + pad.l + pad.r;
-  canvas.height = stitchedHeight + pad.t + pad.b;
+  canvas.width = stitchedWidth + pad.left + pad.right;
+  canvas.height = stitchedHeight + pad.top + pad.bottom;
   const ctx = canvas.getContext('2d');
-
+  if (!ctx) {
+    throw new Error('Failed to get 2D canvas context');
+  }
   const isAlpha = supportsAlpha(style.format);
   const applyClip = style.roundedRadius > 0;
 
@@ -281,10 +330,10 @@ async function captureStitched(element, elementRect, viewportSize, dpr, captureM
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   for (const ti of tileImages) {
-    ctx.drawImage(ti.image, ti.cropX, ti.cropY, ti.cropWidth, ti.cropHeight, pad.l + ti.destX, pad.t + ti.destY, ti.cropWidth, ti.cropHeight);
+    ctx.drawImage(ti.image, ti.cropX, ti.cropY, ti.cropWidth, ti.cropHeight, pad.left + ti.destX, pad.top + ti.destY, ti.cropWidth, ti.cropHeight);
   }
 
-  applyPaddingRings(ctx, canvas, pad, margin, stitchedWidth, stitchedHeight, style, isAlpha);
+  applyPaddingRings(selection, ctx, canvas, pad, margin, stitchedWidth, stitchedHeight, style, isAlpha);
 
   if (applyClip) {
     ctx.restore();
@@ -296,22 +345,27 @@ async function captureStitched(element, elementRect, viewportSize, dpr, captureM
 /**
  * Capture element in single screenshot
  */
-async function captureSingle(element, dpr, captureMargin, pad, style) {
-  element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+async function captureSingle(selection: ElementSelection, dpr: number, captureMargin: number, pad: Padding, style: CaptureStyle): Promise<HTMLCanvasElement> {
+  selection?.element?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   await new Promise((r) => setTimeout(r, 120));
 
-  const rect = element.getBoundingClientRect();
-  const currentRect = {
-    x: Math.round(rect.left),
-    y: Math.round(rect.top),
-    width: Math.round(rect.width),
-    height: Math.round(rect.height),
-  };
+  let currentRect: Rect;
+  if (selection.element) {
+    const rect = selection.element.getBoundingClientRect();
+    currentRect = {
+      x: Math.round(rect.left),
+      y: Math.round(rect.top),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+    };
+  } else {
+    currentRect = { ...selection.rect };
+  }
 
   await waitFrames(2);
   await new Promise((r) => setTimeout(r, 30));
-  const { screenshotUrl } = await sendMessage(EXT_MESSAGES.CAPTURE_VISIBLE);
-  const image = await createImageFromDataURL(screenshotUrl);
+  const { dataUrl } = await sendMessage(CAPTURE_MESSAGES.CAPTURE_TAB);
+  const image = await createImageFromData(dataUrl);
 
   const canvas = document.createElement('canvas');
   const targetW = Math.max(1, Math.floor(currentRect.width * dpr));
@@ -328,9 +382,13 @@ async function captureSingle(element, dpr, captureMargin, pad, style) {
   const sWidth = Math.min(rawSW - (sx - rawSx), Math.max(0, image.width - sx));
   const sHeight = Math.min(rawSH - (sy - rawSy), Math.max(0, image.height - sy));
 
-  canvas.width = sWidth + pad.l + pad.r;
-  canvas.height = sHeight + pad.t + pad.b;
+  canvas.width = sWidth + pad.left + pad.right;
+  canvas.height = sHeight + pad.top + pad.bottom;
   const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Failed to get 2D canvas context');
+  }
 
   const isAlpha = supportsAlpha(style.format);
   const applyClip = style.roundedRadius > 0;
@@ -344,9 +402,9 @@ async function captureSingle(element, dpr, captureMargin, pad, style) {
   }
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(image, sx, sy, sWidth, sHeight, pad.l, pad.t, sWidth, sHeight);
+  ctx.drawImage(image, sx, sy, sWidth, sHeight, pad.left, pad.top, sWidth, sHeight);
 
-  applyPaddingRings(ctx, canvas, pad, marginPx, sWidth, sHeight, style, isAlpha);
+  applyPaddingRings(selection, ctx, canvas, pad, marginPx, sWidth, sHeight, style, isAlpha);
 
   if (applyClip) {
     ctx.restore();
@@ -358,12 +416,22 @@ async function captureSingle(element, dpr, captureMargin, pad, style) {
 /**
  * Apply padding rings to canvas
  */
-function applyPaddingRings(ctx, canvas, pad, margin, contentWidth, contentHeight, style, isAlpha) {
+function applyPaddingRings(
+  selection: ElementSelection,
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  pad: Padding,
+  margin: number,
+  contentWidth: number,
+  contentHeight: number,
+  style: CaptureStyle,
+  isAlpha: boolean
+): void {
   const outer = { x: 0, y: 0, w: canvas.width, h: canvas.height };
-  const marginRect = { x: pad.l, y: pad.t, w: contentWidth, h: contentHeight };
+  const marginRect = { x: pad.left, y: pad.top, w: contentWidth, h: contentHeight };
   const contentRect = {
-    x: pad.l + margin,
-    y: pad.t + margin,
+    x: pad.left + margin,
+    y: pad.top + margin,
     w: Math.max(0, contentWidth - margin * 2),
     h: Math.max(0, contentHeight - margin * 2),
   };
@@ -372,9 +440,14 @@ function applyPaddingRings(ctx, canvas, pad, margin, contentWidth, contentHeight
   const rOuter = Math.min(rr, Math.floor(Math.min(outer.w, outer.h) / 2));
   const rMargin = Math.min(rr, Math.floor(Math.min(marginRect.w, marginRect.h) / 2));
 
-  const fillColor = style.paddingColor;
+  let fillColor;
+  if (selection.element) {
+    fillColor = getEffectiveBackground(selection.element, style.paddingColor);
+  } else {
+    fillColor = style.paddingColor;
+  }
 
-  if (pad.l + pad.r + pad.t + pad.b > 0) {
+  if (pad.left + pad.right + pad.top + pad.bottom > 0) {
     if (!style.transparentPadding || !isAlpha) {
       ctx.beginPath();
       smartRectPath(ctx, outer.x, outer.y, outer.w, outer.h, rOuter, style.squircleRounding, style.cornerSmoothing);
@@ -388,20 +461,36 @@ function applyPaddingRings(ctx, canvas, pad, margin, contentWidth, contentHeight
 /**
  * Convert canvas to output format
  */
-async function canvasToOutput(canvas, format, quality) {
-  let dataUrl, blob;
+async function canvasToOutput(canvas: HTMLCanvasElement, format: ExportFormats, resolution: Resolution = 'normal'): Promise<{ dataUrl: string; blob: Blob }> {
+  const scaleFactor = getScaleFactor(resolution, canvas.width, canvas.height);
 
+  // Create a scaled temporary canvas
+  // const scaledCanvas = document.createElement('canvas');
+  // scaledCanvas.width = Math.round(canvas.width * scaleFactor);
+  // scaledCanvas.height = Math.round(canvas.height * scaleFactor);
+
+  // const ctx = scaledCanvas.getContext('2d')!;
+  // ctx.scale(scaleFactor, scaleFactor);
+  // ctx.drawImage(canvas, 0, 0);
+
+  // SVG export
   if (format === 'svg') {
     const raster = canvas.toDataURL('image/png');
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}"><image href="${raster}" width="${canvas.width}" height="${canvas.height}"/></svg>`;
-    dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-    blob = new Blob([svg], { type: 'image/svg+xml' });
-  } else {
-    const mime = format === 'jpg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
-    const qualityVal = quality / 100;
-    dataUrl = canvas.toDataURL(mime, qualityVal);
-    blob = await new Promise((resolve) => canvas.toBlob(resolve, mime, qualityVal));
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}">
+      <image href="${raster}" width="${canvas.width}" height="${canvas.height}" />
+    </svg>`;
+
+    return {
+      dataUrl: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
+      blob: new Blob([svg], { type: 'image/svg+xml' }),
+    };
   }
+
+  // PNG / JPEG / WebP
+  const mime = format === 'jpg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+
+  const dataUrl = canvas.toDataURL(mime);
+  const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), mime));
 
   return { dataUrl, blob };
 }
@@ -409,39 +498,52 @@ async function canvasToOutput(canvas, format, quality) {
 /**
  * Helper: Check if format supports alpha channel
  */
-function supportsAlpha(fmt) {
+function supportsAlpha(fmt: ExportFormats) {
   return fmt === 'png' || fmt === 'webp' || fmt === 'svg';
 }
 
 /**
  * Helper: Wait for animation frames
  */
-function waitFrames(n = 2) {
+function waitFrames(n: number = 2): Promise<void> {
   return new Promise((resolve) => {
-    function f(i) {
+    function f(i: number): void {
       if (i <= 0) return resolve();
       requestAnimationFrame(() => f(i - 1));
     }
     f(n);
   });
 }
-
 /**
- * Helper: Create image from data URL
+ * Create an HTMLImageElement from a Data URL or Blob
  */
-function createImageFromDataURL(dataUrl) {
+function createImageFromData(input: string | Blob): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
+
+    img.onload = () => {
+      resolve(img);
+      if (input instanceof Blob) {
+        URL.revokeObjectURL(img.src);
+      }
+    };
+
     img.onerror = reject;
-    img.src = dataUrl;
+
+    if (typeof input === 'string') {
+      img.src = input; // data URL
+    } else if (input instanceof Blob) {
+      img.src = URL.createObjectURL(input);
+    } else {
+      reject(new Error('Invalid image input'));
+    }
   });
 }
 
 /**
  * Helper: Draw rounded rectangle path
  */
-function roundRectPath(ctx, x, y, w, h, r) {
+function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
   ctx.arcTo(x + w, y + h, x, y + h, r);
@@ -453,7 +555,7 @@ function roundRectPath(ctx, x, y, w, h, r) {
 /**
  * Helper: Squircle path (Figma-style smooth corners)
  */
-function squircleRectPath(ctx, x, y, w, h, r, cornerSmoothing) {
+function squircleRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, cornerSmoothing: number): void {
   if (r <= 0 || cornerSmoothing <= 0) {
     roundRectPath(ctx, x, y, w, h, r);
     return;
@@ -598,11 +700,23 @@ function squircleRectPath(ctx, x, y, w, h, r, cornerSmoothing) {
   ctx.closePath();
 }
 
-function toRadians(degrees) {
+function toRadians(degrees: number): number {
   return (degrees * Math.PI) / 180;
 }
 
-function getPathParamsForCorner(cornerRadius, cornerSmoothing, roundingAndSmoothingBudget) {
+function getPathParamsForCorner(
+  cornerRadius: number,
+  cornerSmoothing: number,
+  roundingAndSmoothingBudget: number
+): {
+  a: number;
+  b: number;
+  c: number;
+  d: number;
+  p: number;
+  arcSectionLength: number;
+  cornerRadius: number;
+} {
   let p = (1 + cornerSmoothing) * cornerRadius;
   const maxCornerSmoothing = roundingAndSmoothingBudget / cornerRadius - 1;
   cornerSmoothing = Math.min(cornerSmoothing, maxCornerSmoothing);
@@ -624,7 +738,7 @@ function getPathParamsForCorner(cornerRadius, cornerSmoothing, roundingAndSmooth
 /**
  * Helper: Smart path routing (chooses between rounded and squircle)
  */
-function smartRectPath(ctx, x, y, w, h, r, useSquircle, cornerSmoothing) {
+function smartRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, useSquircle: boolean, cornerSmoothing: number): void {
   if (useSquircle && r > 0 && cornerSmoothing > 0) {
     squircleRectPath(ctx, x, y, w, h, r, cornerSmoothing);
   } else {

@@ -1,60 +1,44 @@
 import { createAndMountUI } from '@/providers/ThemeProvider';
-import CaptureCustom from './components/CaptureCustom';
-import CaptureElem from './components/CaptureElem';
+import Cropper from './components/Cropper';
 
 //  ['*://*.example.com/*'];
 // ['<all_urls>'];
 
+const anchor = 'body';
 export default defineContentScript({
-  matches: ['<all_urls>'],
+  matches: ['*://*.example.com/*'],
   cssInjectionMode: 'ui',
-  // allFrames: true,
 
   async main(ctx) {
     let mountedElem: any = null;
-    // mountedElem = await createAndMountUI(ctx, {
-    //   anchor: 'body',
-    //   children: (
-    //     <>
-    //       <CaptureElem />
-    //     </>
-    //   ),
-    // });
 
-    onMessage(EXT_MESSAGES.CAPTURE_DIV, async () => {
+    // Capture Element
+    onMessage(CAPTURE_MESSAGES.CAPTURE_DIV, async () => {
       if (mountedElem) return;
 
       mountedElem = await createAndMountUI(ctx, {
-        anchor: 'body',
-        position: 'overlay',
-        children: (
-          <>
-            <CaptureElem />
-          </>
-        ),
+        anchor,
+        children: <Cropper mode="element" />,
       });
     });
 
-    onMessage(EXT_MESSAGES.CAPTURE_CUSTOM, async () => {
+    // Capture Custom
+    onMessage(CAPTURE_MESSAGES.CAPTURE_CUSTOM, async () => {
       if (mountedElem) return;
 
       mountedElem = await createAndMountUI(ctx, {
-        anchor: 'body',
-        position: 'overlay',
-        children: (
-          <>
-            <CaptureCustom />
-          </>
-        ),
+        anchor,
+        children: <Cropper mode="custom" />,
       });
     });
 
+    // Message Handler to Unmount Injected React Nodes
     document.addEventListener('EXTENSION_MESSAGE', async (e: Event) => {
       const event = e as CustomEvent<{ action: string; payload?: any }>;
 
       const { action, payload } = event.detail;
 
-      if (action === EXT_MESSAGES.UNMOUNT && mountedElem) {
+      if (action === GENERAL_MESSAGES.UNMOUNT && mountedElem) {
         mountedElem.remove();
         mountedElem = null;
       }
