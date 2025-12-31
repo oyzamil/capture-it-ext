@@ -5,7 +5,7 @@ Capture It! A browser extension to capture & edit screenshots in beautiful desig
 
 ---
 
-![Capture It - Capture & Edit Screenshots](screenshots/Capture It - Capture & Edit Screenshots.png)
+![Capture It - Capture & Edit Screenshots](screenshots/Capture-It.png)
 
 ---
 
@@ -15,7 +15,7 @@ Unlike other screenshot tools that lose styling or fonts, Capture It guarantees 
 
 ---
 
-![Capture It - Capture & Edit Screenshots](screenshots/Capture It - Capture & Edit Screenshots - Sample.png)
+![Capture It - Capture & Edit Screenshots](screenshots/Sample-Design.png)
 
 ---
 
@@ -35,7 +35,7 @@ Unlike other screenshot tools that lose styling or fonts, Capture It guarantees 
 
 ---
 
-![Capture It - Capture & Edit Screenshots](screenshots/Capture It - Capture & Edit Screenshots - Editor Overview.png)
+![Capture It - Capture & Edit Screenshots](screenshots/Editor-Overview.png)
 
 ---
 
