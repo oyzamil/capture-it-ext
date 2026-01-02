@@ -38,13 +38,6 @@ const ActionButtons = forwardRef<ActionButtonsHandle, ActionButtonsProps>(({ mod
     try {
       const { blob, dataUrl } = await sketchImage(selection, {
         padding: { top: captureMargin, right: captureMargin, bottom: captureMargin, left: captureMargin },
-        paddingColor: '#ffffff',
-        transparentPadding: false,
-        roundedRadius: 0,
-        squircleRounding: true,
-        cornerSmoothing: 0.6,
-        format: settings.fileFormat,
-        resolution: settings.resolution,
       });
       return { blob, dataUrl };
     } catch (error) {

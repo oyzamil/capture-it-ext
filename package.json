@@ -16,7 +16,7 @@
     "git-remove": "bun run ./scripts/git-helper.js remove-git",
     "git-change": "bun run ./scripts/git-helper.js change-repo",
     "git-show": "bun run ./scripts/git-helper.js show-git",
-    "git-add": "bun run ./scripts/git-helper.js add-git",
+    "git": "bun run ./scripts/git-helper.js add-git",
     "format": "prettier --write ."
   },
   "dependencies": {

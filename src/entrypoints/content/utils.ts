@@ -27,7 +27,7 @@ export const ensureFontsReady = async (timeoutMs = 1000) => {
   } catch {}
 };
 
-export const getEffectiveBackground = (el: HTMLElement, defaultColor: string): string => {
+const getEffectiveBackground = (el: HTMLElement, defaultColor: string): string => {
   let current: HTMLElement | null = el;
 
   while (current) {
@@ -43,16 +43,22 @@ export const getEffectiveBackground = (el: HTMLElement, defaultColor: string): s
   return defaultColor;
 };
 
-export const getComputedPadding = (el: HTMLElement) => {
-  const style = getComputedStyle(el);
-
-  return {
-    top: parseFloat(style.paddingTop) || 0,
-    right: parseFloat(style.paddingRight) || 0,
-    bottom: parseFloat(style.paddingBottom) || 0,
-    left: parseFloat(style.paddingLeft) || 0,
-  };
-};
+function getStickyAndFixedElements(): HTMLElement[] {
+  return Array.from(document.querySelectorAll('*')).filter((el) => {
+    const pos = window.getComputedStyle(el).position.toLowerCase();
+    return pos.includes('fixed') || pos.includes('sticky');
+  }) as HTMLElement[];
+}
+async function hideStickyAndFixedElements(): Promise<void> {
+  getStickyAndFixedElements().forEach((el) => {
+    el.style.visibility = 'hidden';
+  });
+}
+async function showStickyAndFixedElements(): Promise<void> {
+  getStickyAndFixedElements().forEach((el) => {
+    el.style.visibility = '';
+  });
+}
 
 interface Padding {
   top: number;
@@ -61,57 +67,34 @@ interface Padding {
   left: number;
 }
 
-interface SketchOptions {
-  captureMargin?: number;
-  padding?: Padding;
-  paddingColor?: string;
-  transparentPadding?: boolean;
-  roundedRadius?: number;
-  squircleRounding?: boolean;
-  cornerSmoothing?: number;
-  format?: ExportFormats;
-  resolution?: Resolution;
-}
-
 interface ViewportSize {
   width: number;
   height: number;
 }
 
 interface Tile {
-  docX: number;
-  docY: number;
-  width: number;
-  height: number;
-  col: number;
-  row: number;
+  scrollX: number;
+  scrollY: number;
+
+  elementOverlapX: number;
+  elementOverlapY: number;
+  elementOverlapWidth: number;
+  elementOverlapHeight: number;
+
+  destX: number;
+  destY: number;
 }
 
-interface CaptureStyle {
-  format: ExportFormats;
-  roundedRadius: number;
-  squircleRounding: boolean;
-  cornerSmoothing: number;
-  paddingColor: string;
-  transparentPadding: boolean;
-}
-
-export async function sketchImage(selection: ElementSelection, options: SketchOptions = {}): Promise<CanvasResult> {
-  const {
-    captureMargin = 0,
-    padding = { top: 0, right: 0, bottom: 0, left: 0 },
-    paddingColor = '#ffffff',
-    transparentPadding = false,
-    roundedRadius = 0,
-    squircleRounding = false,
-    cornerSmoothing = 0.6,
-    format = 'png',
-    resolution = 'normal',
-  } = options;
+export async function sketchImage(
+  selection: ElementSelection,
+  options: {
+    padding?: Padding;
+  } = {}
+): Promise<CanvasResult> {
+  const { padding = { top: 0, right: 0, bottom: 0, left: 0 } } = options;
 
   const dpr = window.devicePixelRatio || 1;
 
-  // Convert padding to device pixels
   const pad = {
     left: Math.floor(padding.left * dpr),
     right: Math.floor(padding.right * dpr),
@@ -129,34 +112,20 @@ export async function sketchImage(selection: ElementSelection, options: SketchOp
   const viewportSize = { width: window.innerWidth, height: window.innerHeight };
 
   // Check if element needs stitching (exceeds viewport)
-  const totalWidth = elementDocRect.width + captureMargin * 2;
-  const totalHeight = elementDocRect.height + captureMargin * 2;
+  const totalWidth = elementDocRect.width;
+  const totalHeight = elementDocRect.height;
   const needsStitching = totalWidth > viewportSize.width || totalHeight > viewportSize.height;
-
   let canvas: HTMLCanvasElement;
 
   if (needsStitching) {
-    canvas = await captureStitched(selection, elementDocRect, viewportSize, dpr, captureMargin, pad, {
-      paddingColor,
-      transparentPadding,
-      roundedRadius,
-      squircleRounding,
-      cornerSmoothing,
-      format,
-    });
+    canvas = await captureStitched(selection, elementDocRect, viewportSize, dpr, pad);
   } else {
-    canvas = await captureSingle(selection, dpr, captureMargin, pad, {
-      paddingColor,
-      transparentPadding,
-      roundedRadius,
-      squircleRounding,
-      cornerSmoothing,
-      format,
-    });
+    canvas = await captureSingle(selection, dpr, pad);
   }
 
   // Convert canvas to output format
-  const { dataUrl, blob } = await canvasToOutput(canvas, format, resolution);
+  const dataUrl = canvas.toDataURL('image/png');
+  const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), 'image/png'));
   return { dataUrl, blob };
 }
 
@@ -173,13 +142,29 @@ function getElementDocumentRect(element: Element): Rect {
   };
 }
 
+async function captureScreenshotWithThrottle(delay = 500, waitFrameCount = 2): Promise<string> {
+  // Wait for the throttle delay
+  await new Promise((resolve) => setTimeout(resolve, delay));
+
+  // Wait for a few animation frames
+  await new Promise<void>((resolve) => {
+    function step(i: number) {
+      if (i <= 0) return resolve();
+      requestAnimationFrame(() => step(i - 1));
+    }
+    step(waitFrameCount);
+  });
+
+  const { dataUrl } = await sendMessage(CAPTURE_MESSAGES.CAPTURE_TAB);
+  return dataUrl;
+}
+
 /**
  * Calculate tiles for stitched capture
  */
 function calculateTiles(
   elementRect: Rect,
-  viewportSize: ViewportSize,
-  captureMargin: number
+  viewportSize: ViewportSize
 ): {
   tiles: Tile[];
   cols: number;
@@ -188,74 +173,79 @@ function calculateTiles(
 } {
   const tiles: Tile[] = [];
 
+  // Expanded capture rectangle (CSS pixels, document coords)
   const captureRect: Rect = {
-    x: elementRect.x - captureMargin,
-    y: elementRect.y - captureMargin,
-    width: elementRect.width + captureMargin * 2,
-    height: elementRect.height + captureMargin * 2,
+    x: elementRect.x,
+    y: elementRect.y,
+    width: elementRect.width,
+    height: elementRect.height,
   };
 
-  const tileStepX = viewportSize.width;
-  const tileStepY = viewportSize.height;
-
-  const cols = Math.ceil(captureRect.width / tileStepX);
-  const rows = Math.ceil(captureRect.height / tileStepY);
+  const cols = Math.ceil(captureRect.width / viewportSize.width);
+  const rows = Math.ceil(captureRect.height / viewportSize.height);
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-      const docX = captureRect.x + col * tileStepX;
-      const docY = captureRect.y + row * tileStepY;
+      // Where we scroll the viewport
+      const scrollX = captureRect.x + col * viewportSize.width;
+      const scrollY = captureRect.y + row * viewportSize.height;
 
-      const tileWidth = Math.min(viewportSize.width, captureRect.x + captureRect.width - docX);
-      const tileHeight = Math.min(viewportSize.height, captureRect.y + captureRect.height - docY);
+      // Viewport bounds after scrolling
+      const viewportLeft = scrollX;
+      const viewportTop = scrollY;
+      const viewportRight = scrollX + viewportSize.width;
+      const viewportBottom = scrollY + viewportSize.height;
+
+      // Element bounds
+      const elementLeft = captureRect.x;
+      const elementTop = captureRect.y;
+      const elementRight = captureRect.x + captureRect.width;
+      const elementBottom = captureRect.y + captureRect.height;
+
+      // Intersection (overlap)
+      const overlapLeft = Math.max(elementLeft, viewportLeft);
+      const overlapTop = Math.max(elementTop, viewportTop);
+      const overlapRight = Math.min(elementRight, viewportRight);
+      const overlapBottom = Math.min(elementBottom, viewportBottom);
+
+      const overlapWidth = overlapRight - overlapLeft;
+      const overlapHeight = overlapBottom - overlapTop;
+
+      if (overlapWidth <= 0 || overlapHeight <= 0) {
+        continue;
+      }
 
       tiles.push({
-        docX,
-        docY,
-        width: tileWidth,
-        height: tileHeight,
-        col,
-        row,
+        scrollX,
+        scrollY,
+
+        // Where the element appears inside the viewport (CSS px)
+        elementOverlapX: overlapLeft - viewportLeft,
+        elementOverlapY: overlapTop - viewportTop,
+        elementOverlapWidth: overlapWidth,
+        elementOverlapHeight: overlapHeight,
+
+        // Where this part goes in the final stitched canvas (CSS px)
+        destX: overlapLeft - elementLeft,
+        destY: overlapTop - elementTop,
       });
     }
   }
 
   return { tiles, cols, rows, captureRect };
 }
-let lastCaptureTime = 0;
-const MIN_CAPTURE_INTERVAL = 600;
-
-async function throttledCapture(): Promise<{ dataUrl: string }> {
-  const now = Date.now();
-  const wait = Math.max(0, MIN_CAPTURE_INTERVAL - (now - lastCaptureTime));
-
-  if (wait > 0) {
-    await new Promise((r) => setTimeout(r, wait));
-  }
-
-  lastCaptureTime = Date.now();
-  return sendMessage(CAPTURE_MESSAGES.CAPTURE_TAB);
-}
 
 /**
  * Capture element using multiple screenshots stitched together
  */
-async function captureStitched(
-  selection: ElementSelection,
-  elementRect: Rect,
-  viewportSize: ViewportSize,
-  dpr: number,
-  captureMargin: number,
-  pad: Padding,
-  style: CaptureStyle
-): Promise<HTMLCanvasElement> {
-  const margin = Math.floor(captureMargin * dpr);
-  const { tiles, captureRect } = calculateTiles(elementRect, viewportSize, captureMargin);
-  const savedScrollX = window.scrollX;
-  const savedScrollY = window.scrollY;
-  const tileImages: Array<{
+async function captureStitched(selection: ElementSelection, elementRect: Rect, viewportSize: ViewportSize, dpr: number, padding: Padding): Promise<HTMLCanvasElement> {
+  const { tiles, captureRect } = calculateTiles(elementRect, viewportSize);
+
+  const originalScrollX = window.scrollX;
+  const originalScrollY = window.scrollY;
+
+  const capturedTiles: Array<{
     image: HTMLImageElement;
-    tile: Tile;
     cropX: number;
     cropY: number;
     cropWidth: number;
@@ -264,89 +254,75 @@ async function captureStitched(
     destY: number;
   }> = [];
 
+  hideStickyAndFixedElements();
+
   try {
     for (const tile of tiles) {
+      // Scroll viewport to tile position
       window.scrollTo({
-        left: tile.docX,
-        top: tile.docY,
+        left: tile.scrollX,
+        top: tile.scrollY,
         behavior: 'instant',
       });
 
-      await new Promise((r) => setTimeout(r, 120));
-      await waitFrames(2);
-      await new Promise((r) => setTimeout(r, 30));
-
-      const { dataUrl } = await throttledCapture();
+      const dataUrl = await captureScreenshotWithThrottle();
       const image = await createImageFromData(dataUrl);
+      const overlapLeft = Math.max(captureRect.x, window.scrollX);
+      const overlapTop = Math.max(captureRect.y, window.scrollY);
+      const cropX = Math.round((overlapLeft - window.scrollX) * dpr);
+      const cropY = Math.round((overlapTop - window.scrollY) * dpr);
 
-      const cropX = 0;
-      const cropY = 0;
-      const cropWidth = Math.min(tile.width * dpr, image.width);
-      const cropHeight = Math.min(tile.height * dpr, image.height);
+      const cropWidth = Math.round(Math.min(window.innerWidth - (overlapLeft - window.scrollX), captureRect.x + captureRect.width - overlapLeft) * dpr);
 
-      tileImages.push({
+      const cropHeight = Math.round(Math.min(window.innerHeight - (overlapTop - window.scrollY), captureRect.y + captureRect.height - overlapTop) * dpr);
+
+      capturedTiles.push({
         image,
-        tile,
         cropX,
         cropY,
         cropWidth,
         cropHeight,
-        destX: (tile.docX - captureRect.x) * dpr,
-        destY: (tile.docY - captureRect.y) * dpr,
+        destX: Math.round(tile.destX * dpr),
+        destY: Math.round(tile.destY * dpr),
       });
     }
   } finally {
     window.scrollTo({
-      left: savedScrollX,
-      top: savedScrollY,
+      left: originalScrollX,
+      top: originalScrollY,
       behavior: 'instant',
     });
-    await new Promise((r) => setTimeout(r, 120));
+
+    showStickyAndFixedElements();
   }
 
-  const stitchedWidth = Math.ceil(captureRect.width * dpr);
-  const stitchedHeight = Math.ceil(captureRect.height * dpr);
+  const stitchedWidth = Math.round(captureRect.width * dpr);
+  const stitchedHeight = Math.round(captureRect.height * dpr);
 
   const canvas = document.createElement('canvas');
-  canvas.width = stitchedWidth + pad.left + pad.right;
-  canvas.height = stitchedHeight + pad.top + pad.bottom;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
+  canvas.width = stitchedWidth + padding.left + padding.right;
+  canvas.height = stitchedHeight + padding.top + padding.bottom;
+
+  const context = canvas.getContext('2d');
+  if (!context) {
     throw new Error('Failed to get 2D canvas context');
   }
-  const isAlpha = supportsAlpha(style.format);
-  const applyClip = style.roundedRadius > 0;
 
-  if (applyClip) {
-    ctx.save();
-    const r = Math.min(style.roundedRadius, Math.floor(Math.min(canvas.width, canvas.height) / 2));
-    ctx.beginPath();
-    smartRectPath(ctx, 0, 0, canvas.width, canvas.height, r, style.squircleRounding, style.cornerSmoothing);
-    ctx.clip();
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (const tile of capturedTiles) {
+    context.drawImage(tile.image, tile.cropX, tile.cropY, tile.cropWidth, tile.cropHeight, padding.left + tile.destX, padding.top + tile.destY, tile.cropWidth, tile.cropHeight);
   }
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  for (const ti of tileImages) {
-    ctx.drawImage(ti.image, ti.cropX, ti.cropY, ti.cropWidth, ti.cropHeight, pad.left + ti.destX, pad.top + ti.destY, ti.cropWidth, ti.cropHeight);
-  }
-
-  applyPaddingRings(selection, ctx, canvas, pad, margin, stitchedWidth, stitchedHeight, style, isAlpha);
-
-  if (applyClip) {
-    ctx.restore();
-  }
+  applyPaddingBackground(selection.element, context, canvas, padding, stitchedWidth, stitchedHeight);
 
   return canvas;
 }
-
 /**
  * Capture element in single screenshot
  */
-async function captureSingle(selection: ElementSelection, dpr: number, captureMargin: number, pad: Padding, style: CaptureStyle): Promise<HTMLCanvasElement> {
+async function captureSingle(selection: ElementSelection, dpr: number, pad: Padding): Promise<HTMLCanvasElement> {
   selection?.element?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  await new Promise((r) => setTimeout(r, 120));
-
   let currentRect: Rect;
   if (selection.element) {
     const rect = selection.element.getBoundingClientRect();
@@ -360,25 +336,20 @@ async function captureSingle(selection: ElementSelection, dpr: number, captureMa
     currentRect = { ...selection.rect };
   }
 
-  await waitFrames(2);
-  await new Promise((r) => setTimeout(r, 30));
-  const { dataUrl } = await sendMessage(CAPTURE_MESSAGES.CAPTURE_TAB);
+  const dataUrl = await captureScreenshotWithThrottle(0);
   const image = await createImageFromData(dataUrl);
 
   const canvas = document.createElement('canvas');
   const targetW = Math.max(1, Math.floor(currentRect.width * dpr));
   const targetH = Math.max(1, Math.floor(currentRect.height * dpr));
-  const marginPx = Math.max(0, Math.floor(captureMargin * dpr));
 
-  const rawSx = Math.floor(currentRect.x * dpr) - marginPx;
-  const rawSy = Math.floor(currentRect.y * dpr) - marginPx;
-  const rawSW = targetW + marginPx * 2;
-  const rawSH = targetH + marginPx * 2;
+  const rawSx = Math.floor(currentRect.x * dpr);
+  const rawSy = Math.floor(currentRect.y * dpr);
 
   const sx = Math.max(0, rawSx);
   const sy = Math.max(0, rawSy);
-  const sWidth = Math.min(rawSW - (sx - rawSx), Math.max(0, image.width - sx));
-  const sHeight = Math.min(rawSH - (sy - rawSy), Math.max(0, image.height - sy));
+  const sWidth = Math.min(targetW - (sx - rawSx), Math.max(0, image.width - sx));
+  const sHeight = Math.min(targetH - (sy - rawSy), Math.max(0, image.height - sy));
 
   canvas.width = sWidth + pad.left + pad.right;
   canvas.height = sHeight + pad.top + pad.bottom;
@@ -388,129 +359,43 @@ async function captureSingle(selection: ElementSelection, dpr: number, captureMa
     throw new Error('Failed to get 2D canvas context');
   }
 
-  const isAlpha = supportsAlpha(style.format);
-  const applyClip = style.roundedRadius > 0;
-
-  if (applyClip) {
-    ctx.save();
-    const r = Math.min(style.roundedRadius, Math.floor(Math.min(canvas.width, canvas.height) / 2));
-    ctx.beginPath();
-    smartRectPath(ctx, 0, 0, canvas.width, canvas.height, r, style.squircleRounding, style.cornerSmoothing);
-    ctx.clip();
-  }
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(image, sx, sy, sWidth, sHeight, pad.left, pad.top, sWidth, sHeight);
 
-  applyPaddingRings(selection, ctx, canvas, pad, marginPx, sWidth, sHeight, style, isAlpha);
-
-  if (applyClip) {
-    ctx.restore();
-  }
+  applyPaddingBackground(selection.element, ctx, canvas, pad, sWidth, sHeight);
 
   return canvas;
 }
 
 /**
- * Apply padding rings to canvas
+ * Add padding around the content and fill it with a background color
  */
-function applyPaddingRings(
-  selection: ElementSelection,
-  ctx: CanvasRenderingContext2D,
-  canvas: HTMLCanvasElement,
-  pad: Padding,
-  margin: number,
-  contentWidth: number,
-  contentHeight: number,
-  style: CaptureStyle,
-  isAlpha: boolean
-): void {
-  const outer = { x: 0, y: 0, w: canvas.width, h: canvas.height };
-  const marginRect = { x: pad.left, y: pad.top, w: contentWidth, h: contentHeight };
-  const contentRect = {
-    x: pad.left + margin,
-    y: pad.top + margin,
-    w: Math.max(0, contentWidth - margin * 2),
-    h: Math.max(0, contentHeight - margin * 2),
-  };
-
-  const rr = style.roundedRadius;
-  const rOuter = Math.min(rr, Math.floor(Math.min(outer.w, outer.h) / 2));
-  const rMargin = Math.min(rr, Math.floor(Math.min(marginRect.w, marginRect.h) / 2));
-
-  let fillColor;
-  if (selection.element) {
-    fillColor = getEffectiveBackground(selection.element, style.paddingColor);
-  } else {
-    fillColor = style.paddingColor;
+function applyPaddingBackground(element: HTMLElement | null, ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, padding: Padding, contentWidth: number, contentHeight: number): void {
+  const defaultColor = '#ffffff';
+  const backgroundColor = element ? getEffectiveBackground(element, defaultColor) : defaultColor;
+  // Top padding
+  if (padding.top > 0) {
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, canvas.width, padding.top);
   }
 
-  if (pad.left + pad.right + pad.top + pad.bottom > 0) {
-    if (!style.transparentPadding || !isAlpha) {
-      ctx.beginPath();
-      smartRectPath(ctx, outer.x, outer.y, outer.w, outer.h, rOuter, style.squircleRounding, style.cornerSmoothing);
-      smartRectPath(ctx, marginRect.x, marginRect.y, marginRect.w, marginRect.h, rMargin, style.squircleRounding, style.cornerSmoothing);
-      ctx.fillStyle = fillColor;
-      ctx.fill('evenodd');
-    }
-  }
-}
-
-/**
- * Convert canvas to output format
- */
-async function canvasToOutput(canvas: HTMLCanvasElement, format: ExportFormats, resolution: Resolution = 'normal'): Promise<{ dataUrl: string; blob: Blob }> {
-  const scaleFactor = getScaleFactor(resolution, canvas.width, canvas.height);
-
-  // Create a scaled temporary canvas
-  // const scaledCanvas = document.createElement('canvas');
-  // scaledCanvas.width = Math.round(canvas.width * scaleFactor);
-  // scaledCanvas.height = Math.round(canvas.height * scaleFactor);
-
-  // const ctx = scaledCanvas.getContext('2d')!;
-  // ctx.scale(scaleFactor, scaleFactor);
-  // ctx.drawImage(canvas, 0, 0);
-
-  // SVG export
-  if (format === 'svg') {
-    const raster = canvas.toDataURL('image/png');
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}">
-      <image href="${raster}" width="${canvas.width}" height="${canvas.height}" />
-    </svg>`;
-
-    return {
-      dataUrl: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
-      blob: new Blob([svg], { type: 'image/svg+xml' }),
-    };
+  // Bottom padding
+  if (padding.bottom > 0) {
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, padding.top + contentHeight, canvas.width, padding.bottom);
   }
 
-  // PNG / JPEG / WebP
-  const mime = format === 'jpg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+  // Left padding
+  if (padding.left > 0) {
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, padding.top, padding.left, contentHeight);
+  }
 
-  const dataUrl = canvas.toDataURL(mime);
-  const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), mime));
-
-  return { dataUrl, blob };
-}
-
-/**
- * Helper: Check if format supports alpha channel
- */
-function supportsAlpha(fmt: ExportFormats) {
-  return fmt === 'png' || fmt === 'webp' || fmt === 'svg';
-}
-
-/**
- * Helper: Wait for animation frames
- */
-function waitFrames(n: number = 2): Promise<void> {
-  return new Promise((resolve) => {
-    function f(i: number): void {
-      if (i <= 0) return resolve();
-      requestAnimationFrame(() => f(i - 1));
-    }
-    f(n);
-  });
+  // Right padding
+  if (padding.right > 0) {
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(padding.left + contentWidth, padding.top, padding.right, contentHeight);
+  }
 }
 /**
  * Create an HTMLImageElement from a Data URL or Blob
@@ -537,228 +422,36 @@ function createImageFromData(input: string | Blob): Promise<HTMLImageElement> {
     }
   });
 }
+function openPreview(source: HTMLCanvasElement | HTMLImageElement): void {
+  // If already a canvas, use it directly
+  if (source instanceof HTMLCanvasElement) {
+    source.toBlob((blob) => {
+      if (!blob) return;
 
-/**
- * Helper: Draw rounded rectangle path
- */
-function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
 
-/**
- * Helper: Squircle path (Figma-style smooth corners)
- */
-function squircleRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, cornerSmoothing: number): void {
-  if (r <= 0 || cornerSmoothing <= 0) {
-    roundRectPath(ctx, x, y, w, h, r);
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    }, 'image/png');
     return;
   }
 
-  const roundingAndSmoothingBudget = Math.min(w, h) / 2;
-  const cornerRadius = Math.min(r, roundingAndSmoothingBudget);
+  // If it's an image, draw it onto a canvas first
+  const canvas = document.createElement('canvas');
+  canvas.width = source.naturalWidth;
+  canvas.height = source.naturalHeight;
 
-  if (cornerRadius <= 0 || roundingAndSmoothingBudget <= 0) {
-    roundRectPath(ctx, x, y, w, h, Math.max(0, r));
-    return;
-  }
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
-  const params = getPathParamsForCorner(cornerRadius, cornerSmoothing, roundingAndSmoothingBudget);
-  const { a, b, c, d, p, arcSectionLength } = params;
-  const R = params.cornerRadius;
+  ctx.drawImage(source, 0, 0);
 
-  const effectiveSmoothing = Math.min(cornerSmoothing, roundingAndSmoothingBudget / cornerRadius - 1);
+  canvas.toBlob((blob) => {
+    if (!blob) return;
 
-  if (effectiveSmoothing < 0.01) {
-    roundRectPath(ctx, x, y, w, h, cornerRadius);
-    return;
-  }
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
 
-  const arcMeasure = 90 * (1 - effectiveSmoothing);
-  const arcAngleRad = toRadians(arcMeasure);
-  const kappa = (4 / 3) * Math.tan(arcAngleRad / 4);
-
-  const mag1 = Math.sqrt(c * c + d * d);
-
-  if (mag1 < 0.001) {
-    roundRectPath(ctx, x, y, w, h, cornerRadius);
-    return;
-  }
-
-  const t1x = c / mag1;
-  const t1y = d / mag1;
-  const t2x = d / mag1;
-  const t2y = c / mag1;
-
-  const ctrlDist = kappa * R;
-
-  ctx.moveTo(x + p, y);
-  ctx.lineTo(x + w - p, y);
-
-  let cx = x + w - p;
-  let cy = y;
-
-  // Top-right corner
-  ctx.bezierCurveTo(cx + a, cy, cx + a + b, cy, cx + a + b + c, cy + d);
-  cx += a + b + c;
-  cy += d;
-
-  {
-    const cp1x = cx + ctrlDist * t1x;
-    const cp1y = cy + ctrlDist * t1y;
-    const endX = cx + arcSectionLength;
-    const endY = cy + arcSectionLength;
-    const cp2x = endX - ctrlDist * t2x;
-    const cp2y = endY - ctrlDist * t2y;
-    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
-    cx = endX;
-    cy = endY;
-  }
-
-  ctx.bezierCurveTo(cx + d, cy + c, cx + d, cy + b + c, cx + d, cy + a + b + c);
-  cx += d;
-  cy += a + b + c;
-
-  ctx.lineTo(x + w, y + h - p);
-  cx = x + w;
-  cy = y + h - p;
-
-  // Bottom-right corner
-  ctx.bezierCurveTo(cx, cy + a, cx, cy + a + b, cx - d, cy + a + b + c);
-  cx -= d;
-  cy += a + b + c;
-
-  {
-    const cp1x = cx + ctrlDist * -t2x;
-    const cp1y = cy + ctrlDist * t2y;
-    const endX = cx - arcSectionLength;
-    const endY = cy + arcSectionLength;
-    const cp2x = endX - ctrlDist * -t1x;
-    const cp2y = endY - ctrlDist * t1y;
-    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
-    cx = endX;
-    cy = endY;
-  }
-
-  ctx.bezierCurveTo(cx - c, cy + d, cx - b - c, cy + d, cx - a - b - c, cy + d);
-  cx -= a + b + c;
-  cy += d;
-
-  ctx.lineTo(x + p, y + h);
-  cx = x + p;
-  cy = y + h;
-
-  // Bottom-left corner
-  ctx.bezierCurveTo(cx - a, cy, cx - a - b, cy, cx - a - b - c, cy - d);
-  cx -= a + b + c;
-  cy -= d;
-
-  {
-    const cp1x = cx + ctrlDist * -t1x;
-    const cp1y = cy + ctrlDist * -t1y;
-    const endX = cx - arcSectionLength;
-    const endY = cy - arcSectionLength;
-    const cp2x = endX - ctrlDist * -t2x;
-    const cp2y = endY - ctrlDist * -t2y;
-    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
-    cx = endX;
-    cy = endY;
-  }
-
-  ctx.bezierCurveTo(cx - d, cy - c, cx - d, cy - b - c, cx - d, cy - a - b - c);
-  cx -= d;
-  cy -= a + b + c;
-
-  ctx.lineTo(x, y + p);
-  cx = x;
-  cy = y + p;
-
-  // Top-left corner
-  ctx.bezierCurveTo(cx, cy - a, cx, cy - a - b, cx + d, cy - a - b - c);
-  cx += d;
-  cy -= a + b + c;
-
-  {
-    const cp1x = cx + ctrlDist * t2x;
-    const cp1y = cy + ctrlDist * -t2y;
-    const endX = cx + arcSectionLength;
-    const endY = cy - arcSectionLength;
-    const cp2x = endX - ctrlDist * t1x;
-    const cp2y = endY - ctrlDist * -t1y;
-    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
-    cx = endX;
-    cy = endY;
-  }
-
-  ctx.bezierCurveTo(cx + c, cy - d, cx + b + c, cy - d, cx + a + b + c, cy - d);
-  ctx.closePath();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }, 'image/png');
 }
-
-function toRadians(degrees: number): number {
-  return (degrees * Math.PI) / 180;
-}
-
-function getPathParamsForCorner(
-  cornerRadius: number,
-  cornerSmoothing: number,
-  roundingAndSmoothingBudget: number
-): {
-  a: number;
-  b: number;
-  c: number;
-  d: number;
-  p: number;
-  arcSectionLength: number;
-  cornerRadius: number;
-} {
-  let p = (1 + cornerSmoothing) * cornerRadius;
-  const maxCornerSmoothing = roundingAndSmoothingBudget / cornerRadius - 1;
-  cornerSmoothing = Math.min(cornerSmoothing, maxCornerSmoothing);
-  p = Math.min(p, roundingAndSmoothingBudget);
-
-  const arcMeasure = 90 * (1 - cornerSmoothing);
-  const arcSectionLength = Math.sin(toRadians(arcMeasure / 2)) * cornerRadius * Math.sqrt(2);
-  const angleAlpha = (90 - arcMeasure) / 2;
-  const p3ToP4Distance = cornerRadius * Math.tan(toRadians(angleAlpha / 2));
-  const angleBeta = 45 * cornerSmoothing;
-  const c = p3ToP4Distance * Math.cos(toRadians(angleBeta));
-  const d = c * Math.tan(toRadians(angleBeta));
-  let b = (p - arcSectionLength - c - d) / 3;
-  let a = 2 * b;
-
-  return { a, b, c, d, p, arcSectionLength, cornerRadius };
-}
-
-/**
- * Helper: Smart path routing (chooses between rounded and squircle)
- */
-function smartRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, useSquircle: boolean, cornerSmoothing: number): void {
-  if (useSquircle && r > 0 && cornerSmoothing > 0) {
-    squircleRectPath(ctx, x, y, w, h, r, cornerSmoothing);
-  } else {
-    roundRectPath(ctx, x, y, w, h, r);
-  }
-}
-
-// Usage example:
-/*
-const element = document.querySelector('.my-element');
-const result = await createCanvas(element, {
-  captureMargin: 10,
-  padding: { top: 20, right: 20, bottom: 20, left: 20 },
-  paddingColor: "#ffffff",
-  transparentPadding: false,
-  roundedRadius: 12,
-  squircleRounding: true,
-  cornerSmoothing: 0.6,
-  format: "png",
-  quality: 90
-});
-
-// result.dataUrl - can be used in <img src="">
-// result.blob - can be used for File API or downloads
-*/
