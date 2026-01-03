@@ -40,7 +40,14 @@
     @apply after:from-app-500/10 after:bg-linear-to-b after:to-transparent dark:after:from-black;
   }
   * {
-    @apply scrollbar:size-1 scrollbar-track:bg-app-500/20 scrollbar-thumb:bg-app-500 dark:scrollbar-thumb:bg-black dark:scrollbar-track:bg-black;
+    @apply scrollbar:size-1 
+            scrollbar-track:bg-gray-100 
+            scrollbar-thumb:bg-gray-400 
+            scrollbar-thumb:rounded-full
+            scrollbar-thumb:hover:bg-gray-500
+            dark:scrollbar-track:bg-gray-800 
+            dark:scrollbar-thumb:bg-gray-600
+            selection:bg-app-500 selection:text-white;
   }
 }
 @layer components {
@@ -54,7 +61,7 @@
     @apply mb-0;
   }
   .underline {
-    @apply hover:text-app-500 decoration-app-500 dark:decoration-app-400 dark:hover:decoration-app-500 dark:focus:ring-app-400/40 rounded-sm underline decoration-2 underline-offset-2 transition duration-100;
+    @apply hover:text-app-500 decoration-app-500 dark:decoration-app-400 dark:hover:decoration-app-500 rounded-sm underline decoration-2 underline-offset-2 transition duration-100;
   }
   .ant-app {
     @apply flex h-[inherit] flex-col;

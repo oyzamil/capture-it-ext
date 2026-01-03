@@ -194,7 +194,7 @@ const Editor: React.FC = () => {
       }}
     >
       {/* Sidebar  */}
-      <Sider trigger={null} width={350} className="shadow bg-white overflow-auto h-screen sticky top-0 scrollbar:hidden dark:bg-neutral-900">
+      <Sider trigger={null} width={350} className="shadow bg-white overflow-auto h-screen sticky top-0 dark:bg-neutral-900 overflow-x-hidden">
         <Watermark className="scale-150 text-2xl pt-6 pb-2 mb-4 flex-center gap-2 sticky top-0 z-50 bg-white dark:bg-neutral-900" />
         <Sidebar onReset={resetSettings} />
       </Sider>

@@ -1,7 +1,5 @@
 import { ArrowIcon, BarsIcon, ChatIcon, KeyIcon, StarIcon } from '@/icons';
-import { useAntd } from '@/providers/ThemeProvider';
 import { Button, Dropdown, Space, Typography } from 'antd';
-import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const { ROUTES } = useAppConfig();
@@ -19,7 +17,6 @@ export default function Body({ children }: { children: React.ReactNode }) {
 
 export function Header() {
   const { settings, saveSettings } = useSettings();
-  const { message } = useAntd();
   const navigate = useNavigate();
   const location = useLocation();
   const showBackButton = ![ROUTES.LOGIN, ROUTES.HOME].includes(location.pathname);
@@ -47,7 +44,7 @@ export function Header() {
 
   return (
     <>
-      <header className={'bg-app-300 z-51 flex w-full items-center dark:border-black/90 px-2 py-3 dark:bg-zinc-900'}>
+      <header className={'bg-app-500 z-51 flex w-full items-center px-2 py-3 dark:bg-black'}>
         <Watermark className="text-2xl w-full" />
         <div className="flex items-center justify-center gap-1">
           <Space.Compact block>
@@ -71,12 +68,8 @@ export function Header() {
 export function Footer() {
   const { Text } = Typography;
   return (
-    <>
-      <div className="mb-0.5 flex items-center justify-start gap-2">
-        <Text title="Version" keyboard>
-          v{browser.runtime.getManifest().version}
-        </Text>
-      </div>
-    </>
+    <Text title="Version" className="text-xs mb-1" keyboard>
+      v{browser.runtime.getManifest().version}
+    </Text>
   );
 }
