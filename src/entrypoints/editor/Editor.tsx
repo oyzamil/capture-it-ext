@@ -212,7 +212,7 @@ const Editor: React.FC = () => {
                 background: getGradientBackground(settings),
               }}
             >
-              <PatternBox className="w-full h-full absolute mix-blend-soft-light" name={cn(settings.bgPattern)} noise={settings.noise} />
+              <PatternBox className={cn('w-full h-full absolute', settings.patternBlendMode)} name={cn(settings.bgPattern)} noise={settings.noise} />
               <div
                 className={cn(
                   'relative grid grid-rows-1 grid-cols-1',
@@ -223,12 +223,11 @@ const Editor: React.FC = () => {
                   settings.aspectRatio
                 )}
               >
-                {/* Browser Bar  */}
                 <WindowBox
                   name={settings.windowBar}
                   theme={settings.windowTheme}
                   rounded={settings.rounded}
-                  className={cn(settings.shadow)}
+                  className={cn(settings.shadow, settings.aspectRatio === 'aspect-21/9' ? 'h-full' : 'h-auto', settings.imageOrigin)}
                   style={{
                     scale: settings.scale,
                   }}
@@ -247,9 +246,9 @@ const Editor: React.FC = () => {
                     }}
                   />
                 </WindowBox>
-                <div className="absolute bottom-6 w-full flex justify-center items-center">
-                  <Watermark className="pl-1 pr-2 py-2" glass />
-                </div>
+              </div>
+              <div className="absolute bottom-6 w-full flex justify-center items-center">
+                <Watermark className="pl-1 pr-2 py-2" glass />
               </div>
             </div>
           ) : (

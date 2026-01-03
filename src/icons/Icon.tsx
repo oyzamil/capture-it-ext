@@ -1,5 +1,5 @@
-export default ({ className = 'size-4', stroke = '2' }: IconType) => {
+export default ({ className, stroke = '2' }: IconType) => {
   return;
 };
 
-// className={className}
+// className={cn('size-4', className)}

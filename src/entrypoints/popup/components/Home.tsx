@@ -175,7 +175,7 @@ function Home() {
                   }
                 }}
               >
-                Visible Page
+                Current Page
               </Button>
               <Button
                 type="primary"

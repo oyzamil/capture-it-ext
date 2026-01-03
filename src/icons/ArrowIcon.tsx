@@ -1,10 +1,7 @@
-export default ({ className = 'size-4', stroke = '2' }: IconType) => {
+export default ({ className, stroke = '2' }: IconType) => {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={className}>
-      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-      <path d="M12 5l0 14" />
-      <path d="M16 9l-4 -4" />
-      <path d="M8 9l4 -4" />
+    <svg xmlns="http://www.w3.org/2000/svg" className={cn('size-4 rotate-90', className)} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={stroke}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
     </svg>
   );
 };

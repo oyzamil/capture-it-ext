@@ -1,6 +1,6 @@
 import { WINDOW_BARS } from '@/components/WindowBox';
-import { ResetIcon, TriangleIcon } from '@/icons';
-import { Button, Collapse, CollapseProps, ColorPicker, Popconfirm, Slider, Switch } from 'antd';
+import { EyeDropperIcon, ResetIcon, TriangleIcon } from '@/icons';
+import { Button, Collapse, CollapseProps, ColorPicker, Popconfirm, Slider, Switch, Tooltip } from 'antd';
 
 interface Sidebar {
   onReset: () => void;
@@ -43,9 +43,9 @@ export const ASPECT_CONFIG = {
     label: '3:2 — Photography',
     className: 'w-[960px] h-[640px]',
   },
-  'aspect-[21/9]': {
+  'aspect-21/9': {
     label: '21:9 — Ultrawide',
-    className: 'w-[1493px] h-[640px]',
+    className: 'max-w-[1493px] max-h-[640px] w-full h-full',
   },
 } as const;
 
@@ -58,6 +58,8 @@ export const aspectRatios = [
     label: config.label,
   })),
 ];
+
+const isEyeDropperSupported = typeof window !== 'undefined' && 'EyeDropper' in window;
 
 export default function Sidebar({ onReset }: Sidebar) {
   const { settings, saveSettings } = useSettings();
@@ -104,23 +106,42 @@ export default function Sidebar({ onReset }: Sidebar) {
                 className="hover-scale flex"
                 format="hex"
                 mode={['single', 'gradient']}
-                defaultValue={[
-                  {
-                    color: settings.canvasColors[0],
-                    percent: 0,
-                  },
-                  {
-                    color: settings.canvasColors[1],
-                    percent: 100,
-                  },
-                ]}
+                value={settings.canvasColors.map((c, i) => ({
+                  color: c,
+                  percent: i === 0 ? 0 : 100,
+                }))}
                 presets={gradientPresets}
                 onChangeComplete={(color) => {
                   const colors = color.getColors();
                   const canvasColorsHex = colors.map((c) => c.color.toHexString());
-
                   saveSettings({ canvasColors: canvasColorsHex });
                 }}
+                panelRender={(panel) => (
+                  <>
+                    {isEyeDropperSupported && (
+                      <div className="flex justify-end w-full">
+                        <Tooltip title="Pick color from page">
+                          <Button
+                            size="small"
+                            type="text"
+                            onClick={async () => {
+                              try {
+                                // @ts-expect-error
+                                const eyeDropper = new window.EyeDropper();
+                                const { sRGBHex } = await eyeDropper.open();
+                                saveSettings({ canvasColors: [sRGBHex] }); // <-- now preview updates
+                              } catch {}
+                            }}
+                          >
+                            <EyeDropperIcon />
+                          </Button>
+                        </Tooltip>
+                      </div>
+                    )}
+
+                    {panel}
+                  </>
+                )}
               />
             </FieldSet>
             <FieldSet label="Angle" orientation="horizontal" className="p-0 flex-1 gap-5">
@@ -186,6 +207,32 @@ export default function Sidebar({ onReset }: Sidebar) {
               onChange={(bgPattern) => {
                 saveSettings({ bgPattern });
               }}
+            />
+          </FieldSet>
+          <FieldSet label="Background Blend Mode">
+            <MySelect
+              className="w-full"
+              value={settings.patternBlendMode}
+              placeholder="Blend Mode"
+              options={[
+                { value: 'mix-blend-normal', label: 'Normal' },
+                { value: 'mix-blend-multiply', label: 'Multiply' },
+                { value: 'mix-blend-screen', label: 'Screen' },
+                { value: 'mix-blend-overlay', label: 'Overlay' },
+                { value: 'mix-blend-darken', label: 'Darken' },
+                { value: 'mix-blend-lighten', label: 'Lighten' },
+                { value: 'mix-blend-color-dodge', label: 'Color Dodge' },
+                { value: 'mix-blend-color-burn', label: 'Color Burn' },
+                { value: 'mix-blend-hard-light', label: 'Hard Light' },
+                { value: 'mix-blend-soft-light', label: 'Soft Light' },
+                { value: 'mix-blend-difference', label: 'Difference' },
+                { value: 'mix-blend-exclusion', label: 'Exclusion' },
+                { value: 'mix-blend-hue', label: 'Hue' },
+                { value: 'mix-blend-saturation', label: 'Saturation' },
+                { value: 'mix-blend-color', label: 'Color' },
+                { value: 'mix-blend-luminosity', label: 'Luminosity' },
+              ]}
+              onChange={(patternBlendMode) => saveSettings({ patternBlendMode })}
             />
           </FieldSet>
         </div>
@@ -298,17 +345,20 @@ export default function Sidebar({ onReset }: Sidebar) {
             <FieldSet label="Position" orientation="horizontal" className="p-0 flex-1 gap-6">
               <div className="hover-scale">
                 {[
-                  { value: 'place-items-start', label: 'Top left' },
-                  { value: 'place-items-start justify-items-center', label: 'Top center' },
-                  { value: 'place-items-start justify-items-end', label: 'Top right' },
+                  // Top
+                  { label: 'Top left', align: 'place-items-start justify-items-start', origin: 'origin-top-left' },
+                  { label: 'Top center', align: 'place-items-start justify-items-center', origin: 'origin-top' },
+                  { label: 'Top right', align: 'place-items-start justify-items-end', origin: 'origin-top-right' },
 
-                  { value: 'place-items-center justify-items-start', label: 'Center left' },
-                  { value: 'place-items-center', label: 'Center' },
-                  { value: 'place-items-center justify-items-end', label: 'Center right' },
+                  // Center
+                  { label: 'Center left', align: 'place-items-center justify-items-start', origin: 'origin-left' },
+                  { label: 'Center', align: 'place-items-center', origin: 'origin-center' },
+                  { label: 'Center right', align: 'place-items-center justify-items-end', origin: 'origin-right' },
 
-                  { value: 'place-items-end justify-items-start', label: 'Bottom left' },
-                  { value: 'place-items-end justify-items-center', label: 'Bottom center' },
-                  { value: 'place-items-end', label: 'Bottom right' },
+                  // Bottom
+                  { label: 'Bottom left', align: 'place-items-end justify-items-start', origin: 'origin-bottom-left' },
+                  { label: 'Bottom center', align: 'place-items-end justify-items-center', origin: 'origin-bottom' },
+                  { label: 'Bottom right', align: 'place-items-end justify-items-end', origin: 'origin-bottom-right' },
                 ].map((item, i) => {
                   return (
                     <span
@@ -316,10 +366,10 @@ export default function Sidebar({ onReset }: Sidebar) {
                       title={item.label}
                       className={cn(
                         'w-2 h-2 rounded-full cursor-pointer bg-gray-300 dark:bg-neutral-900',
-                        settings.position === item.value ? 'bg-black dark:bg-white/60' : 'hover:bg-neutral-500 dark:hover:bg-neutral-800 '
+                        settings.position === item.align ? 'bg-black dark:bg-white/60' : 'hover:bg-neutral-500 dark:hover:bg-neutral-800 '
                       )}
                       onClick={() => {
-                        saveSettings({ position: item.value });
+                        saveSettings({ position: item.align, imageOrigin: item.origin });
                       }}
                     ></span>
                   );
