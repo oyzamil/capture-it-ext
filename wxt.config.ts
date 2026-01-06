@@ -1,9 +1,48 @@
 import tailwindcss from '@tailwindcss/vite';
+import fs from 'fs';
 import path from 'path';
 import removeConsole from 'vite-plugin-remove-console';
 import { defineConfig } from 'wxt';
 
 import toUtf8 from './scripts/vite-plugin-to-utf8';
+
+import { BACKGROUND_PATTERNS } from './patterns';
+
+export function encodeToDataURI(svg: string) {
+  return `url("data:image/svg+xml,${encodeURIComponent(svg).replace(/'/g, '%27').replace(/"/g, '%22').replace(/\n/g, '')}")`;
+}
+
+function buildPatternCSS() {
+  return BACKGROUND_PATTERNS.map((pattern) => {
+    const selector = `.pattern-${pattern.name}`;
+
+    if (pattern.svg) {
+      return `${selector} {
+  background-image: ${encodeToDataURI(pattern.svg)};
+  background-repeat: var(--pattern-repeat, repeat);
+  background-position: var(--pattern-position, center);
+  background-size: var(--pattern-size, auto);
+}`;
+    }
+
+    if (pattern.css) {
+      const cssProps = Object.entries(pattern.css)
+        .map(([key, value]) => {
+          const kebabKey = key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+          return `${kebabKey}: ${value};`;
+        })
+        .join('\n  ');
+
+      return `${selector} {
+  ${cssProps}
+}`;
+    }
+
+    return '';
+  })
+    .filter(Boolean)
+    .join('\n\n');
+}
 
 // See https://wxt.dev/api/config.html
 
@@ -12,6 +51,20 @@ export default defineConfig({
   srcDir: 'src',
   autoIcons: {
     baseIconPath: 'assets/icon.svg',
+  },
+  hooks: {
+    'build:manifestGenerated': (wxt, manifest) => {
+      const cssOutput = buildPatternCSS();
+
+      const outDir = path.join(wxt.config.root, 'src/assets');
+      const outFile = path.join(outDir, 'patterns.css');
+
+      if (!fs.existsSync(outDir)) {
+        fs.mkdirSync(outDir, { recursive: true });
+      }
+
+      fs.writeFileSync(outFile, cssOutput);
+    },
   },
   vite: (configEnv: { mode: string }) => ({
     plugins: configEnv.mode === 'production' ? [removeConsole({ includes: ['log'] }), tailwindcss()] : [toUtf8(), tailwindcss()],
