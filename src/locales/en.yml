@@ -2,24 +2,53 @@ appName: Capture It
 appFullName: Capture It - Capture & Edit Screenshots
 appDescription: Capture & edit screenshots in beautiful designs.
 copyMessages:
-  empty: 'Nothnig to copy'
-  progress: 'Copying...'
-  success: 'Image successfuly copied to clipboard'
-  error: 'Error occured while copying image'
+  empty: Nothnig to copy
+  progress: Copying...
+  success: Image successfuly copied to clipboard
+  error: Error occured while copying image
 exportMessages:
-  empty: 'Nothnig to export'
-  progress: 'Exporting...'
-  success: 'Image successfuly saved'
-  error: 'Error occured while exporting image'
-unknownError: 'An unknown error occured, See logs for more information!'
-edit: 'Edit'
-copy: 'Copy'
-download: 'Download'
-delete: 'Delete'
-close: 'Close'
-undo: 'Undo'
-restoreAll: 'Restore All'
+  empty: Nothnig to export
+  progress: Exporting...
+  success: Image successfuly saved
+  error: Error occured while exporting image
+unknownError: An unknown error occured, See logs for more information!
+edit: Edit
+copy: Copy
+copyImage: Copy Image
+exportImage: Export Image
+download: Download
+delete: Delete
+close: Close
+undo: Undo
+restoreAll: Restore All
+confirm: Confirm
+yes: Yes
+no: No
+reset: Reset
+canvasOptions: Canvas Options
+aspectRatio: Aspect Ratio
+roundedCorners: Rounded
+background: Background
+bgOpacity: BG Opacity
+gradientAngle: Gradient Angle
+gradientType: Gradient Type
+backgroundPattern: BG Pattern
+backgroundBlendMode: BG Blend Mode
+screenshotOptions: Screenshot Options
+windowBar: Window Bar
+windowTheme: Window Theme
+zoom: Zoom
+margin: Margin
+shadow: Shadow
+position: Position
+noise: Noise
+format: Format
+resolution: Resolution
+resetMessage: 'Are you sure to reset $1?'
+cropImage: Crop Image
+
 # items:
 #   0: No items # i18n.t('items', 0, ['Zero']) - "No items"
 #   1: 1 item # i18n.t('items', 1, ['One']); - "One item"
 #   n: $1 items # i18n.t('items', 1, ['One']); - "Multiple items"
+# {i18n.t("")}

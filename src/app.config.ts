@@ -1,5 +1,4 @@
 import { defineAppConfig } from 'wxt/utils/define-app-config';
-import { AspectRatioKey } from './entrypoints/editor/components/Sidebar';
 
 export const config = {
   APP: {
@@ -17,11 +16,12 @@ export const config = {
       status: 'inactive',
     },
     base64Image: null as string | null,
-    aspectRatio: 'aspect-auto' as AspectRatioKey,
+    aspectRatio: 'aspect-auto' as AspectRatioKeyType,
     bgPattern: 'jigsaw',
     patternBlendMode: 'mix-blend-soft-light',
     canvasColors: ['#ff40ff', '#fec700'],
     backgroundAngle: '45deg',
+    bgOpacity: 1,
     gradientType: 'linear' as 'linear' | 'radial' | 'conic',
     padding: 'p-20',
     position: 'place-items-center',
@@ -32,8 +32,8 @@ export const config = {
     noise: false,
     windowBar: 'none',
     windowTheme: 'light' as 'light' | 'dark',
-    resolution: '4k' as Resolution,
-    fileFormat: 'png' as ExportFormats,
+    resolution: 'normal' as ResolutionType,
+    exportFileFormat: 'png',
     scale: 1,
     captureMargin: 10,
   },
@@ -48,8 +48,6 @@ export const config = {
 };
 
 export default defineAppConfig(config);
-
-export type SETTINGS_TYPE = typeof config.SETTINGS;
 
 declare module 'wxt/utils/define-app-config' {
   export interface WxtAppConfig {

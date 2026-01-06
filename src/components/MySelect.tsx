@@ -76,7 +76,19 @@ const MySelect = <T extends any = any>({ value, onChange, options = [], enableKe
     onChange?.(val, option);
   };
 
-  return <Select<T> ref={selectRef} value={internalValue} onChange={handleChange} onOpenChange={setIsOpen} onKeyDown={handleKeyDown} options={options} {...restProps} />;
+  return (
+    <Select<T>
+      size="small"
+      popupMatchSelectWidth={false}
+      ref={selectRef}
+      value={internalValue}
+      onChange={handleChange}
+      onOpenChange={setIsOpen}
+      onKeyDown={handleKeyDown}
+      options={options}
+      {...restProps}
+    />
+  );
 };
 
 export default MySelect;

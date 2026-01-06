@@ -1,11 +1,10 @@
 import { useAntd } from '@/providers/ThemeProvider';
-import { Button, Divider, Layout, Popconfirm, Select, Switch } from 'antd';
+import { Button, Divider, Layout, Popconfirm, Select, Tooltip } from 'antd';
 import { toBlob, toPng } from 'html-to-image';
 
-import { SETTINGS_TYPE } from '@/app.config';
-import { CopyIcon, PasteIcon, ResetIcon, SaveIcon } from '@/icons';
+import { CopyIcon, CropIcon, PasteIcon, ResetIcon, SaveIcon } from '@/icons';
 import { copyImageToClipboard } from '../content/utils';
-import Sidebar, { ASPECT_CONFIG } from './components/Sidebar';
+import Sidebar from './components/Sidebar';
 import { getGradientBackground } from './utils';
 
 const { Sider, Content, Footer } = Layout;
@@ -22,11 +21,27 @@ type ToastType = {
   key?: string;
 };
 
+type Options = {
+  copying: boolean;
+  saving: boolean;
+  importing: boolean;
+  showCropper: boolean;
+};
+
 const Editor: React.FC = () => {
   const { message } = useAntd();
   const { settings, saveSettings, resetSettings } = useSettings();
-  const wrapperRef = useRef<HTMLElement | null>(null);
+
   const [blob, setBlob] = useState<BlobState>({ src: null, w: 0, h: 0 });
+  const [options, setOptions] = useStateUpdater<Options>({
+    copying: false,
+    saving: false,
+    importing: false,
+    showCropper: false,
+  });
+
+  const wrapperRef = useRef<HTMLElement | null>(null);
+  const imageCropperRef = useRef<CropModalRef>(null);
 
   // useEffect(() => {
   //   disableDevtool({
@@ -64,20 +79,21 @@ const Editor: React.FC = () => {
     if (!wrapperRef.current || !blob.src) {
       showToast({
         type: 'error',
-        content: i18n.t('copyMessages.empty'),
+        content: i18n.t('exportMessages.empty'),
         duration: 2,
       });
       return;
     }
 
     try {
+      setOptions({ saving: true });
       showToast({ type: 'loading', content: i18n.t('exportMessages.progress') });
 
       const width = wrapperRef.current.offsetWidth;
       const height = wrapperRef.current.offsetHeight;
 
       const dataUrl = await toPng(wrapperRef.current, {
-        pixelRatio: getResolution(settings.resolution),
+        pixelRatio: getScaleFector(settings.resolution),
         width: width,
         height: height,
       });
@@ -88,6 +104,8 @@ const Editor: React.FC = () => {
     } catch (err) {
       console.error('Error Exporting Image:', err);
       showToast({ type: 'error', content: i18n.t('exportMessages.error'), duration: 2 });
+    } finally {
+      setOptions({ saving: false });
     }
   };
 
@@ -97,9 +115,10 @@ const Editor: React.FC = () => {
       return;
     }
     try {
+      setOptions({ copying: true });
       showToast({ type: 'loading', content: i18n.t('copyMessages.progress') });
       const blob = await toBlob(wrapperRef.current, {
-        pixelRatio: getResolution(settings.resolution),
+        pixelRatio: getScaleFector(settings.resolution),
       });
 
       if (!blob) {
@@ -113,6 +132,8 @@ const Editor: React.FC = () => {
     } catch (error) {
       console.error('Error copying image:', error);
       showToast({ type: 'error', content: i18n.t('copyMessages.error'), duration: 2 });
+    } finally {
+      setOptions({ copying: false });
     }
   };
 
@@ -125,6 +146,7 @@ const Editor: React.FC = () => {
     });
 
   const onPaste = async (event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>) => {
+    setOptions({ importing: true });
     let files: File[] = [];
 
     if ('clipboardData' in event && event.clipboardData) {
@@ -151,6 +173,7 @@ const Editor: React.FC = () => {
       }));
       await saveSettings({ base64Image: base64 });
     }
+    setOptions({ importing: false });
   };
 
   const handleShortcuts = useCallback((e: KeyboardEvent) => {
@@ -182,91 +205,166 @@ const Editor: React.FC = () => {
   }, [blob.src]);
 
   return (
-    <Layout
-      className="flex flex-row-reverse gap-4"
-      onPaste={onPaste}
-      onDragOver={(e) => e.preventDefault()}
-      onDragEnter={(e) => e.preventDefault()}
-      onDragLeave={(e) => e.preventDefault()}
-      onDrop={(e) => {
-        e.preventDefault();
-        onPaste(e);
-      }}
-    >
-      {/* Sidebar  */}
-      <Sider trigger={null} width={350} className="shadow bg-white overflow-auto h-screen sticky top-0 dark:bg-neutral-900 overflow-x-hidden">
-        <Watermark className="scale-150 text-2xl pt-6 pb-2 mb-4 flex-center gap-2 sticky top-0 z-50 bg-white dark:bg-neutral-900" />
-        <Sidebar onReset={resetSettings} />
-      </Sider>
-      {/* Sidebar End  */}
+    <>
+      <Layout
+        className="flex flex-row-reverse gap-4"
+        onPaste={onPaste}
+        onDragOver={(e) => e.preventDefault()}
+        onDragEnter={(e) => e.preventDefault()}
+        onDragLeave={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          onPaste(e);
+        }}
+      >
+        {/* Sidebar  */}
+        <Sider trigger={null} width={300} className="shadow bg-white overflow-auto h-screen sticky top-0 dark:bg-neutral-900 overflow-x-hidden">
+          <Watermark className="scale-130 text-2xl pt-6 pb-2 mb-4 flex-center gap-2 sticky top-0 z-50 bg-white dark:bg-neutral-900" />
+          <Sidebar onReset={resetSettings} />
+        </Sider>
+        {/* Sidebar End  */}
 
-      <Layout className="flex gap-4 mt-4 ml-4">
-        <Content className="preview-area shadow bg-white p-4 rounded-md dark:bg-neutral-900 flex-center">
-          {blob?.src ? (
-            <div
-              ref={(el) => {
-                wrapperRef.current = el;
-              }}
-              className={cn('relative flex-center overflow-hidden p-0', settings.roundedWrapper)}
-              style={{
-                background: getGradientBackground(settings),
-              }}
-            >
-              <PatternBox className={cn('w-full h-full absolute', settings.patternBlendMode)} name={cn(settings.bgPattern)} noise={settings.noise} />
+        <Layout className="flex gap-4 mt-4 ml-4">
+          <Content className="preview-area shadow bg-white p-4 rounded-md dark:bg-neutral-900 flex-center">
+            {blob?.src ? (
               <div
-                className={cn(
-                  'relative grid grid-rows-1 grid-cols-1',
-                  settings.position,
-                  settings.padding,
-                  settings.roundedWrapper,
-                  ASPECT_CONFIG[settings.aspectRatio].className,
-                  settings.aspectRatio
-                )}
+                ref={(el) => {
+                  wrapperRef.current = el;
+                }}
+                className={cn('relative flex-center overflow-hidden p-0', settings.roundedWrapper)}
+                style={{
+                  background: getGradientBackground(settings),
+                }}
               >
-                <WindowBox
-                  name={settings.windowBar}
-                  theme={settings.windowTheme}
-                  rounded={settings.rounded}
-                  className={cn(settings.shadow, settings.aspectRatio === 'aspect-21/9' ? 'h-full' : 'h-auto', settings.imageOrigin)}
+                <PatternBox
+                  className={cn('w-full h-full absolute', settings.patternBlendMode)}
+                  name={cn(settings.bgPattern)}
+                  noise={settings.noise}
                   style={{
-                    scale: settings.scale,
+                    opacity: settings.bgOpacity,
                   }}
+                />
+                <div
+                  className={cn(
+                    'relative grid grid-rows-1 grid-cols-1',
+                    settings.position,
+                    settings.padding,
+                    settings.roundedWrapper,
+                    ASPECT_CONFIG[settings.aspectRatio].className,
+                    settings.aspectRatio
+                  )}
                 >
-                  <img
-                    src={blob?.src as any}
-                    alt=""
-                    className={cn('w-full h-full object-contain')}
-                    onLoad={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      setBlob({
-                        ...blob,
-                        w: target.naturalWidth,
-                        h: target.naturalHeight,
-                      });
+                  <WindowBox
+                    name={settings.windowBar}
+                    theme={settings.windowTheme}
+                    rounded={settings.rounded}
+                    className={cn(settings.shadow, settings.aspectRatio === 'aspect-21/9' ? 'h-full' : 'h-auto', settings.imageOrigin)}
+                    style={{
+                      scale: settings.scale,
                     }}
-                  />
-                </WindowBox>
+                  >
+                    <img
+                      src={blob?.src as any}
+                      alt=""
+                      className={cn('w-full h-full object-contain')}
+                      onLoad={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        setBlob({
+                          ...blob,
+                          w: target.naturalWidth,
+                          h: target.naturalHeight,
+                        });
+                      }}
+                    />
+                  </WindowBox>
+                </div>
+                <div className="absolute bottom-6 w-full flex justify-center items-center">
+                  <Watermark className="pl-1 pr-2 py-2" glass />
+                </div>
               </div>
-              <div className="absolute bottom-6 w-full flex justify-center items-center">
-                <Watermark className="pl-1 pr-2 py-2" glass />
-              </div>
-            </div>
-          ) : (
-            <NoImage onPaste={onPaste} />
-          )}
-        </Content>
-        <FooterContent
-          settings={settings}
-          saveSettings={saveSettings}
-          handleCopyImage={handleCopyImage}
-          handleImageSave={handleImageSave}
-          resetCanvas={() => {
-            saveSettings({ base64Image: null });
-            setBlob({ src: null, w: 0, h: 0 });
+            ) : (
+              <NoImage onPaste={onPaste} />
+            )}
+          </Content>
+          <Footer className="shadow sticky bottom-0 w-full bg-white dark:bg-neutral-900 p-2 rounded-md mr-4 flex-center gap-3 mb-4 flex-wrap">
+            <FieldSet label={i18n.t('format')} orientation="horizontal" className="h-10 pr-1">
+              <Select
+                value={settings.exportFileFormat}
+                options={EXPORT_FILE_FORMATS.map((value) => ({
+                  value,
+                  label: value.toUpperCase(),
+                }))}
+                onChange={(exportFileFormat) => {
+                  saveSettings({ exportFileFormat });
+                }}
+              />
+            </FieldSet>
+            <FieldSet label={i18n.t('resolution')} orientation="horizontal" className="h-10">
+              <Select
+                value={settings.resolution}
+                options={RESOLUTIONS.map(({ label, value }) => ({
+                  label,
+                  value,
+                }))}
+                onChange={(resolution) => {
+                  saveSettings({ resolution });
+                }}
+              />
+            </FieldSet>
+            <Divider vertical />
+            <Button type="primary" onClick={handleCopyImage} loading={options.copying}>
+              <IconLabel icon={<CopyIcon />} label={i18n.t('copyImage')} />
+            </Button>
+
+            <Button onClick={handleImageSave} loading={options.saving}>
+              <IconLabel icon={<SaveIcon />} label={i18n.t('exportImage')} />
+            </Button>
+
+            <Tooltip title={i18n.t('cropImage')}>
+              <Button
+                onClick={() => {
+                  setOptions({ showCropper: true });
+                }}
+              >
+                <IconLabel icon={<CropIcon />} />
+              </Button>
+            </Tooltip>
+
+            <Divider vertical />
+
+            <Popconfirm
+              title={i18n.t('confirm')}
+              description={i18n.t('resetMessage', ['canvas'])}
+              onConfirm={() => {
+                saveSettings({ base64Image: null });
+                setBlob({ src: null, w: 0, h: 0 });
+              }}
+              okText={i18n.t('yes')}
+              cancelText={i18n.t('no')}
+            >
+              <Button type="text" size="large" danger>
+                <IconLabel icon={<ResetIcon />} label={i18n.t('reset')} />
+              </Button>
+            </Popconfirm>
+          </Footer>
+        </Layout>
+      </Layout>
+
+      {settings.base64Image && (
+        <ImageCropModal
+          ref={imageCropperRef}
+          open={options.showCropper}
+          imageBase64={settings.base64Image}
+          onCancel={() => {
+            setOptions({ showCropper: false });
+          }}
+          onSave={(base64Image) => {
+            setOptions({ showCropper: false });
+            saveSettings({ base64Image });
           }}
         />
-      </Layout>
-    </Layout>
+      )}
+    </>
   );
 };
 
@@ -280,6 +378,7 @@ const NoImage = ({ onPaste }: { onPaste: any }) => {
           className="hidden"
           id="imagesUpload"
           type="file"
+          accept="image/*"
           onChange={(e) => {
             onPaste(e);
           }}
@@ -290,60 +389,5 @@ const NoImage = ({ onPaste }: { onPaste: any }) => {
         <p>or click here to add one</p>
       </label>
     </div>
-  );
-};
-
-const FooterContent = ({
-  settings,
-  saveSettings,
-  handleCopyImage,
-  handleImageSave,
-  resetCanvas,
-}: {
-  settings: SETTINGS_TYPE;
-  saveSettings: any;
-  handleCopyImage: any;
-  handleImageSave: any;
-  resetCanvas: any;
-}) => {
-  return (
-    <>
-      <Footer className="shadow sticky bottom-0 w-full bg-white dark:bg-neutral-900 p-2 rounded-md mr-4 flex-center gap-3 mb-4 flex-wrap">
-        <FieldSet label="Format" orientation="horizontal" className="h-10 pr-1">
-          <Select
-            value={settings.fileFormat}
-            placeholder="Format"
-            options={[{ value: 'png', label: 'PNG' }]}
-            onChange={(fileFormat) => {
-              saveSettings({ fileFormat });
-            }}
-          />
-        </FieldSet>
-        <FieldSet label="4K" orientation="horizontal" className="h-10">
-          <Switch
-            checked={settings.resolution === '4k'}
-            onChange={(checked) => {
-              saveSettings({ quality: checked ? '4k' : 'normal' });
-            }}
-          />
-        </FieldSet>
-        <Divider vertical />
-        <Button type="primary" onClick={handleCopyImage}>
-          <IconLabel icon={<CopyIcon />} label="Copy Image" />
-        </Button>
-
-        <Button onClick={handleImageSave}>
-          <IconLabel icon={<SaveIcon />} label="Save Image" />
-        </Button>
-
-        <Divider vertical />
-
-        <Popconfirm title="Confirm" description="Are you sure to reset the canvas?" onConfirm={resetCanvas} okText="Yes" cancelText="No">
-          <Button type="text" size="large" danger>
-            <IconLabel icon={<ResetIcon />} label="Reset Canvas" />
-          </Button>
-        </Popconfirm>
-      </Footer>
-    </>
   );
 };

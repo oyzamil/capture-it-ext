@@ -23,9 +23,11 @@ const ActionButtons = forwardRef<ActionButtonsHandle, ActionButtonsProps>(({ mod
     div: localRef.current,
   }));
 
-  const isCloserToBottom = selection.rect.y + selection.rect.height + 40 > window.innerHeight;
+  const finalHeight = mode === 'element' ? selection.rect.height + settings.captureMargin : selection.rect.height;
+  const finalWidth = mode === 'element' ? selection.rect.width + settings.captureMargin : selection.rect.width;
+  const isCloserToBottom = selection.rect.y + finalHeight + 40 > window.innerHeight;
   const isCloserToLeft = selection.rect.x + 220 > window.innerWidth;
-  const top = isCloserToBottom ? Math.floor(selection.rect.y) - 45 : Math.floor(selection.rect.y + selection.rect.height) + 5;
+  const top = isCloserToBottom ? Math.floor(selection.rect.y) - 45 : Math.floor(selection.rect.y + finalHeight) + 5;
   const left = isCloserToLeft ? Math.floor(selection.rect.x - 100) : Math.floor(selection.rect.x);
 
   const createCanvas = async (): Promise<CanvasResult> => {
@@ -94,7 +96,7 @@ const ActionButtons = forwardRef<ActionButtonsHandle, ActionButtonsProps>(({ mod
 
   return (
     <>
-      {(selection.rect.width > 30 || selection.rect.height > 30) && (
+      {(finalWidth > 30 || finalHeight > 30) && (
         <div
           style={{
             top: `${top}px`,

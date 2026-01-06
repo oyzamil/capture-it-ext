@@ -2,25 +2,30 @@ import ActionButtons from '@/entrypoints/content/components/ActionButtons';
 import { Button, Card, Typography } from 'antd';
 import { forwardRef, ReactNode, useEffect, useId, useImperativeHandle, useState } from 'react';
 
-type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w' | null;
 const { Text } = Typography;
 
+type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w' | null;
 type CropperProps = {
   mode?: 'custom' | 'element';
   maskRounded?: number;
+  image?: string;
+  cropperHeight?: number;
+  cropperWidth?: number;
 };
 interface HiddenElement {
   element: HTMLElement;
   label: string;
 }
 
-export interface CropperHandle {
+export interface CropperRef {
   div: HTMLDivElement | null;
   resetSelection: () => void;
   hideCropperUI: () => void;
+  getSelection: () => Rect | null;
+  getImageSize: () => { width: number; height: number };
 }
 
-const Cropper = forwardRef<CropperHandle, CropperProps>(({ mode = 'custom', maskRounded = 0 }, ref) => {
+const Cropper = forwardRef<CropperRef, CropperProps>(({ mode = 'custom', maskRounded = 0 }, ref) => {
   const { settings } = useSettings();
   const { position, isDragging, dragStart, dragEnd } = useCursor();
   const [selection, setSelection] = useState<ElementSelection | null>(null);
@@ -29,6 +34,8 @@ const Cropper = forwardRef<CropperHandle, CropperProps>(({ mode = 'custom', mask
   const [resizeHandle, setResizeHandle] = useState<ResizeHandle>(null);
   const [moveStart, setMoveStart] = useState<Point | null>(null);
   const [resizeStart, setResizeStart] = useState<{ box: Rect; mouse: Point } | null>(null);
+  const [imageSize, setImageSize] = useState({ width: 1, height: 1 });
+  const [cropAreaSize, setCropAreaSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
   // States for Element Selection Mode
   const [hoveredElement, setHoveredElement] = useState<HTMLElement | null>(null);
@@ -37,6 +44,8 @@ const Cropper = forwardRef<CropperHandle, CropperProps>(({ mode = 'custom', mask
   const localRef = useRef<HTMLDivElement | null>(null);
   useImperativeHandle(ref, () => ({
     div: localRef.current,
+    getSelection: () => selection?.rect ?? null,
+    getImageSize: () => imageSize,
     hideCropperUI,
     resetSelection,
   }));
@@ -209,12 +218,12 @@ const Cropper = forwardRef<CropperHandle, CropperProps>(({ mode = 'custom', mask
     setMoveStart({ x: e.clientX, y: e.clientY });
   };
 
-  const startResize = (handle: ResizeHandle, e: React.MouseEvent) => {
+  const startResize = (handle: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!selection) return;
 
     setIsResizing(true);
-    setResizeHandle(handle);
+    setResizeHandle(handle as ResizeHandle);
 
     setResizeStart({
       box: { ...selection.rect },
@@ -336,7 +345,7 @@ const Cropper = forwardRef<CropperHandle, CropperProps>(({ mode = 'custom', mask
         </div>
       )}
       <div className={cn('inset-0 pointer-events-none', mode === 'element' ? 'fixed' : 'absolute')}>
-        <svg className={cn('w-full h-full', mode === 'custom' && 'absolute')} viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`} preserveAspectRatio="none">
+        <svg className={cn('w-full h-full', mode === 'custom' && 'absolute')} preserveAspectRatio="none" viewBox={`0 0 ${cropAreaSize.width} ${cropAreaSize.height}`}>
           <defs>
             <mask id={maskId}>
               {/* Full visible area */}
@@ -360,8 +369,8 @@ const Cropper = forwardRef<CropperHandle, CropperProps>(({ mode = 'custom', mask
               rx={maskRounded}
               fill="none"
               className="stroke-app-500"
-              strokeWidth="2"
-              // strokeDasharray="0 0"
+              strokeWidth="3"
+              strokeDasharray="6"
             />
           )}
         </svg>
@@ -386,7 +395,7 @@ const Cropper = forwardRef<CropperHandle, CropperProps>(({ mode = 'custom', mask
           </div>
 
           {/* Resize handles */}
-          <div className="resize-handle cursor-nw-resize" style={{ left: -6, top: -6 }} onMouseDown={(e) => startResize('nw', e)} />
+          {/* <div className="resize-handle cursor-nw-resize" style={{ left: -6, top: -6 }} onMouseDown={(e) => startResize('nw', e)} />
           <div className="resize-handle cursor-ne-resize" style={{ right: -6, top: -6 }} onMouseDown={(e) => startResize('ne', e)} />
           <div className="resize-handle cursor-sw-resize" style={{ left: -6, bottom: -6 }} onMouseDown={(e) => startResize('sw', e)} />
           <div className="resize-handle cursor-se-resize" style={{ right: -6, bottom: -6 }} onMouseDown={(e) => startResize('se', e)} />
@@ -394,34 +403,13 @@ const Cropper = forwardRef<CropperHandle, CropperProps>(({ mode = 'custom', mask
           <div className="resize-handle cursor-s-resize" style={{ left: '50%', bottom: -6, transform: 'translateX(-50%)' }} onMouseDown={(e) => startResize('s', e)} />
           <div className="resize-handle cursor-e-resize" style={{ right: -6, top: '50%', transform: 'translateY(-50%)' }} onMouseDown={(e) => startResize('e', e)} />
           <div className="resize-handle cursor-w-resize" style={{ left: -6, top: '50%', transform: 'translateY(-50%)' }} onMouseDown={(e) => startResize('w', e)} />
+           */}
         </div>
       )}
 
       {mode === 'element' && (
         <div className="fixed right-4 bottom-4" style={{ pointerEvents: 'auto' }}>
-          <Card
-            size="small"
-            title={<Watermark className="mr-3" />}
-            // extra={
-            //   <Button type="text" size="small" shape="circle" onClick={async () => await setOptions({ overlay: !options.overlay })}>
-            //     {options.overlay ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-            //   </Button>
-            // }
-          >
-            {/* {selection && (
-              <Alert
-                type="info"
-                description={
-                  <div className="space-y-1 text-xs">
-                    <div>Width: {Math.round(selection.rect.width)}px</div>
-                    <div>Height: {Math.round(selection.rect.height)}px</div>
-                    <div>X: {Math.round(selection.rect.x)}px</div>
-                    <div>Y: {Math.round(selection.rect.y)}px</div>
-                  </div>
-                }
-              />
-            )} */}
-
+          <Card size="small" title={<Watermark className="mr-3" />}>
             {/* Hidden Elements */}
             <div className="max-h-40 overflow-auto space-y-2 p-2 border-2 border-gray-200 rounded-md mb-2">
               {hiddenElements.length === 0 ? (

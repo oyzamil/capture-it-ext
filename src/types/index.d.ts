@@ -25,11 +25,13 @@ interface CanvasResult {
   dataUrl: string;
 }
 
-type Resolution = 'normal' | '1k' | '2k' | '4k' | '8k';
-type ExportFormats = 'png' | 'jpg' | 'svg' | 'webp';
-
 type OpenPageOptions = {
   current?: boolean;
   active?: boolean;
   newWindow?: boolean;
 };
+
+type ResolutionType = (typeof RESOLUTIONS)[number]['value'];
+type ResolutionConfigType = (typeof RESOLUTIONS)[number];
+type AspectRatioKeyType = keyof typeof ASPECT_CONFIG;
+type settingsType = typeof config.SETTINGS;

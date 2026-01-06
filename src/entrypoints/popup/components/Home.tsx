@@ -1,4 +1,3 @@
-import { SETTINGS_TYPE } from '@/app.config';
 import { useAntd } from '@/providers/ThemeProvider';
 import { CAPTURE_TYPE } from '@/utils/messaging';
 import { Button, Divider, Form, Segmented, Slider, Space } from 'antd';
@@ -6,12 +5,12 @@ import { Button, Divider, Form, Segmented, Slider, Space } from 'antd';
 function Home() {
   const { message } = useAntd();
   const { settings, saveSettings } = useSettings();
-  const [form] = Form.useForm<SETTINGS_TYPE>();
+  const [form] = Form.useForm<settingsType>();
   const [notAllowed, setNotAllowed] = useState(true);
 
   const debouncedSubmit = useDebounce(onSubmit, 500);
 
-  async function onSubmit(settings: SETTINGS_TYPE) {
+  async function onSubmit(settings: settingsType) {
     message.open({
       key: 'saving',
       type: 'loading',

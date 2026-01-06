@@ -70,7 +70,7 @@ const ChromeTab = ({ children, rounded, theme, device }: { children: ReactNode; 
         <div className={cn('flex items-center justify-between w-full h-full rounded-full px-2.5 py-1.5', light ? 'bg-gray-100' : 'bg-gray-800')}>
           <span className="flex items-center gap-2">
             <LockIcon />
-            <span className={cn('text-xs', light ? 'opacity-50' : 'opacity-80')}>
+            <span className={cn('text-xs truncate', light ? 'opacity-50' : 'opacity-80')}>
               Designed by <span className="underline">{i18n.t('appName')}</span> Browser Extension!
             </span>
           </span>
@@ -89,7 +89,7 @@ const ChromeTabNew = ({ children, rounded, theme, device }: { children: ReactNod
   const light = theme === 'light';
   return (
     <div className={cn(rounded, 'overflow-hidden text-gray-400 flex flex-col')}>
-      <div className={cn('flex items-center justify-between w-full px-3 py-2', light ? 'bg-white' : 'bg-black')}>
+      <div className={cn('flex items-center justify-between w-full px-3 py-2 gap-x-1', light ? 'bg-white' : 'bg-black')}>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 mr-3">
             {['bg-red-400', 'bg-yellow-300', 'bg-green-500'].map((color, i) => (
@@ -102,10 +102,15 @@ const ChromeTabNew = ({ children, rounded, theme, device }: { children: ReactNod
           <StarIcon className="text-yellow-300" />
         </div>
 
-        <div className={cn('flex items-center justify-between w-full h-full rounded-md px-2.5 py-1.5 max-w-[500px]', light ? 'bg-white border border-gray-200' : 'bg-gray-900 border border-gray-600')}>
+        <div
+          className={cn(
+            'flex items-center justify-between w-full h-full rounded-md px-2.5 py-1.5 max-w-[500px] gap-x-2',
+            light ? 'bg-white border border-gray-200' : 'bg-gray-900 border border-gray-600'
+          )}
+        >
           <span className="flex items-center gap-2">
             <LockIcon />
-            <span className={cn('text-xs', light ? 'opacity-50' : 'opacity-80')}>
+            <span className={cn('text-xs truncate', light ? 'opacity-50' : 'opacity-80')}>
               Designed by <span className="underline">{i18n.t('appName')}</span> Browser Extension!
             </span>
           </span>
@@ -226,7 +231,7 @@ const WindowBox = ({ name, className = '', children, rounded, theme, style }: Wi
   }
 
   return (
-    <div className={cn(`bar-${name} flex justify-center`, className)} style={style}>
+    <div className={cn(`bar-${name} grid`, className)} style={style}>
       {barComponent({ children, rounded, theme })}
     </div>
   );

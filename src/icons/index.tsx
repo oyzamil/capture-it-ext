@@ -4,6 +4,7 @@ import BinIcon from './BinIcon';
 import ChatIcon from './ChatIcon';
 import ChevronIcon from './ChevronIcon';
 import CopyIcon from './CopyIcon';
+import CropIcon from './CropIcon';
 import CrossIcon from './CrossIcon';
 import EditIcon from './EditIcon';
 import EyeDropperIcon from './EyeDropperIcon';
@@ -24,6 +25,7 @@ export {
   ChatIcon,
   ChevronIcon,
   CopyIcon,
+  CropIcon,
   CrossIcon,
   EditIcon,
   EyeDropperIcon,
