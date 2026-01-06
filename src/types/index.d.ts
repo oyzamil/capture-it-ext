@@ -34,4 +34,3 @@ type OpenPageOptions = {
 type ResolutionType = (typeof RESOLUTIONS)[number]['value'];
 type ResolutionConfigType = (typeof RESOLUTIONS)[number];
 type AspectRatioKeyType = keyof typeof ASPECT_CONFIG;
-type settingsType = typeof config.SETTINGS;

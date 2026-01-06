@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { BACKGROUND_PATTERNS } from '../../patterns';
+import { BACKGROUND_PATTERNS } from './../../../../patterns';
 
 // let stylesInjected = false;
 // let cachedCSS: string | null = null;

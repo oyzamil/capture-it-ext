@@ -1,7 +1,9 @@
-import { WINDOW_BARS } from '@/components/WindowBox';
-import { EyeDropperIcon, ResetIcon, TriangleIcon } from '@/icons';
+import { ResetIcon, TriangleIcon } from '@/icons';
 import { ASPECT_CONFIG } from '@/utils/constants';
-import { Button, Collapse, CollapseProps, ColorPicker, Popconfirm, Slider, Switch, Tooltip } from 'antd';
+import { Button, Collapse, CollapseProps, Popconfirm, Slider, Switch } from 'antd';
+import { MyColorPicker } from './MyColorPicker';
+import { BG_PATTERNS } from './PatternBox';
+import { WINDOW_BARS } from './WindowBox';
 
 interface Sidebar {
   onReset: () => void;
@@ -51,48 +53,7 @@ export default function Sidebar({ onReset }: Sidebar) {
           </FieldSet>
 
           <FieldSet label={i18n.t('background')} orientation="horizontal">
-            <ColorPicker
-              size="large"
-              className="hover-scale flex"
-              format="hex"
-              mode={['single', 'gradient']}
-              value={settings.canvasColors.map((c, i) => ({
-                color: c,
-                percent: i === 0 ? 0 : 100,
-              }))}
-              presets={GRADIENT_PRESETS}
-              onChangeComplete={(color) => {
-                const colors = color.getColors();
-                const canvasColorsHex = colors.map((c) => c.color.toHexString());
-                saveSettings({ canvasColors: canvasColorsHex });
-              }}
-              panelRender={(panel) => (
-                <>
-                  {isEyeDropperSupported && (
-                    <div className="flex justify-end w-full">
-                      <Tooltip title="Pick color from page">
-                        <Button
-                          size="small"
-                          type="text"
-                          onClick={async () => {
-                            try {
-                              // @ts-expect-error
-                              const eyeDropper = new window.EyeDropper();
-                              const { sRGBHex } = await eyeDropper.open();
-                              saveSettings({ canvasColors: [sRGBHex] }); // <-- now preview updates
-                            } catch {}
-                          }}
-                        >
-                          <EyeDropperIcon />
-                        </Button>
-                      </Tooltip>
-                    </div>
-                  )}
-
-                  {panel}
-                </>
-              )}
-            />
+            <MyColorPicker value={settings.canvasColors} onChange={(colors) => saveSettings({ canvasColors: colors })} />
           </FieldSet>
 
           <FieldSet label={i18n.t('gradientAngle')} orientation="horizontal">
@@ -144,7 +105,7 @@ export default function Sidebar({ onReset }: Sidebar) {
           <FieldSet label={i18n.t('backgroundBlendMode')}>
             <MySelect className="w-full" value={settings.patternBlendMode} options={BACKGROUND_BLEND_MODES} onChange={(patternBlendMode) => saveSettings({ patternBlendMode })} />
           </FieldSet>
-          <FieldSet label={i18n.t('bgOpacity')}>
+          <FieldSet label={i18n.t('patternOpacity')}>
             <Slider
               className="w-full"
               min={0}
@@ -259,6 +220,33 @@ export default function Sidebar({ onReset }: Sidebar) {
                 saveSettings({ noise });
               }}
             />
+          </FieldSet>
+        </div>
+      ),
+    },
+    {
+      key: '3',
+      label: <Title title={i18n.t('windowBorder')} />,
+      children: (
+        <div className="space-y-2">
+          <FieldSet label={i18n.t('visible')}>
+            <Switch
+              checked={settings.borderMask.visible}
+              onChange={(visible) => {
+                saveSettings({ borderMask: { visible } });
+              }}
+            />
+          </FieldSet>
+          <FieldSet label={i18n.t('restricted')}>
+            <Switch
+              checked={settings.borderMask.windowRestricted}
+              onChange={(windowRestricted) => {
+                saveSettings({ borderMask: { windowRestricted } });
+              }}
+            />
+          </FieldSet>
+          <FieldSet label={i18n.t('color')}>
+            <MyColorPicker value={settings.borderMask.color} mode={['single']} onChange={(color) => saveSettings({ borderMask: { color } })} />
           </FieldSet>
         </div>
       ),

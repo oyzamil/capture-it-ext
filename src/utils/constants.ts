@@ -102,7 +102,7 @@ export const GRADIENT_PRESETS = [
   {
     label: 'Default Colors',
     defaultOpen: true,
-    colors: ['#ffffff', '#afafaf', useAppConfig().APP.color, '#F44336', '#1E88E5', '#FDD835', '#7a00cc'],
+    colors: ['#ffffff', '#edebeb', useAppConfig().APP.color, '#F44336', '#1E88E5', '#FDD835', '#7a00cc'],
   },
 ];
 export const ASPECT_CONFIG = {

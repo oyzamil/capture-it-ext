@@ -26,9 +26,9 @@ export const config = {
     padding: 'p-20',
     position: 'place-items-center',
     imageOrigin: 'origin-center',
-    rounded: 'rounded-xl',
-    roundedWrapper: 'rounded-xl',
-    shadow: 'shadow-xl',
+    rounded: 'rounded-md',
+    roundedWrapper: 'rounded-md',
+    shadow: 'shadow-md',
     noise: false,
     windowBar: 'none',
     windowTheme: 'light' as 'light' | 'dark',
@@ -36,6 +36,11 @@ export const config = {
     exportFileFormat: 'png',
     scale: 1,
     captureMargin: 10,
+    borderMask: {
+      visible: false,
+      windowRestricted: false,
+      color: ['#edebeb'],
+    },
   },
   ROUTES: {
     HOME: '/',
@@ -48,6 +53,7 @@ export const config = {
 };
 
 export default defineAppConfig(config);
+export type settingsType = typeof config.SETTINGS;
 
 declare module 'wxt/utils/define-app-config' {
   export interface WxtAppConfig {

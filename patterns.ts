@@ -400,6 +400,21 @@ export const BACKGROUND_PATTERNS = [
     svg: `<svg width='100' height='100' xmlns='http://www.w3.org/2000/svg'><text x='50' y='50' font-size='60' text-anchor='middle' dominant-baseline='central'>🔥</text></svg>`,
   },
   {
+    name: 'paper',
+    svg: `<svg width="650" height="500" xmlns="http://www.w3.org/2000/svg">
+  <filter id="roughpaper">
+    <feTurbulence type="fractalNoise" baseFrequency="0.04" result="noise" numOctaves="10" />
+    <feDiffuseLighting in="noise" lighting-color="#fff" surfaceScale="2">
+      <feDistantLight azimuth="40" elevation="1" />
+    </feDiffuseLighting>
+  </filter>
+
+  <!-- Apply the filter to a rectangle covering the whole SVG -->
+  <rect width="100%" height="100%" filter="url(#roughpaper)" fill="#000" />
+</svg>
+`,
+  },
+  {
     name: 'mesh-gradient',
     css: {
       backgroundImage:

@@ -1,12 +1,12 @@
+import { settingsType } from '@/app.config';
+import Logo from '@/components/Logo';
 import { ArrowIcon, BarsIcon, ChevronIcon, CrossIcon, EditIcon, MaximizeIcon, PlusIcon, ResetIcon, StarIcon, SubtractIcon } from '@/icons';
 import LockIcon from '@/icons/LockIcon';
-import { ReactElement, ReactNode } from 'react';
-import Logo from './Logo';
+import { ReactElement, ReactNode, RefObject } from 'react';
 
 type WindowBoxProps = {
-  name: string;
-  rounded: string;
-  theme: 'light' | 'dark';
+  wrapperRef: RefObject<HTMLElement | null>;
+  settings: settingsType;
   className?: string;
   children?: ReactNode;
   style?: React.CSSProperties;
@@ -16,8 +16,6 @@ interface BarConfig {
   name: string;
   code: (props: { children: ReactNode; rounded: string; theme: 'light' | 'dark' }) => ReactElement;
 }
-
-import React from 'react';
 
 const ChromeTab = ({ children, rounded, theme, device }: { children: ReactNode; rounded: string; theme: 'light' | 'dark'; device: 'mac' | 'windows' }) => {
   const light = theme === 'light';
@@ -219,21 +217,65 @@ const Bars: BarConfig[] = [
 // Create a Map for quick lookup
 const barsMap = new Map<string, (props: { children: ReactNode; rounded: string; theme: 'light' | 'dark' }) => ReactElement>(Bars.map((p) => [p.name, p.code]));
 
-const WindowBox = ({ name, className = '', children, rounded, theme, style }: WindowBoxProps) => {
-  const barComponent = barsMap.get(name);
+const WindowBox = ({ wrapperRef, className = '', children, settings, style }: WindowBoxProps) => {
+  const { size: windowSize, ref: windowBoxRef } = useElementSize();
+  const { size: wrapperSize } = useElementSize(wrapperRef);
 
-  if (!name || !barComponent) {
-    return (
-      <div className={cn(`bar-${name}`, className)} style={style}>
-        {children}
-      </div>
-    );
-  }
+  const barComponent = barsMap.get(settings.windowBar);
+
+  const finalBoxHeight = settings.borderMask.windowRestricted ? '100%' : wrapperSize?.height - 20;
+  const finalBoxWidth = settings.borderMask.windowRestricted ? '100%' : wrapperSize?.width - 20;
 
   return (
-    <div className={cn(`bar-${name} grid`, className)} style={style}>
-      {barComponent({ children, rounded, theme })}
-    </div>
+    <>
+      {settings.borderMask.visible && (
+        <div className="absolute overflow-visible" style={{ height: windowSize?.height, width: windowSize?.width }}>
+          {['top', 'bottom', 'left', 'right'].map((pos) => (
+            <div
+              key={pos}
+              className={cn('absolute bg-red-500')}
+              style={{
+                ...(pos === 'top' && {
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  top: -6,
+                  width: finalBoxWidth,
+                  height: '2px',
+                  background: `linear-gradient(to right, transparent, ${settings.borderMask.color}, transparent)`,
+                }),
+                ...(pos === 'bottom' && {
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  bottom: -6,
+                  width: finalBoxWidth,
+                  height: '2px',
+                  background: `linear-gradient(to right, transparent, ${settings.borderMask.color}, transparent)`,
+                }),
+                ...(pos === 'left' && {
+                  left: -6,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '2px',
+                  height: finalBoxHeight,
+                  background: `linear-gradient(to bottom, transparent, ${settings.borderMask.color}, transparent)`,
+                }),
+                ...(pos === 'right' && {
+                  right: -6,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '2px',
+                  height: finalBoxHeight,
+                  background: `linear-gradient(to bottom, transparent, ${settings.borderMask.color}, transparent)`,
+                }),
+              }}
+            />
+          ))}
+        </div>
+      )}
+      <div ref={windowBoxRef} className={cn(`bar-${settings.windowBar} grid`, className)} style={style}>
+        {barComponent ? barComponent({ children, rounded: settings.rounded, theme: settings.windowTheme }) : children}
+      </div>
+    </>
   );
 };
 

@@ -29,7 +29,7 @@ canvasOptions: Canvas Options
 aspectRatio: Aspect Ratio
 roundedCorners: Rounded
 background: Background
-bgOpacity: BG Opacity
+patternOpacity: Pattern Opacity
 gradientAngle: Gradient Angle
 gradientType: Gradient Type
 backgroundPattern: BG Pattern
@@ -44,6 +44,10 @@ position: Position
 noise: Noise
 format: Format
 resolution: Resolution
+windowBorder: Window Border
+visible: Visible
+restricted: Restricted
+color: Color
 resetMessage: 'Are you sure to reset $1?'
 cropImage: Crop Image
 

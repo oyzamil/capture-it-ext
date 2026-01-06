@@ -404,6 +404,25 @@ const Cropper = forwardRef<CropperRef, CropperProps>(({ mode = 'custom', maskRou
           <div className="resize-handle cursor-e-resize" style={{ right: -6, top: '50%', transform: 'translateY(-50%)' }} onMouseDown={(e) => startResize('e', e)} />
           <div className="resize-handle cursor-w-resize" style={{ left: -6, top: '50%', transform: 'translateY(-50%)' }} onMouseDown={(e) => startResize('w', e)} />
            */}
+
+          {['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'].map((pos) => (
+            <div
+              key={pos}
+              className={cn('resize-handle', `cursor-${pos}-resize`)}
+              style={{
+                ...(pos === 'nw' && { left: -6, top: -6 }),
+                ...(pos === 'ne' && { right: -6, top: -6 }),
+                ...(pos === 'sw' && { left: -6, bottom: -6 }),
+                ...(pos === 'se' && { right: -6, bottom: -6 }),
+                ...(pos === 'n' && { left: '50%', top: -6, transform: 'translateX(-50%)' }),
+                ...(pos === 's' && { left: '50%', bottom: -6, transform: 'translateX(-50%)' }),
+                ...(pos === 'e' && { right: -6, top: '50%', transform: 'translateY(-50%)' }),
+                ...(pos === 'w' && { left: -6, top: '50%', transform: 'translateY(-50%)' }),
+                cursor: `${pos}-resize`,
+              }}
+              onMouseDown={(e) => startResize(pos, e)}
+            />
+          ))}
         </div>
       )}
 

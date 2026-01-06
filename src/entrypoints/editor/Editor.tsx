@@ -4,7 +4,10 @@ import { toBlob, toPng } from 'html-to-image';
 
 import { CopyIcon, CropIcon, PasteIcon, ResetIcon, SaveIcon } from '@/icons';
 import { copyImageToClipboard } from '../content/utils';
+import ImageCropModal, { CropModalRef } from './components/ImageCropModal';
+import PatternBox from './components/PatternBox';
 import Sidebar from './components/Sidebar';
+import WindowBox from './components/WindowBox';
 import { getGradientBackground } from './utils';
 
 const { Sider, Content, Footer } = Layout;
@@ -255,9 +258,8 @@ const Editor: React.FC = () => {
                   )}
                 >
                   <WindowBox
-                    name={settings.windowBar}
-                    theme={settings.windowTheme}
-                    rounded={settings.rounded}
+                    wrapperRef={wrapperRef}
+                    settings={settings}
                     className={cn(settings.shadow, settings.aspectRatio === 'aspect-21/9' ? 'h-full' : 'h-auto', settings.imageOrigin)}
                     style={{
                       scale: settings.scale,
