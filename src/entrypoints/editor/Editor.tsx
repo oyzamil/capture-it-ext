@@ -234,7 +234,7 @@ const Editor: React.FC = () => {
                 ref={(el) => {
                   wrapperRef.current = el;
                 }}
-                className={cn('relative flex-center overflow-hidden p-0', settings.roundedWrapper)}
+                className={cn('relative flex-center overflow-hidden p-0 border border-gray-50', settings.roundedWrapper)}
                 style={{
                   background: getGradientBackground(settings),
                 }}
@@ -318,9 +318,11 @@ const Editor: React.FC = () => {
               <IconLabel icon={<CopyIcon />} label={i18n.t('copyImage')} />
             </Button>
 
-            <Button onClick={handleImageSave} loading={options.saving}>
-              <IconLabel icon={<SaveIcon />} label={i18n.t('exportImage')} />
-            </Button>
+            <RainbowBorder backgroundColor="black">
+              <Button className="border-none" color="default" variant="solid" onClick={handleImageSave} loading={options.saving}>
+                <IconLabel icon={<SaveIcon />} label={i18n.t('exportImage')} />
+              </Button>
+            </RainbowBorder>
 
             <Tooltip title={i18n.t('cropImage')}>
               <Button

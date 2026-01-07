@@ -221,59 +221,62 @@ const WindowBox = ({ wrapperRef, className = '', children, settings, style }: Wi
   const { size: windowSize, ref: windowBoxRef } = useElementSize();
   const { size: wrapperSize } = useElementSize(wrapperRef);
 
-  const barComponent = barsMap.get(settings.windowBar);
+  const { windowBar, windowTheme, borderMask, rounded, captureMargin } = settings;
+  const { visible, masked, windowRestricted, borderType, color } = borderMask;
 
-  const finalBoxHeight = settings.borderMask.windowRestricted ? '100%' : wrapperSize?.height - 20;
-  const finalBoxWidth = settings.borderMask.windowRestricted ? '100%' : wrapperSize?.width - 20;
+  const barComponent = barsMap.get(windowBar);
 
+  const finalBoxHeight = windowRestricted ? '100%' : wrapperSize?.height;
+  const finalBoxWidth = windowRestricted ? '100%' : wrapperSize?.width;
+  const maskSize = 25;
+
+  const getMaskImages = (direction: 'right' | 'bottom') => {
+    const gradient =
+      direction === 'right'
+        ? `linear-gradient(to right, transparent 0%, black ${maskSize}%, black ${100 - maskSize}%, transparent 100%)`
+        : `linear-gradient(to bottom, transparent 0%, black ${maskSize}%, black ${100 - maskSize}%, transparent 100%)`;
+
+    return {
+      maskImage: gradient,
+      WebkitMaskImage: gradient,
+    };
+  };
+
+  const verticalEdges = ['top', 'bottom'];
+  const horizontalEdges = ['left', 'right'];
   return (
     <>
-      {settings.borderMask.visible && (
-        <div className="absolute overflow-visible" style={{ height: windowSize?.height, width: windowSize?.width }}>
-          {['top', 'bottom', 'left', 'right'].map((pos) => (
+      {visible && (
+        <div className="absolute overflow-visible" style={{ height: windowSize?.height + captureMargin, width: windowSize?.width + captureMargin }}>
+          {[...verticalEdges, ...horizontalEdges].map((pos) => (
             <div
               key={pos}
-              className={cn('absolute bg-red-500')}
+              className={cn('absolute')}
               style={{
-                ...(pos === 'top' && {
+                [`border${pos.charAt(0).toUpperCase() + pos.slice(1)}`]: `2px ${borderType} ${color}`,
+                background: 'transparent',
+                [pos]: -6,
+
+                ...(verticalEdges.includes(pos) && {
+                  width: finalBoxWidth,
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  top: -6,
-                  width: finalBoxWidth,
-                  height: '2px',
-                  background: `linear-gradient(to right, transparent, ${settings.borderMask.color}, transparent)`,
+                  ...(masked && getMaskImages('right')),
                 }),
-                ...(pos === 'bottom' && {
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  bottom: -6,
-                  width: finalBoxWidth,
-                  height: '2px',
-                  background: `linear-gradient(to right, transparent, ${settings.borderMask.color}, transparent)`,
-                }),
-                ...(pos === 'left' && {
-                  left: -6,
+
+                ...(horizontalEdges.includes(pos) && {
+                  height: finalBoxHeight,
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  width: '2px',
-                  height: finalBoxHeight,
-                  background: `linear-gradient(to bottom, transparent, ${settings.borderMask.color}, transparent)`,
-                }),
-                ...(pos === 'right' && {
-                  right: -6,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '2px',
-                  height: finalBoxHeight,
-                  background: `linear-gradient(to bottom, transparent, ${settings.borderMask.color}, transparent)`,
+                  ...(masked && getMaskImages('bottom')),
                 }),
               }}
             />
           ))}
         </div>
       )}
-      <div ref={windowBoxRef} className={cn(`bar-${settings.windowBar} grid`, className)} style={style}>
-        {barComponent ? barComponent({ children, rounded: settings.rounded, theme: settings.windowTheme }) : children}
+      <div ref={windowBoxRef} className={cn(`bar-${windowBar} grid`, className)} style={style}>
+        {barComponent ? barComponent({ children, rounded, theme: windowTheme }) : children}
       </div>
     </>
   );

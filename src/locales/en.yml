@@ -46,9 +46,11 @@ format: Format
 resolution: Resolution
 windowBorder: Window Border
 visible: Visible
+masked: Masked
 restricted: Restricted
 color: Color
-resetMessage: 'Are you sure to reset $1?'
+borderType: Border Type
+resetMessage: Are you sure to reset $1?
 cropImage: Crop Image
 
 # items:

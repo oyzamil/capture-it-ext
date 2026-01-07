@@ -237,11 +237,32 @@ export default function Sidebar({ onReset }: Sidebar) {
               }}
             />
           </FieldSet>
+          <FieldSet label={i18n.t('masked')}>
+            <Switch
+              checked={settings.borderMask.masked}
+              onChange={(masked) => {
+                saveSettings({ borderMask: { masked } });
+              }}
+            />
+          </FieldSet>
           <FieldSet label={i18n.t('restricted')}>
             <Switch
               checked={settings.borderMask.windowRestricted}
               onChange={(windowRestricted) => {
                 saveSettings({ borderMask: { windowRestricted } });
+              }}
+            />
+          </FieldSet>
+          <FieldSet label={i18n.t('borderType')}>
+            <MySelect
+              className="w-full"
+              value={settings.borderMask.borderType}
+              options={BORDER_TYPES.map((value) => ({
+                value,
+                label: value.charAt(0).toUpperCase() + value.slice(1),
+              }))}
+              onChange={(borderType) => {
+                saveSettings({ borderMask: { borderType } });
               }}
             />
           </FieldSet>

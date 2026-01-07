@@ -1,4 +1,5 @@
 export const EXPORT_FILE_FORMATS = ['png', 'jpg', 'svg', 'webp'];
+export const BORDER_TYPES = ['dotted', 'dashed', 'solid'];
 export const RESOLUTIONS = [
   {
     label: 'Normal',

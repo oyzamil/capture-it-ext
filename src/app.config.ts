@@ -39,7 +39,9 @@ export const config = {
     borderMask: {
       visible: false,
       windowRestricted: false,
+      masked: true,
       color: ['#edebeb'],
+      borderType: 'dashed',
     },
   },
   ROUTES: {

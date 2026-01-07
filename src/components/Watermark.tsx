@@ -11,7 +11,9 @@ const Watermark = ({ className = '', glass }: { className: string; glass?: boole
           {glass ? (
             <div className="flex-center gap-1 text-xs">
               <span>Designed by</span>
-              <Logo size="size-5" />
+              <RainbowBorder>
+                <Logo size="size-5" />
+              </RainbowBorder>
               <span className="font-semibold">{i18n.t('appName')}</span>
               <span>Browser Extension</span>
             </div>
