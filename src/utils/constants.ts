@@ -1,16 +1,9 @@
-export const EXPORT_FILE_FORMATS = ['png', 'jpg', 'svg', 'webp'];
+export const EXPORT_FILE_FORMATS = ['png', 'jpg'];
 export const BORDER_TYPES = ['dotted', 'dashed', 'solid'];
 export const RESOLUTIONS = [
   {
     label: 'Normal',
     value: 'normal',
-    scaleFactor: 1,
-    width: 1024,
-    height: 1024,
-  },
-  {
-    label: '1K',
-    value: '1k',
     scaleFactor: 1,
     width: 1024,
     height: 1024,
@@ -103,7 +96,7 @@ export const GRADIENT_PRESETS = [
   {
     label: 'Default Colors',
     defaultOpen: true,
-    colors: ['#ffffff', '#edebeb', useAppConfig().APP.color, '#F44336', '#1E88E5', '#FDD835', '#7a00cc'],
+    colors: ['#ffffff', '#edebeb', useAppConfig().APP.color, '#F44336', '#1E88E5', '#FDD835', '#7a00cc', '#bfeb30', '#34302c', '#41199c', '#df21a5'],
   },
 ];
 export const ASPECT_CONFIG = {
@@ -222,3 +215,18 @@ export const POSITIONS_CONFIG = [
   { label: 'Bottom center', align: 'place-items-end justify-items-center', origin: 'origin-bottom' },
   { label: 'Bottom right', align: 'place-items-end justify-items-end', origin: 'origin-bottom-right' },
 ];
+export const TILT_CONFIG = [
+  { label: 'Top left', x: 25, y: -25 },
+  { label: 'Top center', x: 25, y: 0 },
+  { label: 'Top right', x: 25, y: 25 },
+
+  { label: 'Center left', x: 0, y: -25 },
+  { label: 'Center', x: 0, y: 0 },
+  { label: 'Center right', x: 0, y: 25 },
+
+  { label: 'Bottom left', x: -25, y: -25 },
+  { label: 'Bottom center', x: -25, y: 0 },
+  { label: 'Bottom right', x: -25, y: 25 },
+] as const;
+export type TiltConfigItem = (typeof TILT_CONFIG)[number];
+export type TiltLabel = TiltConfigItem['label'];

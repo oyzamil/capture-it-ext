@@ -1,7 +1,7 @@
 const Watermark = ({ className = '', glass }: { className: string; glass?: boolean }) => {
   const borderColor = glass ? 'border-white' : 'border-app-500';
   return (
-    <div className={cn('text-sm', className)}>
+    <div className={cn('text-sm select-none!', className)}>
       <div className="-my-1 inline-grid grid-cols-[.25rem_1fr_.25rem] grid-rows-[.25rem_1fr_.25rem] align-middle">
         <div className={cn('border-s border-t [grid-area:1/1/2/2] animate-spark', borderColor)}></div>
         <div className={cn('border-e border-t [grid-area:1/3/2/4] animate-spark-fast', borderColor)}></div>

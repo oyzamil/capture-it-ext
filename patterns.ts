@@ -558,4 +558,28 @@ export const BACKGROUND_PATTERNS = [
       maskImage: 'radial-gradient(ellipse 80% 80% at 100% 100%, #000 50%, transparent 90%)',
     },
   },
+  {
+    name: 'angles-stripes',
+    css: {
+      backgroundImage: `
+      linear-gradient(
+  110deg,
+  hsla(0,0%,100%,.4) 0%,
+  hsla(0,0%,100%,.4) 16%,
+
+  hsla(0,0%,100%,.2) 16%,
+  hsla(0,0%,100%,.2) 23%,
+
+  transparent 23%,
+  transparent 78%,
+
+  hsla(0,0%,100%,.2) 78%,
+  hsla(0,0%,100%,.2) 84%,
+
+  hsla(0,0%,100%,.4) 84%,
+  hsla(0,0%,100%,.5) 100%
+)
+    `,
+    },
+  },
 ];

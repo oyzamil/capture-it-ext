@@ -41,6 +41,7 @@ zoom: Zoom
 margin: Margin
 shadow: Shadow
 position: Position
+tilt: Tilt
 noise: Noise
 format: Format
 resolution: Resolution

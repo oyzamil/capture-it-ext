@@ -9,8 +9,6 @@ interface Sidebar {
   onReset: () => void;
 }
 
-const isEyeDropperSupported = typeof window !== 'undefined' && 'EyeDropper' in window;
-
 export default function Sidebar({ onReset }: Sidebar) {
   const { settings, saveSettings } = useSettings();
 
@@ -57,7 +55,7 @@ export default function Sidebar({ onReset }: Sidebar) {
           </FieldSet>
 
           <FieldSet label={i18n.t('gradientAngle')} orientation="horizontal">
-            <div className="hover-scale ">
+            <div className="hover-scale">
               {BACKGROUND_GRADIENT_ANGLES.map(({ direction, angle, disabled }, i) => {
                 return (
                   <Button
@@ -65,7 +63,7 @@ export default function Sidebar({ onReset }: Sidebar) {
                     size="small"
                     title={direction}
                     onClick={() => saveSettings({ backgroundAngle: `${angle}deg` })}
-                    className={cn('p-0 rounded-lg size-3', settings.backgroundAngle === `${angle}deg` ? 'bg-black text-white border-black' : '', disabled ? 'opacity-0 cursor-auto' : '')}
+                    className={cn('p-0 size-3', settings.backgroundAngle === `${angle}deg` ? 'bg-black text-white border-black' : 'bg-[#edebeb]', disabled ? 'opacity-0 cursor-auto' : '')}
                     disabled={disabled}
                   >
                     <div
@@ -73,7 +71,7 @@ export default function Sidebar({ onReset }: Sidebar) {
                         transform: `rotate(${angle - 90}deg)`,
                       }}
                     >
-                      <TriangleIcon className="size-3" />
+                      <TriangleIcon className="size-4" />
                     </div>
                   </Button>
                 );
@@ -194,25 +192,48 @@ export default function Sidebar({ onReset }: Sidebar) {
               }}
             />
           </FieldSet>
-          <FieldSet label={i18n.t('position')} orientation="horizontal" className="p-0 flex-1 gap-6">
-            <div className="hover-scale">
-              {POSITIONS_CONFIG.map((item, i) => {
-                return (
-                  <span
-                    key={i}
-                    title={item.label}
-                    className={cn(
-                      'w-2 h-2 rounded-full cursor-pointer bg-gray-300 dark:bg-neutral-900',
-                      settings.position === item.align ? 'bg-black dark:bg-white/60' : 'hover:bg-neutral-500 dark:hover:bg-neutral-800 '
-                    )}
-                    onClick={() => {
-                      saveSettings({ position: item.align, imageOrigin: item.origin });
-                    }}
-                  ></span>
-                );
-              })}
-            </div>
-          </FieldSet>
+          <div className="flex gap-9">
+            <FieldSet label={i18n.t('position')} orientation="horizontal" className="p-0 flex-1 gap-6">
+              <div className="hover-scale">
+                {POSITIONS_CONFIG.map((item, i) => {
+                  return (
+                    <span
+                      key={i}
+                      title={item.label}
+                      className={cn(
+                        'size-2.5 rounded-full cursor-pointer bg-[#edebeb] dark:bg-neutral-800',
+                        settings.position === item.align ? 'bg-black dark:bg-white' : 'hover:bg-gray-300 dark:hover:bg-neutral-900 '
+                      )}
+                      onClick={() => {
+                        saveSettings({ position: item.align, imageOrigin: item.origin });
+                      }}
+                    ></span>
+                  );
+                })}
+              </div>
+            </FieldSet>
+            <FieldSet label={i18n.t('tilt')}>
+              <div className="hover-scale">
+                {TILT_CONFIG.map((item, i) => {
+                  return (
+                    <span
+                      key={i}
+                      title={item.label}
+                      className={cn(
+                        'size-2.5 rounded-full cursor-pointer bg-[#edebeb] dark:bg-neutral-800',
+                        settings.tilt === item.label ? 'bg-black dark:bg-white' : 'hover:bg-gray-300 dark:hover:bg-neutral-900 '
+                      )}
+                      onClick={() => {
+                        saveSettings({
+                          tilt: item.label,
+                        });
+                      }}
+                    ></span>
+                  );
+                })}
+              </div>
+            </FieldSet>
+          </div>
           <FieldSet label={i18n.t('noise')} orientation="horizontal" className="p-0 h-12.5 flex-1 gap-5">
             <Switch
               checked={settings.noise}
@@ -286,7 +307,7 @@ export default function Sidebar({ onReset }: Sidebar) {
           <TriangleIcon />
         </div>
       )}
-      defaultActiveKey={['1', '2']}
+      defaultActiveKey={['1', '2', '3']}
       className={cn('rounded-none')}
     />
   );

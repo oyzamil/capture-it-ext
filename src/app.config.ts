@@ -1,4 +1,5 @@
 import { defineAppConfig } from 'wxt/utils/define-app-config';
+import { TiltLabel } from './utils/constants';
 
 export const config = {
   APP: {
@@ -26,9 +27,9 @@ export const config = {
     padding: 'p-20',
     position: 'place-items-center',
     imageOrigin: 'origin-center',
-    rounded: 'rounded-md',
-    roundedWrapper: 'rounded-md',
-    shadow: 'shadow-md',
+    rounded: 'rounded-xl',
+    roundedWrapper: 'rounded-xl',
+    shadow: 'shadow-xl',
     noise: false,
     windowBar: 'none',
     windowTheme: 'light' as 'light' | 'dark',
@@ -36,6 +37,7 @@ export const config = {
     exportFileFormat: 'png',
     scale: 1,
     captureMargin: 10,
+    tilt: 'Center' as TiltLabel,
     borderMask: {
       visible: false,
       windowRestricted: false,

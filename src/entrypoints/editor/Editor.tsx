@@ -1,6 +1,6 @@
 import { useAntd } from '@/providers/ThemeProvider';
-import { Button, Divider, Layout, Popconfirm, Select, Tooltip } from 'antd';
-import { toBlob, toPng } from 'html-to-image';
+import { Button, Divider, Layout, Popconfirm, Tooltip } from 'antd';
+import { toBlob, toJpeg, toPng } from 'html-to-image';
 
 import { CopyIcon, CropIcon, PasteIcon, ResetIcon, SaveIcon } from '@/icons';
 import { copyImageToClipboard } from '../content/utils';
@@ -95,10 +95,12 @@ const Editor: React.FC = () => {
       const width = wrapperRef.current.offsetWidth;
       const height = wrapperRef.current.offsetHeight;
 
-      const dataUrl = await toPng(wrapperRef.current, {
+      const exportFn = { jpeg: toJpeg }[settings.exportFileFormat] ?? toPng;
+
+      const dataUrl = await exportFn(wrapperRef.current, {
         pixelRatio: getScaleFector(settings.resolution),
-        width: width,
-        height: height,
+        width,
+        height,
       });
 
       await sendMessage(GENERAL_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`${settings.resolution}`, 'png') });
@@ -191,9 +193,7 @@ const Editor: React.FC = () => {
   }, [handleShortcuts]);
 
   useEffect(() => {
-    if (settings.base64Image) {
-      setBlob((prev) => (prev.src === settings.base64Image ? prev : { ...prev, src: settings.base64Image }));
-    }
+    setBlob((prev) => (prev.src === settings.base64Image ? prev : { ...prev, src: settings.base64Image }));
   }, [settings.base64Image]);
 
   useEffect(() => {
@@ -234,7 +234,7 @@ const Editor: React.FC = () => {
                 ref={(el) => {
                   wrapperRef.current = el;
                 }}
-                className={cn('relative flex-center overflow-hidden p-0 border border-gray-50', settings.roundedWrapper)}
+                className={cn('relative flex-center overflow-hidden p-0', settings.roundedWrapper)}
                 style={{
                   background: getGradientBackground(settings),
                 }}
@@ -257,14 +257,7 @@ const Editor: React.FC = () => {
                     settings.aspectRatio
                   )}
                 >
-                  <WindowBox
-                    wrapperRef={wrapperRef}
-                    settings={settings}
-                    className={cn(settings.shadow, settings.aspectRatio === 'aspect-21/9' ? 'h-full' : 'h-auto', settings.imageOrigin)}
-                    style={{
-                      scale: settings.scale,
-                    }}
-                  >
+                  <WindowBox wrapperRef={wrapperRef} settings={settings} className={cn(settings.shadow, settings.aspectRatio === 'aspect-21/9' ? 'h-full' : 'h-auto', settings.imageOrigin)}>
                     <img
                       src={blob?.src as any}
                       alt=""
@@ -290,7 +283,7 @@ const Editor: React.FC = () => {
           </Content>
           <Footer className="shadow sticky bottom-0 w-full bg-white dark:bg-neutral-900 p-2 rounded-md mr-4 flex-center gap-3 mb-4 flex-wrap">
             <FieldSet label={i18n.t('format')} orientation="horizontal" className="h-10 pr-1">
-              <Select
+              <MySelect
                 value={settings.exportFileFormat}
                 options={EXPORT_FILE_FORMATS.map((value) => ({
                   value,
@@ -302,7 +295,7 @@ const Editor: React.FC = () => {
               />
             </FieldSet>
             <FieldSet label={i18n.t('resolution')} orientation="horizontal" className="h-10">
-              <Select
+              <MySelect
                 value={settings.resolution}
                 options={RESOLUTIONS.map(({ label, value }) => ({
                   label,

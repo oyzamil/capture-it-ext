@@ -4,7 +4,7 @@ const EDITOR_PAGE_URL = browser.runtime.getURL('/editor.html');
 
 export default defineBackground(() => {
   try {
-    const { settings } = settingsHook.getState();
+    // const { settings } = settingsHook.getState();
     // console.log(settings);
 
     // settingsHook.subscribe(({ settings }) => {

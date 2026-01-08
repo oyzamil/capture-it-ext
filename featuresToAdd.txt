@@ -2,3 +2,4 @@ https://www.npmjs.com/package/selecto
 https://github.com/weijun-lab/region-screenshot-js
 https://www.npmjs.com/package/@webext-core/proxy-service
 https://github.com/tldraw/tldraw
+https://www.fineshopdesign.com/2025/12/blogger-feed-javascript-client.html

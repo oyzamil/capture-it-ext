@@ -2,7 +2,9 @@ import { settingsType } from '@/app.config';
 import Logo from '@/components/Logo';
 import { ArrowIcon, BarsIcon, ChevronIcon, CrossIcon, EditIcon, MaximizeIcon, PlusIcon, ResetIcon, StarIcon, SubtractIcon } from '@/icons';
 import LockIcon from '@/icons/LockIcon';
+import { TiltConfigItem, TiltLabel } from '@/utils/constants';
 import { ReactElement, ReactNode, RefObject } from 'react';
+import Tilt from 'react-parallax-tilt';
 
 type WindowBoxProps = {
   wrapperRef: RefObject<HTMLElement | null>;
@@ -217,11 +219,15 @@ const Bars: BarConfig[] = [
 // Create a Map for quick lookup
 const barsMap = new Map<string, (props: { children: ReactNode; rounded: string; theme: 'light' | 'dark' }) => ReactElement>(Bars.map((p) => [p.name, p.code]));
 
+function getTiltConfig(label: TiltLabel, fallback: TiltLabel = 'Center'): TiltConfigItem {
+  return TILT_CONFIG.find((i) => i.label === label) ?? TILT_CONFIG.find((i) => i.label === fallback)!;
+}
+
 const WindowBox = ({ wrapperRef, className = '', children, settings, style }: WindowBoxProps) => {
   const { size: windowSize, ref: windowBoxRef } = useElementSize();
   const { size: wrapperSize } = useElementSize(wrapperRef);
 
-  const { windowBar, windowTheme, borderMask, rounded, captureMargin } = settings;
+  const { windowBar, windowTheme, borderMask, rounded, captureMargin, tilt, scale } = settings;
   const { visible, masked, windowRestricted, borderType, color } = borderMask;
 
   const barComponent = barsMap.get(windowBar);
@@ -244,40 +250,52 @@ const WindowBox = ({ wrapperRef, className = '', children, settings, style }: Wi
 
   const verticalEdges = ['top', 'bottom'];
   const horizontalEdges = ['left', 'right'];
+
+  const tiltConfig = getTiltConfig(tilt);
   return (
     <>
-      {visible && (
-        <div className="absolute overflow-visible" style={{ height: windowSize?.height + captureMargin, width: windowSize?.width + captureMargin }}>
-          {[...verticalEdges, ...horizontalEdges].map((pos) => (
-            <div
-              key={pos}
-              className={cn('absolute')}
-              style={{
-                [`border${pos.charAt(0).toUpperCase() + pos.slice(1)}`]: `2px ${borderType} ${color}`,
-                background: 'transparent',
-                [pos]: -6,
+      <Tilt
+        tiltAngleXManual={tiltConfig.x}
+        tiltAngleYManual={tiltConfig.y}
+        style={{
+          scale,
+        }}
+        className="flex-center"
+      >
+        {visible && (
+          <div className="absolute overflow-visible" style={{ height: windowSize?.height + captureMargin, width: windowSize?.width + captureMargin }}>
+            {[...verticalEdges, ...horizontalEdges].map((pos) => (
+              <div
+                key={pos}
+                className={cn('absolute')}
+                style={{
+                  [`border${pos.charAt(0).toUpperCase() + pos.slice(1)}`]: `2px ${borderType} ${color}`,
+                  background: 'transparent',
+                  [pos]: -6,
 
-                ...(verticalEdges.includes(pos) && {
-                  width: finalBoxWidth,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  ...(masked && getMaskImages('right')),
-                }),
+                  ...(verticalEdges.includes(pos) && {
+                    width: finalBoxWidth,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    ...(masked && getMaskImages('right')),
+                  }),
 
-                ...(horizontalEdges.includes(pos) && {
-                  height: finalBoxHeight,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  ...(masked && getMaskImages('bottom')),
-                }),
-              }}
-            />
-          ))}
+                  ...(horizontalEdges.includes(pos) && {
+                    height: finalBoxHeight,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    ...(masked && getMaskImages('bottom')),
+                  }),
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        <div ref={windowBoxRef} className={cn(`bar-${windowBar} grid`, className)}>
+          {barComponent ? barComponent({ children, rounded, theme: windowTheme }) : children}
         </div>
-      )}
-      <div ref={windowBoxRef} className={cn(`bar-${windowBar} grid`, className)} style={style}>
-        {barComponent ? barComponent({ children, rounded, theme: windowTheme }) : children}
-      </div>
+      </Tilt>
     </>
   );
 };
