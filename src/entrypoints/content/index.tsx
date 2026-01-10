@@ -1,12 +1,12 @@
 import { createAndMountUI } from '@/providers/ThemeProvider';
 import Cropper from './components/Cropper';
 
-//  ['*://*.example.com/*'];
-// ['<all_urls>'];
+const dev = ['*://*.example.com/*', '*://*.softwebtuts.blogspot.com/*', '*://foundrlist.com/*', '*://*.shadcnstudio.com/*', '*://x.com/*'];
+const production = ['<all_urls>'];
 
 const anchor = 'body';
 export default defineContentScript({
-  matches: ['*://*.example.com/*', '*://*.softwebtuts.blogspot.com/*'],
+  matches: dev,
   cssInjectionMode: 'ui',
 
   async main(ctx) {

@@ -17,7 +17,13 @@ export default function Sidebar({ onReset }: Sidebar) {
       key: '1',
       label: <Title title={i18n.t('canvasOptions')} />,
       extra: (
-        <Popconfirm title={i18n.t('confirm')} description={i18n.t('resetMessage', ['settings'])} onConfirm={onReset} okText={i18n.t('yes')} cancelText={i18n.t('no')}>
+        <Popconfirm
+          title={i18n.t('confirm')}
+          description={i18n.t('resetMessage', ['settings'])}
+          onConfirm={onReset}
+          okText={i18n.t('yes')}
+          cancelText={i18n.t('no')}
+        >
           <Button type="text" icon={<ResetIcon className="size-4" />} size="small" danger>
             {i18n.t('reset')}
           </Button>
@@ -51,7 +57,10 @@ export default function Sidebar({ onReset }: Sidebar) {
           </FieldSet>
 
           <FieldSet label={i18n.t('background')} orientation="horizontal">
-            <MyColorPicker value={settings.canvasColors} onChange={(colors) => saveSettings({ canvasColors: colors })} />
+            <MyColorPicker
+              value={settings.canvasColors}
+              onChange={(colors) => saveSettings({ canvasColors: colors })}
+            />
           </FieldSet>
 
           <FieldSet label={i18n.t('gradientAngle')} orientation="horizontal">
@@ -63,7 +72,13 @@ export default function Sidebar({ onReset }: Sidebar) {
                     size="small"
                     title={direction}
                     onClick={() => saveSettings({ backgroundAngle: `${angle}deg` })}
-                    className={cn('p-0 size-3', settings.backgroundAngle === `${angle}deg` ? 'bg-black text-white border-black' : 'bg-[#edebeb]', disabled ? 'opacity-0 cursor-auto' : '')}
+                    className={cn(
+                      'size-3 p-0',
+                      settings.backgroundAngle === `${angle}deg`
+                        ? 'bg-theme-inverse text-theme-inverse'
+                        : 'bg-theme text-theme',
+                      disabled ? 'cursor-auto opacity-0' : ''
+                    )}
                     disabled={disabled}
                   >
                     <div
@@ -71,7 +86,7 @@ export default function Sidebar({ onReset }: Sidebar) {
                         transform: `rotate(${angle - 90}deg)`,
                       }}
                     >
-                      <TriangleIcon className="size-4" />
+                      <TriangleIcon className="size-3" />
                     </div>
                   </Button>
                 );
@@ -101,7 +116,12 @@ export default function Sidebar({ onReset }: Sidebar) {
             />
           </FieldSet>
           <FieldSet label={i18n.t('backgroundBlendMode')}>
-            <MySelect className="w-full" value={settings.patternBlendMode} options={BACKGROUND_BLEND_MODES} onChange={(patternBlendMode) => saveSettings({ patternBlendMode })} />
+            <MySelect
+              className="w-full"
+              value={settings.patternBlendMode}
+              options={BACKGROUND_BLEND_MODES}
+              onChange={(patternBlendMode) => saveSettings({ patternBlendMode })}
+            />
           </FieldSet>
           <FieldSet label={i18n.t('patternOpacity')}>
             <Slider
@@ -193,7 +213,11 @@ export default function Sidebar({ onReset }: Sidebar) {
             />
           </FieldSet>
           <div className="flex gap-9">
-            <FieldSet label={i18n.t('position')} orientation="horizontal" className="p-0 flex-1 gap-6">
+            <FieldSet
+              label={i18n.t('position')}
+              orientation="horizontal"
+              className="flex-1 gap-6 p-0"
+            >
               <div className="hover-scale">
                 {POSITIONS_CONFIG.map((item, i) => {
                   return (
@@ -201,8 +225,10 @@ export default function Sidebar({ onReset }: Sidebar) {
                       key={i}
                       title={item.label}
                       className={cn(
-                        'size-2.5 rounded-full cursor-pointer bg-[#edebeb] dark:bg-neutral-800',
-                        settings.position === item.align ? 'bg-black dark:bg-white' : 'hover:bg-gray-300 dark:hover:bg-neutral-900 '
+                        'size-2.5 cursor-pointer rounded-full bg-[#edebeb] dark:bg-neutral-800',
+                        settings.position === item.align
+                          ? 'bg-black dark:bg-white'
+                          : 'hover:bg-gray-300 dark:hover:bg-neutral-900'
                       )}
                       onClick={() => {
                         saveSettings({ position: item.align, imageOrigin: item.origin });
@@ -220,8 +246,10 @@ export default function Sidebar({ onReset }: Sidebar) {
                       key={i}
                       title={item.label}
                       className={cn(
-                        'size-2.5 rounded-full cursor-pointer bg-[#edebeb] dark:bg-neutral-800',
-                        settings.tilt === item.label ? 'bg-black dark:bg-white' : 'hover:bg-gray-300 dark:hover:bg-neutral-900 '
+                        'size-2.5 cursor-pointer rounded-full bg-[#edebeb] dark:bg-neutral-800',
+                        settings.tilt === item.label
+                          ? 'bg-black dark:bg-white'
+                          : 'hover:bg-gray-300 dark:hover:bg-neutral-900'
                       )}
                       onClick={() => {
                         saveSettings({
@@ -234,7 +262,11 @@ export default function Sidebar({ onReset }: Sidebar) {
               </div>
             </FieldSet>
           </div>
-          <FieldSet label={i18n.t('noise')} orientation="horizontal" className="p-0 h-12.5 flex-1 gap-5">
+          <FieldSet
+            label={i18n.t('noise')}
+            orientation="horizontal"
+            className="h-12.5 flex-1 gap-5 p-0"
+          >
             <Switch
               checked={settings.noise}
               onChange={(noise) => {
@@ -288,7 +320,11 @@ export default function Sidebar({ onReset }: Sidebar) {
             />
           </FieldSet>
           <FieldSet label={i18n.t('color')}>
-            <MyColorPicker value={settings.borderMask.color} mode={['single']} onChange={(color) => saveSettings({ borderMask: { color } })} />
+            <MyColorPicker
+              value={settings.borderMask.color}
+              mode={['single']}
+              onChange={(color) => saveSettings({ borderMask: { color } })}
+            />
           </FieldSet>
         </div>
       ),
@@ -308,7 +344,7 @@ export default function Sidebar({ onReset }: Sidebar) {
         </div>
       )}
       defaultActiveKey={['1', '2', '3']}
-      className={cn('rounded-none')}
+      className={cn('rounded-none border-x-0 bg-transparent')}
     />
   );
 }

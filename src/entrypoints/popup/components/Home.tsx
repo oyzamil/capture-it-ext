@@ -1,3 +1,4 @@
+import { settingsType } from '@/app.config';
 import { useAntd } from '@/providers/ThemeProvider';
 import { CAPTURE_TYPE } from '@/utils/messaging';
 import { Button, Divider, Form, Segmented, Slider, Space } from 'antd';
@@ -62,7 +63,11 @@ function Home() {
       const currentUrl = activeTab.url;
 
       const isInternalPage =
-        currentUrl.startsWith('chrome://') || currentUrl.startsWith('chrome-extension://') || currentUrl.startsWith('edge://') || currentUrl.includes('chromewebstore') || currentUrl === 'about:blank';
+        currentUrl.startsWith('chrome://') ||
+        currentUrl.startsWith('chrome-extension://') ||
+        currentUrl.startsWith('edge://') ||
+        currentUrl.includes('chromewebstore') ||
+        currentUrl === 'about:blank';
 
       if (isInternalPage) {
         await sendMessage(GENERAL_MESSAGES.NOTIFY, {
@@ -104,7 +109,9 @@ function Home() {
           label="Margin"
           name="captureMargin"
           className="w-full"
-          tooltip={'The spaceing that will be added to the selected element. Only effects in element select mode.'}
+          tooltip={
+            'The spaceing that will be added to the selected element. Only effects in element select mode.'
+          }
           labelCol={labelColumn}
         >
           <Slider
@@ -117,9 +124,17 @@ function Home() {
           />
         </Form.Item>
 
-        <Form.Item layout="vertical" className="bg-white dark:bg-black dark:border-black w-full border border-gray-200 border-t-0 rounded-md mt-2 -mb-3">
-          <Divider children={<span className="px-2 text-app-500 font-semibold dark:text-white">Capture</span>} className="-mt-3 mb-2" />
-          <div className="p-2 space-y-2">
+        <Form.Item
+          layout="vertical"
+          className="mt-2 -mb-3 w-full rounded-md border border-t-0 border-gray-200 bg-white dark:border-black dark:bg-black"
+        >
+          <Divider
+            children={
+              <span className="text-app-500 px-2 font-semibold dark:text-white">Capture</span>
+            }
+            className="-mt-3 mb-2"
+          />
+          <div className="space-y-2 p-2">
             <Space.Compact block>
               <Button
                 type="primary"
@@ -184,7 +199,11 @@ function Home() {
                     active: true,
                     currentWindow: true,
                   });
-                  await sendMessage(CAPTURE_MESSAGES.CAPTURE_FULL_TAB, { format: 'png', scaleFactor: window.devicePixelRatio, tabId: activeTab.id });
+                  await sendMessage(CAPTURE_MESSAGES.CAPTURE_FULL_TAB, {
+                    format: 'png',
+                    scaleFactor: window.devicePixelRatio,
+                    tabId: activeTab.id,
+                  });
                   window.close();
                 }}
                 disabled={notAllowed}

@@ -1,5 +1,14 @@
 {
-  "printWidth": 200,
+  "printWidth": 100,
   "singleQuote": true,
-  "trailingComma": "es5"
+  "trailingComma": "es5",
+  "tabWidth": 2,
+  "plugins": [
+    "@ianvs/prettier-plugin-sort-imports",
+    "prettier-plugin-classnames",
+    "prettier-plugin-tailwindcss",
+    "prettier-plugin-merge"
+  ],
+  "importOrder": ["^react$", "<THIRD_PARTY_MODULES>", "^[./]"],
+  "importOrderSeparation": true
 }

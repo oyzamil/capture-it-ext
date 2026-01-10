@@ -1,8 +1,7 @@
+import { CopyIcon, CropIcon, PasteIcon, ResetIcon, SaveIcon } from '@/icons';
 import { useAntd } from '@/providers/ThemeProvider';
 import { Button, Divider, Layout, Popconfirm, Tooltip } from 'antd';
 import { toBlob, toJpeg, toPng } from 'html-to-image';
-
-import { CopyIcon, CropIcon, PasteIcon, ResetIcon, SaveIcon } from '@/icons';
 import { copyImageToClipboard } from '../content/utils';
 import ImageCropModal, { CropModalRef } from './components/ImageCropModal';
 import PatternBox from './components/PatternBox';
@@ -103,7 +102,10 @@ const Editor: React.FC = () => {
         height,
       });
 
-      await sendMessage(GENERAL_MESSAGES.DOWNLOAD, { dataUrl, filename: validFilename(`${settings.resolution}`, 'png') });
+      await sendMessage(GENERAL_MESSAGES.DOWNLOAD, {
+        dataUrl,
+        filename: validFilename(`${settings.resolution}`, 'png'),
+      });
 
       showToast({ type: 'success', content: i18n.t('exportMessages.success'), duration: 2 });
     } catch (err) {
@@ -150,7 +152,9 @@ const Editor: React.FC = () => {
       reader.readAsDataURL(file);
     });
 
-  const onPaste = async (event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>) => {
+  const onPaste = async (
+    event: React.ClipboardEvent | React.DragEvent | React.ChangeEvent<HTMLInputElement>
+  ) => {
     setOptions({ importing: true });
     let files: File[] = [];
 
@@ -193,7 +197,9 @@ const Editor: React.FC = () => {
   }, [handleShortcuts]);
 
   useEffect(() => {
-    setBlob((prev) => (prev.src === settings.base64Image ? prev : { ...prev, src: settings.base64Image }));
+    setBlob((prev) =>
+      prev.src === settings.base64Image ? prev : { ...prev, src: settings.base64Image }
+    );
   }, [settings.base64Image]);
 
   useEffect(() => {
@@ -210,7 +216,7 @@ const Editor: React.FC = () => {
   return (
     <>
       <Layout
-        className="flex flex-row-reverse gap-4"
+        className="bg-theme flex flex-row-reverse"
         onPaste={onPaste}
         onDragOver={(e) => e.preventDefault()}
         onDragEnter={(e) => e.preventDefault()}
@@ -221,26 +227,30 @@ const Editor: React.FC = () => {
         }}
       >
         {/* Sidebar  */}
-        <Sider trigger={null} width={300} className="shadow bg-white overflow-auto h-screen sticky top-0 dark:bg-neutral-900 overflow-x-hidden">
-          <Watermark className="scale-130 text-2xl pt-6 pb-2 mb-4 flex-center gap-2 sticky top-0 z-50 bg-white dark:bg-neutral-900" />
+        <Sider
+          trigger={null}
+          width={300}
+          className="border-theme sticky top-0 h-screen overflow-auto overflow-x-hidden border-l bg-transparent"
+        >
+          <Watermark className="bg-theme flex-center sticky top-0 z-50 mb-4 scale-130 gap-2 pt-6 pb-2 text-2xl" />
           <Sidebar onReset={resetSettings} />
         </Sider>
         {/* Sidebar End  */}
 
-        <Layout className="flex gap-4 mt-4 ml-4">
-          <Content className="preview-area shadow bg-white p-4 rounded-md dark:bg-neutral-900 flex-center">
+        <Layout className="flex bg-transparent">
+          <Content className="preview-area flex-center">
             {blob?.src ? (
               <div
                 ref={(el) => {
                   wrapperRef.current = el;
                 }}
-                className={cn('relative flex-center overflow-hidden p-0', settings.roundedWrapper)}
+                className={cn('flex-center relative overflow-hidden p-0', settings.roundedWrapper)}
                 style={{
                   background: getGradientBackground(settings),
                 }}
               >
                 <PatternBox
-                  className={cn('w-full h-full absolute', settings.patternBlendMode)}
+                  className={cn('absolute h-full w-full', settings.patternBlendMode)}
                   name={cn(settings.bgPattern)}
                   noise={settings.noise}
                   style={{
@@ -249,7 +259,7 @@ const Editor: React.FC = () => {
                 />
                 <div
                   className={cn(
-                    'relative grid grid-rows-1 grid-cols-1',
+                    'relative grid grid-cols-1 grid-rows-1',
                     settings.position,
                     settings.padding,
                     settings.roundedWrapper,
@@ -257,11 +267,19 @@ const Editor: React.FC = () => {
                     settings.aspectRatio
                   )}
                 >
-                  <WindowBox wrapperRef={wrapperRef} settings={settings} className={cn(settings.shadow, settings.aspectRatio === 'aspect-21/9' ? 'h-full' : 'h-auto', settings.imageOrigin)}>
+                  <WindowBox
+                    wrapperRef={wrapperRef}
+                    settings={settings}
+                    className={cn(
+                      settings.shadow,
+                      settings.aspectRatio === 'aspect-21/9' ? 'h-full' : 'h-auto',
+                      settings.imageOrigin
+                    )}
+                  >
                     <img
                       src={blob?.src as any}
                       alt=""
-                      className={cn('w-full h-full object-contain')}
+                      className={cn('h-full w-full object-contain')}
                       onLoad={(e) => {
                         const target = e.target as HTMLImageElement;
                         setBlob({
@@ -273,15 +291,15 @@ const Editor: React.FC = () => {
                     />
                   </WindowBox>
                 </div>
-                <div className="absolute bottom-6 w-full flex justify-center items-center">
-                  <Watermark className="pl-1 pr-2 py-2" glass />
+                <div className="absolute bottom-6 flex w-full items-center justify-center">
+                  <Watermark className="py-2 pr-2 pl-1" glass />
                 </div>
               </div>
             ) : (
               <NoImage onPaste={onPaste} />
             )}
           </Content>
-          <Footer className="shadow sticky bottom-0 w-full bg-white dark:bg-neutral-900 p-2 rounded-md mr-4 flex-center gap-3 mb-4 flex-wrap">
+          <Footer className="flex-center border-theme sticky bottom-0 w-full flex-wrap gap-3 border-t bg-transparent">
             <FieldSet label={i18n.t('format')} orientation="horizontal" className="h-10 pr-1">
               <MySelect
                 value={settings.exportFileFormat}
@@ -312,7 +330,13 @@ const Editor: React.FC = () => {
             </Button>
 
             <RainbowBorder backgroundColor="black">
-              <Button className="border-none" color="default" variant="solid" onClick={handleImageSave} loading={options.saving}>
+              <Button
+                className="border-none"
+                color="default"
+                variant="solid"
+                onClick={handleImageSave}
+                loading={options.saving}
+              >
                 <IconLabel icon={<SaveIcon />} label={i18n.t('exportImage')} />
               </Button>
             </RainbowBorder>
@@ -370,7 +394,10 @@ export default Editor;
 const NoImage = ({ onPaste }: { onPaste: any }) => {
   return (
     <div className="text-xl">
-      <label className="flex-center flex-col select-none max-w-[550px] rounded-md p-10 text-center hover:opacity-50" htmlFor="imagesUpload">
+      <label
+        className="flex-center max-w-[550px] flex-col rounded-md p-10 text-center select-none hover:opacity-50"
+        htmlFor="imagesUpload"
+      >
         <input
           className="hidden"
           id="imagesUpload"
@@ -380,7 +407,7 @@ const NoImage = ({ onPaste }: { onPaste: any }) => {
             onPaste(e);
           }}
         />
-        <PasteIcon className="size-12 mb-2" />
+        <PasteIcon className="mb-2 size-12" />
         <p>Paste your screenshot(Cmd/Ctrl+V)</p>
         <p>or drag and drop your screenshot here</p>
         <p>or click here to add one</p>

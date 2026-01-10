@@ -8,7 +8,7 @@ export default function Body({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header />
-      <main className="flex-1 overflow-y-auto p-2 h-full">{children}</main>
+      <main className="h-full flex-1 overflow-y-auto p-2">{children}</main>
       <Footer />
       <LicenseModal />
     </>
@@ -25,7 +25,11 @@ export function Header() {
     {
       key: 'activation',
       label: settings?.isLicensed ? 'Activated' : 'Activate',
-      icon: settings?.isLicensed ? <StarIcon className="size-4 mr-2" /> : <KeyIcon className="size-4  mr-2" />,
+      icon: settings?.isLicensed ? (
+        <StarIcon className="mr-2 size-4" />
+      ) : (
+        <KeyIcon className="mr-2 size-4" />
+      ),
       onClick: async () => {
         saveSettings({
           licenseModalVisible: true,
@@ -38,24 +42,24 @@ export function Header() {
       onClick: () => {
         sendMessage(GENERAL_MESSAGES.OPEN_TAB, { url: 'https://wa.me/923038088869' });
       },
-      icon: <ChatIcon className="size-4 mr-2" />,
+      icon: <ChatIcon className="mr-2 size-4" />,
     },
   ];
 
   return (
     <>
       <header className={'bg-app-500 z-51 flex w-full items-center px-2 py-3 dark:bg-black'}>
-        <Watermark className="text-2xl w-full" />
+        <Watermark className="w-full text-2xl" />
         <div className="flex items-center justify-center gap-1">
           <Space.Compact block>
             {showBackButton && (
               <Button title="Back" type="text" onClick={() => navigate(-1)} className="px-1">
-                <ArrowIcon className="size-6 text-white rotate-270" />
+                <ArrowIcon className="size-6 rotate-270 text-white" />
               </Button>
             )}
             <Dropdown menu={{ items }} placement="bottomRight" trigger={['click']}>
               <Button type="text" className="px-1">
-                <IconLabel icon={<BarsIcon className=" text-white size-5" />} />
+                <IconLabel icon={<BarsIcon className="size-5 text-white" />} />
               </Button>
             </Dropdown>
           </Space.Compact>
@@ -68,7 +72,7 @@ export function Header() {
 export function Footer() {
   const { Text } = Typography;
   return (
-    <Text title="Version" className="text-xs mb-1" keyboard>
+    <Text title="Version" className="text-xs" keyboard>
       v{browser.runtime.getManifest().version}
     </Text>
   );
