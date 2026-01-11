@@ -5,7 +5,7 @@ type Point = {
   y: number;
 };
 
-export function useCursor(throttleMs = 16) {
+export function useCursor(throttleMs = 0) {
   const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);

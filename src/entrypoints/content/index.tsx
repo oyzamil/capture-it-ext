@@ -11,12 +11,18 @@ const dev = [
 const production = ['<all_urls>'];
 
 const anchor = 'body';
+const position = 'overlay';
 export default defineContentScript({
   matches: dev,
   cssInjectionMode: 'ui',
 
   async main(ctx) {
     let mountedElem: any = null;
+    mountedElem = await createAndMountUI(ctx, {
+      anchor,
+      position,
+      children: <Cropper mode="custom" />,
+    });
 
     // Capture Element
     onMessage(CAPTURE_MESSAGES.CAPTURE_DIV, async () => {
@@ -24,6 +30,7 @@ export default defineContentScript({
 
       mountedElem = await createAndMountUI(ctx, {
         anchor,
+        position,
         children: <Cropper mode="element" />,
       });
     });

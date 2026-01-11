@@ -166,7 +166,7 @@ const ChromeTabNew = ({
 
         <div
           className={cn(
-            `flex h-full w-full max-w-[500px] items-center justify-between gap-x-2 rounded-md px-2.5 py-1.5`,
+            'flex h-full items-center justify-between gap-x-2 rounded-md px-2.5 py-1.5',
             light ? 'border border-gray-200 bg-white' : 'border border-gray-600 bg-gray-900'
           )}
         >

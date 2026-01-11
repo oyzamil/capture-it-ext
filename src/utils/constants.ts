@@ -96,7 +96,19 @@ export const GRADIENT_PRESETS = [
   {
     label: 'Default Colors',
     defaultOpen: true,
-    colors: ['#ffffff', '#edebeb', useAppConfig().APP.color, '#F44336', '#1E88E5', '#FDD835', '#7a00cc', '#bfeb30', '#34302c', '#41199c', '#df21a5'],
+    colors: [
+      '#ffffff',
+      '#edebeb',
+      useAppConfig().APP.color,
+      '#F44336',
+      '#1E88E5',
+      '#FDD835',
+      '#7a00cc',
+      '#bfeb30',
+      '#34302c',
+      '#41199c',
+      '#df21a5',
+    ],
   },
 ];
 export const ASPECT_CONFIG = {
@@ -118,27 +130,59 @@ export const ASPECT_CONFIG = {
   },
   'aspect-[1280/800]': {
     label: 'Extension Thumbnail',
-    className: 'w-[1024px] h-[640px]',
+    className: 'w-[1280px] h-[800px]',
   },
   'aspect-[440/280]': {
     label: 'Chrome Promo Tile',
-    className: 'w-[1006px] h-[640px]',
+    className: 'w-[440px] h-[280px]',
   },
-  'aspect-[4/5]': {
-    label: '4:5 — Instagram Portrait',
-    className: 'w-[512px] h-[640px]',
+  'aspect-[920/860]': {
+    label: 'Chrome Large Promo Tile',
+    className: 'w-[920px] h-[860px]',
   },
-  'aspect-[4/3]': {
-    label: '4:3 — Classic',
-    className: 'w-[853px] h-[640px]',
+  'aspect-[1400/560]': {
+    label: 'Chrome Marquee',
+    className: 'w-[1400px] h-[560px]',
+  },
+  'aspect-[2/3]': {
+    label: '2:3 — Pinterest Pin',
+    className: 'w-[426px] h-[640px]',
   },
   'aspect-[3/2]': {
     label: '3:2 — Photography',
     className: 'w-[960px] h-[640px]',
   },
-  'aspect-21/9': {
+  'aspect-[4/3]': {
+    label: '4:3 — Classic',
+    className: 'w-[853px] h-[640px]',
+  },
+  'aspect-[4/5]': {
+    label: '4:5 — Instagram Portrait',
+    className: 'w-[512px] h-[640px]',
+  },
+  'aspect-[21/9]': {
     label: '21:9 — Ultrawide',
-    className: 'max-w-[1493px] max-h-[640px] w-full h-full',
+    className: 'w-[1493px] h-[640px]',
+  },
+  /* ---------- Covers & Banners ---------- */
+  'aspect-[1.91/1]': {
+    label: '1.91:1 — Universal Cover / Link Preview',
+    className: 'w-[1222px] h-[640px]',
+  },
+
+  'aspect-[3/1]': {
+    label: '3:1 — X (Twitter) / LinkedIn Cover',
+    className: 'w-[1920px] h-[640px]',
+  },
+
+  'aspect-[4/1]': {
+    label: '4:1 — Facebook Cover',
+    className: 'w-[2560px] h-[640px]',
+  },
+
+  'aspect-[6.2/1]': {
+    label: '6.2:1 — YouTube Channel Art',
+    className: 'w-[3968px] h-[640px]',
   },
 };
 export const ROUNDED_SIZES = [
@@ -211,9 +255,21 @@ export const POSITIONS_CONFIG = [
   { label: 'Center right', align: 'place-items-center justify-items-end', origin: 'origin-right' },
 
   // Bottom
-  { label: 'Bottom left', align: 'place-items-end justify-items-start', origin: 'origin-bottom-left' },
-  { label: 'Bottom center', align: 'place-items-end justify-items-center', origin: 'origin-bottom' },
-  { label: 'Bottom right', align: 'place-items-end justify-items-end', origin: 'origin-bottom-right' },
+  {
+    label: 'Bottom left',
+    align: 'place-items-end justify-items-start',
+    origin: 'origin-bottom-left',
+  },
+  {
+    label: 'Bottom center',
+    align: 'place-items-end justify-items-center',
+    origin: 'origin-bottom',
+  },
+  {
+    label: 'Bottom right',
+    align: 'place-items-end justify-items-end',
+    origin: 'origin-bottom-right',
+  },
 ];
 export const TILT_CONFIG = [
   { label: 'Top left', x: 25, y: -25 },

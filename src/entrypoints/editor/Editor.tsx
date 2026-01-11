@@ -272,7 +272,7 @@ const Editor: React.FC = () => {
                     settings={settings}
                     className={cn(
                       settings.shadow,
-                      settings.aspectRatio === 'aspect-21/9' ? 'h-full' : 'h-auto',
+                      settings.aspectRatio === 'aspect-[21/9]' ? 'h-full' : 'h-auto',
                       settings.imageOrigin
                     )}
                   >
