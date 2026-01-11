@@ -1,12 +1,19 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { TriangleIcon } from '@/icons';
 import { Select, SelectProps } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
-import React, { useEffect, useRef, useState } from 'react';
 
 interface MySelectProps<T = any> extends SelectProps<T> {
   enableKeyboardNavigation?: boolean;
 }
 
-const MySelect = <T extends any = any>({ value, onChange, options = [], enableKeyboardNavigation = true, ...restProps }: MySelectProps<T>) => {
+const MySelect = <T extends any = any>({
+  value,
+  onChange,
+  options = [],
+  enableKeyboardNavigation = true,
+  ...restProps
+}: MySelectProps<T>) => {
   const [internalValue, setInternalValue] = useState<T | null | undefined>(value);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const selectRef = useRef<any>(null);
@@ -76,9 +83,12 @@ const MySelect = <T extends any = any>({ value, onChange, options = [], enableKe
     onChange?.(val, option);
   };
 
+  const { className: restClassName, ...rest } = restProps;
+
   return (
     <Select<T>
       size="small"
+      className={cn('bg-app-100 border-app-100 dark:border-black dark:bg-black', restClassName)}
       popupMatchSelectWidth={false}
       ref={selectRef}
       value={internalValue}
@@ -86,7 +96,8 @@ const MySelect = <T extends any = any>({ value, onChange, options = [], enableKe
       onOpenChange={setIsOpen}
       onKeyDown={handleKeyDown}
       options={options}
-      {...restProps}
+      suffixIcon={<TriangleIcon className="rotate-90 dark:text-white" />}
+      {...rest}
     />
   );
 };

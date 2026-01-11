@@ -8,7 +8,7 @@ import { WINDOW_BARS } from './WindowBox';
 interface Sidebar {
   onReset: () => void;
 }
-
+const gridClass = 'grid grid-cols-2 gap-4 divide-x divide-theme';
 export default function Sidebar({ onReset }: Sidebar) {
   const { settings, saveSettings } = useSettings();
 
@@ -30,7 +30,7 @@ export default function Sidebar({ onReset }: Sidebar) {
         </Popconfirm>
       ),
       children: (
-        <div className="space-y-2">
+        <div className="divide-theme divide-y">
           <FieldSet label={i18n.t('aspectRatio')}>
             <MySelect
               className="w-full"
@@ -56,14 +56,14 @@ export default function Sidebar({ onReset }: Sidebar) {
             />
           </FieldSet>
 
-          <FieldSet label={i18n.t('background')} orientation="horizontal">
+          <FieldSet label={i18n.t('background')} orientation="horizontal" className="py-0">
             <MyColorPicker
               value={settings.canvasColors}
               onChange={(colors) => saveSettings({ canvasColors: colors })}
             />
           </FieldSet>
 
-          <FieldSet label={i18n.t('gradientAngle')} orientation="horizontal">
+          <FieldSet label={i18n.t('gradientAngle')} orientation="horizontal" className="py-0">
             <div className="hover-scale">
               {BACKGROUND_GRADIENT_ANGLES.map(({ direction, angle, disabled }, i) => {
                 return (
@@ -115,6 +115,7 @@ export default function Sidebar({ onReset }: Sidebar) {
               }}
             />
           </FieldSet>
+
           <FieldSet label={i18n.t('backgroundBlendMode')}>
             <MySelect
               className="w-full"
@@ -123,7 +124,8 @@ export default function Sidebar({ onReset }: Sidebar) {
               onChange={(patternBlendMode) => saveSettings({ patternBlendMode })}
             />
           </FieldSet>
-          <FieldSet label={i18n.t('patternOpacity')}>
+
+          <FieldSet label={i18n.t('patternOpacity')} className="py-0.5">
             <Slider
               className="w-full"
               min={0}
@@ -131,7 +133,7 @@ export default function Sidebar({ onReset }: Sidebar) {
               step={0.05}
               defaultValue={settings.bgOpacity}
               keyboard
-              onChangeComplete={(bgOpacity) => {
+              onChange={(bgOpacity) => {
                 saveSettings({ bgOpacity });
               }}
             />
@@ -143,7 +145,7 @@ export default function Sidebar({ onReset }: Sidebar) {
       key: '2',
       label: <Title title={i18n.t('screenshotOptions')} />,
       children: (
-        <div className="space-y-2">
+        <div className="divide-theme divide-y">
           <FieldSet label={i18n.t('windowBar')}>
             <MySelect
               className="w-full"
@@ -162,20 +164,6 @@ export default function Sidebar({ onReset }: Sidebar) {
               options={WINDOW_THEMES}
               onChange={(windowTheme) => {
                 saveSettings({ windowTheme });
-              }}
-            />
-          </FieldSet>
-
-          <FieldSet label={i18n.t('zoom')}>
-            <Slider
-              className="w-full"
-              min={0}
-              max={2}
-              step={0.05}
-              defaultValue={settings.scale}
-              keyboard
-              onChangeComplete={(scale) => {
-                saveSettings({ scale });
               }}
             />
           </FieldSet>
@@ -212,12 +200,20 @@ export default function Sidebar({ onReset }: Sidebar) {
               }}
             />
           </FieldSet>
-          <div className="flex gap-9">
-            <FieldSet
-              label={i18n.t('position')}
-              orientation="horizontal"
-              className="flex-1 gap-6 p-0"
-            >
+          <FieldSet label={i18n.t('zoom')} className="py-0.5">
+            <Slider
+              className="w-full"
+              min={0}
+              max={2}
+              step={0.05}
+              defaultValue={settings.scale}
+              onChange={(scale) => {
+                saveSettings({ scale });
+              }}
+            />
+          </FieldSet>
+          <div className={gridClass}>
+            <FieldSet label={i18n.t('position')} orientation="horizontal" className="py-0 pr-0">
               <div className="hover-scale">
                 {POSITIONS_CONFIG.map((item, i) => {
                   return (
@@ -238,7 +234,7 @@ export default function Sidebar({ onReset }: Sidebar) {
                 })}
               </div>
             </FieldSet>
-            <FieldSet label={i18n.t('tilt')}>
+            <FieldSet label={i18n.t('tilt')} className="py-0">
               <div className="hover-scale">
                 {TILT_CONFIG.map((item, i) => {
                   return (
@@ -262,11 +258,7 @@ export default function Sidebar({ onReset }: Sidebar) {
               </div>
             </FieldSet>
           </div>
-          <FieldSet
-            label={i18n.t('noise')}
-            orientation="horizontal"
-            className="h-12.5 flex-1 gap-5 p-0"
-          >
+          <FieldSet label={i18n.t('noise')} orientation="horizontal">
             <Switch
               checked={settings.noise}
               onChange={(noise) => {
@@ -281,31 +273,43 @@ export default function Sidebar({ onReset }: Sidebar) {
       key: '3',
       label: <Title title={i18n.t('windowBorder')} />,
       children: (
-        <div className="space-y-2">
-          <FieldSet label={i18n.t('visible')}>
-            <Switch
-              checked={settings.borderMask.visible}
-              onChange={(visible) => {
-                saveSettings({ borderMask: { visible } });
-              }}
-            />
-          </FieldSet>
-          <FieldSet label={i18n.t('masked')}>
-            <Switch
-              checked={settings.borderMask.masked}
-              onChange={(masked) => {
-                saveSettings({ borderMask: { masked } });
-              }}
-            />
-          </FieldSet>
-          <FieldSet label={i18n.t('restricted')}>
-            <Switch
-              checked={settings.borderMask.windowRestricted}
-              onChange={(windowRestricted) => {
-                saveSettings({ borderMask: { windowRestricted } });
-              }}
-            />
-          </FieldSet>
+        <div className="divide-theme divide-y">
+          <div className={gridClass}>
+            <FieldSet label={i18n.t('visible')}>
+              <Switch
+                checked={settings.borderMask.visible}
+                onChange={(visible) => {
+                  saveSettings({ borderMask: { visible } });
+                }}
+              />
+            </FieldSet>
+            <FieldSet label={i18n.t('masked')}>
+              <Switch
+                checked={settings.borderMask.masked}
+                onChange={(masked) => {
+                  saveSettings({ borderMask: { masked } });
+                }}
+              />
+            </FieldSet>
+          </div>
+          <div className={gridClass}>
+            <FieldSet label={i18n.t('restricted')} className="py-0">
+              <Switch
+                checked={settings.borderMask.windowRestricted}
+                onChange={(windowRestricted) => {
+                  saveSettings({ borderMask: { windowRestricted } });
+                }}
+              />
+            </FieldSet>
+            <FieldSet label={i18n.t('color')} className="py-0">
+              <MyColorPicker
+                value={settings.borderMask.color}
+                mode={['single']}
+                onChange={(color) => saveSettings({ borderMask: { color } })}
+              />
+            </FieldSet>
+          </div>
+
           <FieldSet label={i18n.t('borderType')}>
             <MySelect
               className="w-full"
@@ -319,11 +323,17 @@ export default function Sidebar({ onReset }: Sidebar) {
               }}
             />
           </FieldSet>
-          <FieldSet label={i18n.t('color')}>
-            <MyColorPicker
-              value={settings.borderMask.color}
-              mode={['single']}
-              onChange={(color) => saveSettings({ borderMask: { color } })}
+
+          <FieldSet label={i18n.t('inset')} className="py-0.5">
+            <Slider
+              className="w-full"
+              min={0}
+              max={100}
+              defaultValue={settings.borderMask.inset}
+              keyboard
+              onChange={(inset) => {
+                saveSettings({ borderMask: { inset } });
+              }}
             />
           </FieldSet>
         </div>
@@ -344,7 +354,12 @@ export default function Sidebar({ onReset }: Sidebar) {
         </div>
       )}
       defaultActiveKey={['1', '2', '3']}
-      className={cn('rounded-none border-x-0 bg-transparent')}
+      className={cn('rounded-none border-x-0 dark:bg-black')}
+      styles={{
+        body: {
+          padding: 0,
+        },
+      }}
     />
   );
 }

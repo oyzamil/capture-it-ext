@@ -238,7 +238,7 @@ const Editor: React.FC = () => {
         {/* Sidebar End  */}
 
         <Layout className="flex bg-transparent">
-          <Content className="preview-area flex-center">
+          <Content className="preview-area flex-center bg-dotted-pattern">
             {blob?.src ? (
               <div
                 ref={(el) => {
@@ -299,7 +299,7 @@ const Editor: React.FC = () => {
               <NoImage onPaste={onPaste} />
             )}
           </Content>
-          <Footer className="flex-center border-theme sticky bottom-0 w-full flex-wrap gap-3 border-t bg-transparent">
+          <Footer className="bg-grid-pattern flex-center border-theme bg-theme sticky bottom-0 w-full flex-wrap gap-3 border-t">
             <FieldSet label={i18n.t('format')} orientation="horizontal" className="h-10 pr-1">
               <MySelect
                 value={settings.exportFileFormat}

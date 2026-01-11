@@ -1,7 +1,13 @@
 import { createAndMountUI } from '@/providers/ThemeProvider';
 import Cropper from './components/Cropper';
 
-const dev = ['*://*.example.com/*', '*://*.softwebtuts.blogspot.com/*', '*://foundrlist.com/*', '*://*.shadcnstudio.com/*', '*://x.com/*'];
+const dev = [
+  '*://*.example.com/*',
+  '*://*.softwebtuts.blogspot.com/*',
+  '*://foundrlist.com/*',
+  '*://*.shadcnstudio.com/*',
+  '*://*.x.com/*',
+];
 const production = ['<all_urls>'];
 
 const anchor = 'body';

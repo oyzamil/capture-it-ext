@@ -44,6 +44,7 @@ export const config = {
       masked: true,
       color: ['#edebeb'],
       borderType: 'dashed',
+      inset: 10,
     },
   },
   ROUTES: {

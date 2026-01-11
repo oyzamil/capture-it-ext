@@ -23,7 +23,10 @@ export const ensureFontsReady = async (timeoutMs = 1000) => {
   setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    await Promise.race([document.fonts.ready, new Promise((_, reject) => controller.signal.addEventListener('abort', reject))]);
+    await Promise.race([
+      document.fonts.ready,
+      new Promise((_, reject) => controller.signal.addEventListener('abort', reject)),
+    ]);
   } catch {}
 };
 
@@ -93,7 +96,7 @@ export async function sketchImage(
 ): Promise<CanvasResult> {
   const { padding = { top: 0, right: 0, bottom: 0, left: 0 } } = options;
 
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, 4);
 
   const pad = {
     left: Math.floor(padding.left * dpr),
@@ -238,7 +241,13 @@ function calculateTiles(
 /**
  * Capture element using multiple screenshots stitched together
  */
-async function captureStitched(selection: ElementSelection, elementRect: Rect, viewportSize: ViewportSize, dpr: number, padding: Padding): Promise<HTMLCanvasElement> {
+async function captureStitched(
+  selection: ElementSelection,
+  elementRect: Rect,
+  viewportSize: ViewportSize,
+  dpr: number,
+  padding: Padding
+): Promise<HTMLCanvasElement> {
   const { tiles, captureRect } = calculateTiles(elementRect, viewportSize);
 
   const originalScrollX = window.scrollX;
@@ -272,9 +281,19 @@ async function captureStitched(selection: ElementSelection, elementRect: Rect, v
       const cropX = Math.round((overlapLeft - window.scrollX) * dpr);
       const cropY = Math.round((overlapTop - window.scrollY) * dpr);
 
-      const cropWidth = Math.round(Math.min(window.innerWidth - (overlapLeft - window.scrollX), captureRect.x + captureRect.width - overlapLeft) * dpr);
+      const cropWidth = Math.round(
+        Math.min(
+          window.innerWidth - (overlapLeft - window.scrollX),
+          captureRect.x + captureRect.width - overlapLeft
+        ) * dpr
+      );
 
-      const cropHeight = Math.round(Math.min(window.innerHeight - (overlapTop - window.scrollY), captureRect.y + captureRect.height - overlapTop) * dpr);
+      const cropHeight = Math.round(
+        Math.min(
+          window.innerHeight - (overlapTop - window.scrollY),
+          captureRect.y + captureRect.height - overlapTop
+        ) * dpr
+      );
 
       capturedTiles.push({
         image,
@@ -303,25 +322,39 @@ async function captureStitched(selection: ElementSelection, elementRect: Rect, v
   canvas.width = stitchedWidth + padding.left + padding.right;
   canvas.height = stitchedHeight + padding.top + padding.bottom;
 
-  const context = canvas.getContext('2d');
-  if (!context) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
     throw new Error('Failed to get 2D canvas context');
   }
-
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   for (const tile of capturedTiles) {
-    context.drawImage(tile.image, tile.cropX, tile.cropY, tile.cropWidth, tile.cropHeight, padding.left + tile.destX, padding.top + tile.destY, tile.cropWidth, tile.cropHeight);
+    ctx.drawImage(
+      tile.image,
+      tile.cropX,
+      tile.cropY,
+      tile.cropWidth,
+      tile.cropHeight,
+      padding.left + tile.destX,
+      padding.top + tile.destY,
+      tile.cropWidth,
+      tile.cropHeight
+    );
   }
 
-  applyPaddingBackground(selection.element, context, canvas, padding, stitchedWidth, stitchedHeight);
+  applyPaddingBackground(selection.element, ctx, canvas, padding, stitchedWidth, stitchedHeight);
 
   return canvas;
 }
 /**
  * Capture element in single screenshot
  */
-async function captureSingle(selection: ElementSelection, dpr: number, pad: Padding): Promise<HTMLCanvasElement> {
+async function captureSingle(
+  selection: ElementSelection,
+  dpr: number,
+  pad: Padding
+): Promise<HTMLCanvasElement> {
   selection?.element?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   let currentRect: Rect;
   if (selection.element) {
@@ -358,7 +391,7 @@ async function captureSingle(selection: ElementSelection, dpr: number, pad: Padd
   if (!ctx) {
     throw new Error('Failed to get 2D canvas context');
   }
-
+  ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(image, sx, sy, sWidth, sHeight, pad.left, pad.top, sWidth, sHeight);
 
@@ -370,7 +403,14 @@ async function captureSingle(selection: ElementSelection, dpr: number, pad: Padd
 /**
  * Add padding around the content and fill it with a background color
  */
-function applyPaddingBackground(element: HTMLElement | null, ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, padding: Padding, contentWidth: number, contentHeight: number): void {
+function applyPaddingBackground(
+  element: HTMLElement | null,
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  padding: Padding,
+  contentWidth: number,
+  contentHeight: number
+): void {
   const defaultColor = '#ffffff';
   const backgroundColor = element ? getEffectiveBackground(element, defaultColor) : defaultColor;
   // Top padding

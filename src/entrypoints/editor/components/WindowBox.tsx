@@ -1,9 +1,20 @@
+import { ReactElement, ReactNode, RefObject } from 'react';
 import { settingsType } from '@/app.config';
 import Logo from '@/components/Logo';
-import { ArrowIcon, BarsIcon, ChevronIcon, CrossIcon, EditIcon, MaximizeIcon, PlusIcon, ResetIcon, StarIcon, SubtractIcon } from '@/icons';
+import {
+  ArrowIcon,
+  BarsIcon,
+  ChevronIcon,
+  CrossIcon,
+  EditIcon,
+  MaximizeIcon,
+  PlusIcon,
+  ResetIcon,
+  StarIcon,
+  SubtractIcon,
+} from '@/icons';
 import LockIcon from '@/icons/LockIcon';
 import { TiltConfigItem, TiltLabel } from '@/utils/constants';
-import { ReactElement, ReactNode, RefObject } from 'react';
 import Tilt from 'react-parallax-tilt';
 
 type WindowBoxProps = {
@@ -19,26 +30,52 @@ interface BarConfig {
   code: (props: { children: ReactNode; rounded: string; theme: 'light' | 'dark' }) => ReactElement;
 }
 
-const ChromeTab = ({ children, rounded, theme, device }: { children: ReactNode; rounded: string; theme: 'light' | 'dark'; device: 'mac' | 'windows' }) => {
+const ChromeTab = ({
+  children,
+  rounded,
+  theme,
+  device,
+}: {
+  children: ReactNode;
+  rounded: string;
+  theme: 'light' | 'dark';
+  device: 'mac' | 'windows';
+}) => {
   const light = theme === 'light';
   return (
     <div className={cn(rounded, 'overflow-hidden text-gray-400')}>
-      <section className={cn('flex items-center justify-between w-full pt-1 px-3', light ? 'bg-gray-100' : 'bg-gray-800')}>
+      <section
+        className={cn(
+          'flex w-full items-center justify-between px-3 pt-1',
+          light ? 'bg-gray-100' : 'bg-gray-800'
+        )}
+      >
         <div className="flex items-center gap-1">
           {device === 'mac' ? (
             <div className="flex items-center gap-2 p-3 pl-0">
               {['bg-red-400', 'bg-yellow-300', 'bg-green-500'].map((color, i) => (
-                <div key={i} className={cn('w-3 h-3 rounded-full transition-all duration-150 cursor-pointer', color)}></div>
+                <div
+                  key={i}
+                  className={cn(
+                    'h-3 w-3 cursor-pointer rounded-full transition-all duration-150',
+                    color
+                  )}
+                ></div>
               ))}
             </div>
           ) : (
-            <div className={cn('p-2.5 rounded-t-lg', light ? 'bg-white' : 'bg-black')}>
+            <div className={cn('rounded-t-lg p-2.5', light ? 'bg-white' : 'bg-black')}>
               <BarsIcon />
             </div>
           )}
 
           {/* <!-- Active Tab --> */}
-          <div className={cn('flex items-center rounded-t-lg gap-2 py-2 px-3', light ? 'bg-white' : 'bg-black')}>
+          <div
+            className={cn(
+              'flex items-center gap-2 rounded-t-lg px-3 py-2',
+              light ? 'bg-white' : 'bg-black'
+            )}
+          >
             <Logo size="size-5" />
             <span className="mr-3 text-sm">{i18n.t('appName')}</span>
             <CrossIcon className="size-3" />
@@ -58,19 +95,29 @@ const ChromeTab = ({ children, rounded, theme, device }: { children: ReactNode; 
       </section>
 
       {/* <!-- URL Section --> */}
-      <section className={cn('flex items-center gap-3 w-full px-3 py-1.25', light ? 'bg-white' : 'bg-black')}>
+      <section
+        className={cn(
+          'flex w-full items-center gap-3 px-3 py-1.25',
+          light ? 'bg-white' : 'bg-black'
+        )}
+      >
         {/* <!-- Navigation Buttons --> */}
         <div className="flex items-center gap-3">
           <ArrowIcon className={cn('size-4 rotate-0', light ? 'text-black' : 'text-gray-100')} />
           <ArrowIcon className="size-4 rotate-180" />
-          <CrossIcon className="size-3 mx-1" />
+          <CrossIcon className="mx-1 size-3" />
         </div>
 
         {/* <!-- URL Bar --> */}
-        <div className={cn('flex items-center justify-between w-full h-full rounded-full px-2.5 py-1.5', light ? 'bg-gray-100' : 'bg-gray-800')}>
+        <div
+          className={cn(
+            'flex h-full w-full items-center justify-between rounded-full px-2.5 py-1.5',
+            light ? 'bg-gray-100' : 'bg-gray-800'
+          )}
+        >
           <span className="flex items-center gap-2">
             <LockIcon />
-            <span className={cn('text-xs truncate', light ? 'opacity-50' : 'opacity-80')}>
+            <span className={cn('truncate text-xs', light ? 'opacity-50' : 'opacity-80')}>
               Designed by <span className="underline">{i18n.t('appName')}</span> Browser Extension!
             </span>
           </span>
@@ -85,15 +132,30 @@ const ChromeTab = ({ children, rounded, theme, device }: { children: ReactNode; 
   );
 };
 
-const ChromeTabNew = ({ children, rounded, theme, device }: { children: ReactNode; rounded: string; theme: 'light' | 'dark'; device: 'mac' | 'windows' }) => {
+const ChromeTabNew = ({
+  children,
+  rounded,
+  theme,
+  device,
+}: {
+  children: ReactNode;
+  rounded: string;
+  theme: 'light' | 'dark';
+  device: 'mac' | 'windows';
+}) => {
   const light = theme === 'light';
   return (
-    <div className={cn(rounded, 'overflow-hidden text-gray-400 flex flex-col')}>
-      <div className={cn('flex items-center justify-between w-full px-3 py-2 gap-x-1', light ? 'bg-white' : 'bg-black')}>
+    <div className={cn(rounded, 'flex flex-col overflow-hidden text-gray-400')}>
+      <div
+        className={cn(
+          'flex w-full items-center justify-between gap-x-1 px-3 py-2',
+          light ? 'bg-white' : 'bg-black'
+        )}
+      >
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 mr-3">
+          <div className="mr-3 flex items-center gap-2">
             {['bg-red-400', 'bg-yellow-300', 'bg-green-500'].map((color, i) => (
-              <div key={i} className={cn('w-3 h-3 rounded-full', color)}></div>
+              <div key={i} className={cn('h-3 w-3 rounded-full', color)}></div>
             ))}
           </div>
           <BarsIcon />
@@ -104,13 +166,13 @@ const ChromeTabNew = ({ children, rounded, theme, device }: { children: ReactNod
 
         <div
           className={cn(
-            'flex items-center justify-between w-full h-full rounded-md px-2.5 py-1.5 max-w-[500px] gap-x-2',
-            light ? 'bg-white border border-gray-200' : 'bg-gray-900 border border-gray-600'
+            `flex h-full w-full max-w-[500px] items-center justify-between gap-x-2 rounded-md px-2.5 py-1.5`,
+            light ? 'border border-gray-200 bg-white' : 'border border-gray-600 bg-gray-900'
           )}
         >
           <span className="flex items-center gap-2">
             <LockIcon />
-            <span className={cn('text-xs truncate', light ? 'opacity-50' : 'opacity-80')}>
+            <span className={cn('truncate text-xs', light ? 'opacity-50' : 'opacity-80')}>
               Designed by <span className="underline">{i18n.t('appName')}</span> Browser Extension!
             </span>
           </span>
@@ -131,18 +193,25 @@ const ChromeTabNew = ({ children, rounded, theme, device }: { children: ReactNod
 const Bars: BarConfig[] = [
   {
     name: 'none',
-    code: ({ children, rounded }) => <div className={cn(rounded, 'overflow-hidden')}>{children}</div>,
+    code: ({ children, rounded }) => (
+      <div className={cn(rounded, 'overflow-hidden')}>{children}</div>
+    ),
   },
   {
     name: 'mac',
     code: ({ children, rounded, theme }) => {
       const light = theme === 'light';
       return (
-        <div className={cn(rounded, 'overflow-hidden flex flex-col')}>
-          <div className={cn('flex items-center -mb-px w-full px-4 py-2.5', light ? 'bg-white' : 'bg-black')}>
+        <div className={cn(rounded, 'flex flex-col overflow-hidden')}>
+          <div
+            className={cn(
+              '-mb-px flex w-full items-center px-4 py-2.5',
+              light ? 'bg-white' : 'bg-black'
+            )}
+          >
             <div className="flex items-center space-x-2">
               {['bg-red-400', 'bg-yellow-300', 'bg-green-500'].map((color, i) => (
-                <div key={i} className={cn('w-3 h-3 rounded-full', color)}></div>
+                <div key={i} className={cn('h-3 w-3 rounded-full', color)}></div>
               ))}
             </div>
           </div>
@@ -156,9 +225,21 @@ const Bars: BarConfig[] = [
     code: ({ children, rounded, theme }) => {
       const light = theme === 'light';
       return (
-        <div className="relative flex-center flex-col">
-          <div className={cn('absolute w-[calc(100%-20%)] h-5 -top-4 backdrop-blur-xl z-[-3]', light ? 'bg-white/50' : 'bg-black/50', rounded)}></div>
-          <div className={cn('absolute w-[calc(100%-10%)] h-5 -top-2 backdrop-blur-xl z-[-2]', light ? 'bg-white/80' : 'bg-black/80', rounded)}></div>
+        <div className="flex-center relative flex-col">
+          <div
+            className={cn(
+              'absolute -top-4 z-[-3] h-5 w-[calc(100%-20%)] backdrop-blur-xl',
+              light ? 'bg-white/50' : 'bg-black/50',
+              rounded
+            )}
+          ></div>
+          <div
+            className={cn(
+              'absolute -top-2 z-[-2] h-5 w-[calc(100%-10%)] backdrop-blur-xl',
+              light ? 'bg-white/80' : 'bg-black/80',
+              rounded
+            )}
+          ></div>
           <div className={cn('overflow-hidden', rounded)}>{children}</div>
         </div>
       );
@@ -198,9 +279,14 @@ const Bars: BarConfig[] = [
     code: ({ children, rounded, theme }) => {
       const light = theme === 'light';
       return (
-        <div className={cn(rounded, 'overflow-hidden flex flex-col')}>
-          <div className={cn('flex items-center justify-between -mb-px w-full px-4 py-2', light ? 'bg-gray-100 text-gray-900' : 'text-gray-100 bg-gray-900')}>
-            <div className={cn('text-xs font-medium truncate max-w-[50%]')}>
+        <div className={cn(rounded, 'flex flex-col overflow-hidden')}>
+          <div
+            className={cn(
+              '-mb-px flex w-full items-center justify-between px-4 py-2',
+              light ? 'bg-gray-100 text-gray-900' : 'bg-gray-900 text-gray-100'
+            )}
+          >
+            <div className={cn('max-w-[50%] truncate text-xs font-medium')}>
               Designed by <span className="underline">{i18n.t('appName')}</span> Browser Extension!
             </div>
             <div className="flex items-center gap-5">
@@ -217,10 +303,15 @@ const Bars: BarConfig[] = [
 ];
 
 // Create a Map for quick lookup
-const barsMap = new Map<string, (props: { children: ReactNode; rounded: string; theme: 'light' | 'dark' }) => ReactElement>(Bars.map((p) => [p.name, p.code]));
+const barsMap = new Map<
+  string,
+  (props: { children: ReactNode; rounded: string; theme: 'light' | 'dark' }) => ReactElement
+>(Bars.map((p) => [p.name, p.code]));
 
 function getTiltConfig(label: TiltLabel, fallback: TiltLabel = 'Center'): TiltConfigItem {
-  return TILT_CONFIG.find((i) => i.label === label) ?? TILT_CONFIG.find((i) => i.label === fallback)!;
+  return (
+    TILT_CONFIG.find((i) => i.label === label) ?? TILT_CONFIG.find((i) => i.label === fallback)!
+  );
 }
 
 const WindowBox = ({ wrapperRef, className = '', children, settings, style }: WindowBoxProps) => {
@@ -228,7 +319,7 @@ const WindowBox = ({ wrapperRef, className = '', children, settings, style }: Wi
   const { size: wrapperSize } = useElementSize(wrapperRef);
 
   const { windowBar, windowTheme, borderMask, rounded, captureMargin, tilt, scale } = settings;
-  const { visible, masked, windowRestricted, borderType, color } = borderMask;
+  const { visible, masked, windowRestricted, borderType, color, inset } = borderMask;
 
   const barComponent = barsMap.get(windowBar);
 
@@ -263,7 +354,13 @@ const WindowBox = ({ wrapperRef, className = '', children, settings, style }: Wi
         className="flex-center"
       >
         {visible && (
-          <div className="absolute overflow-visible" style={{ height: windowSize?.height + captureMargin, width: windowSize?.width + captureMargin }}>
+          <div
+            className="absolute overflow-visible"
+            style={{
+              height: windowSize?.height + inset,
+              width: windowSize?.width + inset,
+            }}
+          >
             {[...verticalEdges, ...horizontalEdges].map((pos) => (
               <div
                 key={pos}

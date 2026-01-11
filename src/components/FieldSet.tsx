@@ -7,10 +7,10 @@ type FieldSetProps = {
 
 export function FieldSet({ label, children, orientation = 'vertical', className }: FieldSetProps) {
   return (
-    <fieldset className={cn('grid grid-cols-2 items-center', className)}>
+    <fieldset className={cn('grid grid-cols-2 items-center px-2 py-2', className)}>
       <span className={cn('text-sm whitespace-nowrap')}>{label}</span>
 
-      <div className={cn('w-full flex justify-end')}>{children}</div>
+      <div className={cn('flex w-full justify-end')}>{children}</div>
     </fieldset>
   );
 }

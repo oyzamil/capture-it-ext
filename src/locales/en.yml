@@ -51,6 +51,7 @@ masked: Masked
 restricted: Restricted
 color: Color
 borderType: Border Type
+inset: Inset
 resetMessage: Are you sure to reset $1?
 cropImage: Crop Image
 

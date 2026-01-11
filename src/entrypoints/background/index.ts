@@ -1,4 +1,5 @@
 import { settingsHook } from '@/hooks/useSettings';
+
 export const OFFSCREEN_DOCUMENT_PATH = '/offscreen.html';
 const EDITOR_PAGE_URL = browser.runtime.getURL('/editor.html');
 
@@ -86,7 +87,7 @@ const captureVisible = async (windowId?: number): Promise<{ dataUrl: string }> =
     };
 
     const finalWindowId = await getWindowId();
-    const dataUrl = await browser.tabs.captureVisibleTab(finalWindowId, { format: 'png' });
+    const dataUrl = await browser.tabs.captureVisibleTab(finalWindowId, { format: 'jpeg' });
 
     return { dataUrl };
   } catch (err) {
@@ -95,7 +96,10 @@ const captureVisible = async (windowId?: number): Promise<{ dataUrl: string }> =
   }
 };
 
-const handleImageDownload = async (dataUrl: string, filename: string): Promise<{ downloadId: number | undefined }> => {
+const handleImageDownload = async (
+  dataUrl: string,
+  filename: string
+): Promise<{ downloadId: number | undefined }> => {
   try {
     const downloadId = await browser.downloads.download({
       url: dataUrl,
@@ -218,10 +222,17 @@ async function captureTabScreenshot(options: CaptureScreenshotOptions): Promise<
     await browser.debugger.sendCommand(debuggerTarget, 'Page.enable');
 
     // --- transparent background
-    await browser.debugger.sendCommand(debuggerTarget, 'Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+    await browser.debugger.sendCommand(
+      debuggerTarget,
+      'Emulation.setDefaultBackgroundColorOverride',
+      { color: { r: 0, g: 0, b: 0, a: 0 } }
+    );
 
     // --- get layout size
-    const metrics = (await browser.debugger.sendCommand(debuggerTarget, 'Page.getLayoutMetrics')) as {
+    const metrics = (await browser.debugger.sendCommand(
+      debuggerTarget,
+      'Page.getLayoutMetrics'
+    )) as {
       contentSize: { width: number; height: number };
     };
 
